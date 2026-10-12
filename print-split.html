@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>표준 원소 주기율표 - 2장 정보분할 인쇄 (제1편 / 제2편)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    /* ========================================================
+       2장 분할 전용 인쇄 스타일 (A4 가로 2장 보장)
+       ======================================================== */
+    @page {
+      size: A4 landscape;
+      margin: 5mm 6mm 5mm 6mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --cat-alkali: #ef4444;
+      --cat-alkalineEarth: #f97316;
+      --cat-transition: #ca8a04;
+      --cat-postTransition: #16a34a;
+      --cat-metalloid: #0d9488;
+      --cat-nonmetal: #0284c7;
+      --cat-nobleGas: #9333ea;
+      --font-sans: 'Pretendard', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', Consolas, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: #f1f5f9;
+      color: #0f172a;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    /* 화면 상단 안내 툴바 */
+    .top-toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 999;
+      background: #1e293b;
+      color: #fff;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .top-toolbar h1 {
+      font-size: 1.1rem;
+      font-weight: 800;
+    }
+
+    .top-toolbar .desc {
+      font-size: 0.82rem;
+      color: #94a3b8;
+    }
+
+    .print-btn-main {
+      background: #0284c7;
+      color: #fff;
+      border: none;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 800;
+      padding: 8px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .print-btn-main:hover {
+      background: #0369a1;
+    }
+
+    /* 각 페이지 시트 컨테이너 (화면에서는 용지 모양, 인쇄에서는 1장씩 분할) */
+    .print-sheet {
+      background: #ffffff;
+      width: 287mm;
+      min-height: 195mm;
+      margin: 15px auto;
+      padding: 5mm 6mm;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      border-radius: 4px;
+      page-break-after: always !important;
+      break-after: page !important;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .print-sheet:last-child {
+      page-break-after: avoid !important;
+      break-after: avoid !important;
+    }
+
+    /* 페이지 헤더 */
+    .sheet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-bottom: 3px;
+      margin-bottom: 3px;
+      border-bottom: 2px solid #0284c7;
+    }
+
+    .sheet-title {
+      font-size: 11pt;
+      font-weight: 900;
+      color: #0f172a;
+    }
+
+    .sheet-tag {
+      font-size: 7.5pt;
+      font-weight: 700;
+      color: #0284c7;
+      background: #e0f2fe;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .sheet-info {
+      font-size: 6.5pt;
+      color: #475569;
+    }
+
+    /* 족 번호 행 (1~18) */
+    .group-row {
+      display: grid;
+      grid-template-columns: 24px repeat(18, minmax(0, 1fr));
+      gap: 1.5px;
+      margin-bottom: 1.5px;
+      text-align: center;
+    }
+
+    .group-num, .corner-cell {
+      font-size: 6pt;
+      font-weight: 700;
+      color: #334155;
+      background: #f1f5f9;
+      padding: 1px 0;
+      border-radius: 2px;
+    }
+
+    /* 18열 x 7행 주기율표 격자 */
+    .grid-table {
+      display: grid;
+      grid-template-columns: 24px repeat(18, minmax(0, 1fr));
+      grid-template-rows: repeat(7, 49px);
+      gap: 1.5px;
+    }
+
+    .period-label {
+      font-size: 6.5pt;
+      font-weight: 800;
+      color: #334155;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f1f5f9;
+      border-radius: 2px;
+    }
+
+    .cell-empty {
+      visibility: hidden;
+    }
+
+    .cell-placeholder {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      border: 0.5pt dashed #94a3b8;
+      border-radius: 2px;
+      font-size: 5.5pt;
+      font-weight: 700;
+      color: #475569;
+      text-align: center;
+      line-height: 1.1;
+      background: #f8fafc;
+    }
+
+    /* 원소 타일 공통 */
+    .element-card {
+      position: relative;
+      border: 0.75pt solid #94a3b8;
+      border-radius: 2px;
+      padding: 1px 2px;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      text-align: center;
+      overflow: hidden;
+      line-height: 1;
+    }
+
+    .element-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background-color: var(--card-color, #94a3b8);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 5pt;
+      color: #475569;
+      line-height: 1;
+    }
+
+    .rad-mark {
+      font-size: 5.5pt;
+      color: #b45309;
+      line-height: 1;
+    }
+
+    /* 1편 전용: 명칭 특화 (원소기호 큼직 + 표준명 + 영문) */
+    .card-p1 .sym {
+      font-family: var(--font-mono);
+      font-size: 11pt;
+      font-weight: 900;
+      color: #0f172a;
+      margin: 1px 0;
+    }
+    .card-p1 .name-ko {
+      font-size: 6.2pt;
+      font-weight: 800;
+      color: #0f172a;
+      white-space: nowrap;
+    }
+    .card-p1 .name-en {
+      font-size: 4.5pt;
+      color: #64748b;
+      white-space: nowrap;
+    }
+
+    /* 2편 전용: 물성 특화 (원소기호 + [나트륨] 등 구명칭 + 원자량 + 전자배치) */
+    .card-p2 .sym {
+      font-family: var(--font-mono);
+      font-size: 9.5pt;
+      font-weight: 900;
+      color: #0f172a;
+    }
+    .card-p2 .alt-name {
+      font-size: 5.5pt;
+      font-weight: 800;
+      color: #0284c7;
+      white-space: nowrap;
+    }
+    .card-p2 .mass {
+      font-family: var(--font-mono);
+      font-size: 4.8pt;
+      font-weight: 700;
+      color: #334155;
+      white-space: nowrap;
+    }
+    .card-p2 .electron {
+      font-family: var(--font-mono);
+      font-size: 4pt;
+      color: #64748b;
+      white-space: nowrap;
+    }
+
+    /* 란타넘 & 악티늄족 f-block */
+    .f-wrap {
+      margin-top: 3px;
+      padding-top: 3px;
+      border-top: 0.5pt dashed #cbd5e1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .f-row {
+      display: grid;
+      grid-template-columns: 80px repeat(15, minmax(0, 1fr));
+      grid-template-rows: 48px;
+      gap: 1.5px;
+    }
+
+    .f-label {
+      font-size: 5.5pt;
+      font-weight: 700;
+      color: #475569;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-end;
+      padding-right: 4px;
+      text-align: right;
+      line-height: 1.1;
+    }
+
+    /* 하단 7개 족 범례 */
+    .legend-box {
+      margin-top: 3px;
+      padding-top: 3px;
+      border-top: 0.5pt solid #cbd5e1;
+    }
+
+    .legend-title {
+      font-size: 6.5pt;
+      font-weight: 800;
+      color: #334155;
+      margin-bottom: 2px;
+    }
+
+    .legend-items {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 1.5px 3px;
+      border: 0.5pt solid #cbd5e1;
+      border-radius: 2px;
+      background: #f8fafc;
+      font-size: 5.5pt;
+      font-weight: 700;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    /* 인쇄 모드 */
+    @media print {
+      body {
+        background: #ffffff !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-sheet {
+        width: 100% !important;
+        height: auto !important;
+        min-height: 195mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 화면 상단 도구 모음 (인쇄 시 숨김) -->
+  <div class="top-toolbar no-print">
+    <div>
+      <h1>표준 원소 주기율표 - 2장 분할 전용 인쇄 뷰</h1>
+      <p class="desc">틀은 동일하며, 1페이지(원소 기본 명칭판)와 2페이지(원자량·이명·물성 상세판)로 구성되어 있습니다.</p>
+    </div>
+    <div>
+      <button class="print-btn-main" onclick="window.print()">🖨️ 지금 인쇄하기 (A4 가로 2장)</button>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       제1페이지: 원소 기본 및 명칭판 (기호 · 한글 · 영문 큼직)
+       ======================================================== -->
+  <section class="print-sheet" id="sheet1">
+    <div>
+      <div class="sheet-header">
+        <div>
+          <span class="sheet-title">표준 원소 주기율표</span>
+          <span class="sheet-tag">제1편: 원소 기본 및 명칭판</span>
+        </div>
+        <div class="sheet-info">구성: 원자번호 · 원소기호 · 한글 표준명 · 영문 명칭 · 7개 족 색상 분류</div>
+      </div>
+
+      <div class="group-row">
+        <div class="corner-cell">주기＼족</div>
+        <div class="group-num">1</div><div class="group-num">2</div><div class="group-num">3</div><div class="group-num">4</div>
+        <div class="group-num">5</div><div class="group-num">6</div><div class="group-num">7</div><div class="group-num">8</div>
+        <div class="group-num">9</div><div class="group-num">10</div><div class="group-num">11</div><div class="group-num">12</div>
+        <div class="group-num">13</div><div class="group-num">14</div><div class="group-num">15</div><div class="group-num">16</div>
+        <div class="group-num">17</div><div class="group-num">18</div>
+      </div>
+
+      <div class="grid-table" id="gridTable1"></div>
+
+      <div class="f-wrap">
+        <div class="f-row">
+          <div class="f-label">란타넘족 <span>57-71</span></div>
+          <div style="display:contents" id="lanth1"></div>
+        </div>
+        <div class="f-row">
+          <div class="f-label">악티늄족 <span>89-103</span></div>
+          <div style="display:contents" id="actin1"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend-box">
+      <div class="legend-title">7대 족 및 화학 계열 분류 (색상별 범례)</div>
+      <div class="legend-items" id="legendItems1"></div>
+    </div>
+  </section>
+
+  <!-- ========================================================
+       제2페이지: 원자량 · 관용명(이명) · 물성 상세판 (동일 틀, 상세 물성)
+       ======================================================== -->
+  <section class="print-sheet" id="sheet2">
+    <div>
+      <div class="sheet-header">
+        <div>
+          <span class="sheet-title">표준 원소 주기율표</span>
+          <span class="sheet-tag" style="background:#fef3c7;color:#b45309">제2편: 원자량 · 관용명(이명) · 물성 상세판</span>
+        </div>
+        <div class="sheet-info">동일 격자 틀 | 구성: 원자번호 · 원소기호 · 관용명(나트륨 등) · 원자량 · 전자배치 · 방사능 ☢️</div>
+      </div>
+
+      <div class="group-row">
+        <div class="corner-cell">주기＼족</div>
+        <div class="group-num">1</div><div class="group-num">2</div><div class="group-num">3</div><div class="group-num">4</div>
+        <div class="group-num">5</div><div class="group-num">6</div><div class="group-num">7</div><div class="group-num">8</div>
+        <div class="group-num">9</div><div class="group-num">10</div><div class="group-num">11</div><div class="group-num">12</div>
+        <div class="group-num">13</div><div class="group-num">14</div><div class="group-num">15</div><div class="group-num">16</div>
+        <div class="group-num">17</div><div class="group-num">18</div>
+      </div>
+
+      <div class="grid-table" id="gridTable2"></div>
+
+      <div class="f-wrap">
+        <div class="f-row">
+          <div class="f-label">란타넘족 <span>57-71</span></div>
+          <div style="display:contents" id="lanth2"></div>
+        </div>
+        <div class="f-row">
+          <div class="f-label">악티늄족 <span>89-103</span></div>
+          <div style="display:contents" id="actin2"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend-box">
+      <div class="legend-title">7대 족 및 화학 계열 분류 (색상별 범례)</div>
+      <div class="legend-items" id="legendItems2"></div>
+    </div>
+  </section>
+
+  <script src="elements.js"></script>
+  <script>
+    // 118개 원소 매핑
+    const elMap = new Map();
+    ELEMENTS_DATA.forEach(el => elMap.set(el.atomicNumber, el));
+
+    function getCatColor(catKey) {
+      const c = CATEGORIES[catKey];
+      return c ? c.color : '#94a3b8';
+    }
+
+    // 1페이지 타일 빌더: 기본 명칭 (기호, 한글, 영문)
+    function buildCard1(el) {
+      const div = document.createElement('div');
+      div.className = 'element-card card-p1';
+      div.style.setProperty('--card-color', getCatColor(el.category));
+
+      div.innerHTML = `
+        <div class="card-top">
+          <span>${el.atomicNumber}</span>
+          ${el.isRadioactive ? '<span class="rad-mark">☢️</span>' : ''}
+        </div>
+        <div class="sym">${el.symbol}</div>
+        <div>
+          <div class="name-ko">${el.nameKo}</div>
+          <div class="name-en">${el.nameEn}</div>
+        </div>
+      `;
+      return div;
+    }
+
+    // 2페이지 타일 빌더: 물성/이명 (기호, 구명칭 [나트륨], 원자량, 전자배치)
+    function buildCard2(el) {
+      const div = document.createElement('div');
+      div.className = 'element-card card-p2';
+      div.style.setProperty('--card-color', getCatColor(el.category));
+
+      const cleanAlt = el.altNameKo ? `[${el.altNameKo.split('/')[0].split('(')[0].trim()}]` : el.nameKo;
+
+      div.innerHTML = `
+        <div class="card-top">
+          <span>${el.atomicNumber}</span>
+          ${el.isRadioactive ? '<span class="rad-mark">☢️</span>' : ''}
+        </div>
+        <div class="sym">${el.symbol}</div>
+        <div>
+          <div class="alt-name">${cleanAlt}</div>
+          <div class="mass">${el.atomicMass}</div>
+          <div class="electron">${el.electronConfig}</div>
+        </div>
+      `;
+      return div;
+    }
+
+    // 격자 채우기 함수
+    function fillGrid(gridId, lanthId, actinId, cardBuilder) {
+      const grid = document.getElementById(gridId);
+      const lanth = document.getElementById(lanthId);
+      const actin = document.getElementById(actinId);
+
+      for (let p = 1; p <= 7; p++) {
+        const pLabel = document.createElement('div');
+        pLabel.className = 'period-label';
+        pLabel.textContent = p;
+        pLabel.style.gridRow = p;
+        pLabel.style.gridColumn = 1;
+        grid.appendChild(pLabel);
+
+        for (let g = 1; g <= 18; g++) {
+          const col = g + 1;
+          if (p === 6 && g === 3) {
+            const ph = document.createElement('div');
+            ph.className = 'cell-placeholder';
+            ph.innerHTML = '57-71<br>란타넘족';
+            ph.style.gridRow = p;
+            ph.style.gridColumn = col;
+            grid.appendChild(ph);
+            continue;
+          }
+          if (p === 7 && g === 3) {
+            const ph = document.createElement('div');
+            ph.className = 'cell-placeholder';
+            ph.innerHTML = '89-103<br>악티늄족';
+            ph.style.gridRow = p;
+            ph.style.gridColumn = col;
+            grid.appendChild(ph);
+            continue;
+          }
+
+          const found = ELEMENTS_DATA.find(e => {
+            if (e.atomicNumber >= 57 && e.atomicNumber <= 71) return false;
+            if (e.atomicNumber >= 89 && e.atomicNumber <= 103) return false;
+            return e.period === p && e.group === g;
+          });
+
+          if (found) {
+            const card = cardBuilder(found);
+            card.style.gridRow = p;
+            card.style.gridColumn = col;
+            grid.appendChild(card);
+          } else {
+            const emp = document.createElement('div');
+            emp.className = 'cell-empty';
+            emp.style.gridRow = p;
+            emp.style.gridColumn = col;
+            grid.appendChild(emp);
+          }
+        }
+      }
+
+      for (let n = 57; n <= 71; n++) {
+        const el = elMap.get(n);
+        if (el) lanth.appendChild(cardBuilder(el));
+      }
+      for (let n = 89; n <= 103; n++) {
+        const el = elMap.get(n);
+        if (el) actin.appendChild(cardBuilder(el));
+      }
+    }
+
+    // 범례 생성
+    function fillLegend(containerId) {
+      const container = document.getElementById(containerId);
+      Object.values(CATEGORIES).forEach(cat => {
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        item.innerHTML = `
+          <span class="dot" style="background:${cat.color}"></span>
+          <span>${cat.nameKo}</span>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      fillGrid('gridTable1', 'lanth1', 'actin1', buildCard1);
+      fillGrid('gridTable2', 'lanth2', 'actin2', buildCard2);
+      fillLegend('legendItems1');
+      fillLegend('legendItems2');
+
+      // URL 파라미터에 print=true 가 있으면 자동으로 인쇄 창 열기
+      if (window.location.search.includes('print=true')) {
+        setTimeout(() => { window.print(); }, 300);
+      }
+    });
+  </script>
+</body>
+</html>

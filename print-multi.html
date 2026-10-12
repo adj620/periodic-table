@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <title>표준 원소 주기율표 - 다기능 N장 전용 인쇄 뷰</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    @page {
+      size: A4 landscape;
+      margin: 4.5mm 5.5mm 4.5mm 5.5mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --cat-alkali: #ef4444;
+      --cat-alkalineEarth: #f97316;
+      --cat-transition: #ca8a04;
+      --cat-postTransition: #16a34a;
+      --cat-metalloid: #0d9488;
+      --cat-nonmetal: #0284c7;
+      --cat-nobleGas: #9333ea;
+      --font-sans: 'Pretendard', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', Consolas, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: #f1f5f9;
+      color: #0f172a;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    /* 화면 상단 도구 모음 */
+    .top-toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 999;
+      background: #0f172a;
+      color: #fff;
+      padding: 10px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+
+    .toolbar-left h1 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .toolbar-left p {
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+
+    .toolbar-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* 줌 및 꽉 찬 화면 컨트롤 */
+    .zoom-controls {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .zoom-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #94a3b8;
+      margin-right: 2px;
+    }
+
+    .zoom-btn {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 5px 9px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .zoom-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: #38bdf8;
+    }
+
+    .zoom-btn.active-mode {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      border-color: #38bdf8;
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+    }
+
+    .zoom-value {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: #38bdf8;
+      min-width: 48px;
+      text-align: center;
+      user-select: none;
+    }
+
+    .page-toggles {
+      display: flex;
+      gap: 6px;
+      background: rgba(255,255,255,0.08);
+      padding: 4px 8px;
+      border-radius: 8px;
+    }
+
+    .page-check-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: #cbd5e1;
+    }
+
+    .btn-print {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #fff;
+      border: none;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 800;
+      padding: 8px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(37,99,235,0.35);
+      transition: transform 0.15s;
+    }
+    .btn-print:hover {
+      transform: translateY(-1px);
+    }
+
+    /* 화면 표시 시트 래퍼 */
+    #sheetContainer {
+      transform-origin: top center;
+      transition: zoom 0.15s ease;
+      padding-bottom: 30px;
+    }
+
+    /* 각 A4 페이지 시트 */
+    .print-sheet {
+      background: #ffffff;
+      width: 287mm;
+      min-height: 198mm;
+      margin: 16px auto;
+      padding: 4.5mm 5.5mm;
+      box-shadow: 0 4px 25px rgba(0,0,0,0.12);
+      border-radius: 4px;
+      page-break-after: always !important;
+      break-after: page !important;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .print-sheet:last-of-type {
+      page-break-after: avoid !important;
+      break-after: avoid !important;
+    }
+
+    .sheet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-bottom: 2px;
+      margin-bottom: 2px;
+      border-bottom: 1.5pt solid #0284c7;
+    }
+
+    .sheet-title-group {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .sheet-main-title {
+      font-size: 11pt;
+      font-weight: 900;
+      color: #0f172a;
+    }
+
+    .sheet-badge {
+      font-size: 7pt;
+      font-weight: 800;
+      padding: 1.5px 6px;
+      border-radius: 4px;
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+
+    .sheet-sub-info {
+      font-size: 6pt;
+      color: #475569;
+    }
+
+    /* 족 헤더 행 */
+    .group-row {
+      display: grid;
+      grid-template-columns: 24px repeat(18, minmax(0, 1fr));
+      gap: 1.5px;
+      margin-bottom: 1.5px;
+      text-align: center;
+    }
+
+    .group-num, .corner-cell {
+      font-size: 5.8pt;
+      font-weight: 700;
+      color: #334155;
+      background: #f1f5f9;
+      padding: 1px 0;
+      border-radius: 2px;
+    }
+
+    /* 18열 x 7행 격자 (54px로 확장하여 질소 등 5~6줄 텍스트 하단 숫자 잘림 완벽 방지) */
+    .grid-table {
+      display: grid;
+      grid-template-columns: 24px repeat(18, minmax(0, 1fr));
+      grid-template-rows: repeat(7, 54px);
+      gap: 1.5px;
+    }
+
+    .period-label {
+      font-size: 6.5pt;
+      font-weight: 800;
+      color: #334155;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f1f5f9;
+      border-radius: 2px;
+    }
+
+    .cell-empty {
+      visibility: hidden;
+    }
+
+    .cell-placeholder {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      border: 0.5pt dashed #94a3b8;
+      border-radius: 2px;
+      font-size: 5.5pt;
+      font-weight: 700;
+      color: #475569;
+      text-align: center;
+      line-height: 1.1;
+      background: #f8fafc;
+    }
+
+    /* 원소 타일 공통 (맨 아래 숫자 잘림 방지: 컴팩트 패딩 & 여유 높이) */
+    .element-card {
+      position: relative;
+      border: 0.75pt solid #94a3b8;
+      border-radius: 2px;
+      padding: 1px 1.5px 1.5px 1.5px;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      text-align: center;
+      overflow: hidden;
+      line-height: 1.05;
+    }
+
+    .element-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2.5px;
+      background-color: var(--card-color, #94a3b8);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 5pt;
+      color: #475569;
+      line-height: 1;
+    }
+
+    .rad-mark {
+      font-size: 5pt;
+      color: #b45309;
+      line-height: 1;
+    }
+
+    /* ----------------------------------------------------
+       각 편별 특화 스타일
+       ---------------------------------------------------- */
+    /* 제0편: 종합판 (최초 개발한 1+2편 통합 A4 1장 완성형) */
+    .card-p0 .sym { font-family: var(--font-mono); font-size: 9.2pt; font-weight: 900; }
+    .card-p0 .name-ko { font-size: 5.5pt; font-weight: 800; color: #0f172a; white-space: nowrap; }
+    .card-p0 .alt-name { font-size: 4.8pt; font-weight: 800; color: #0284c7; white-space: nowrap; }
+    .card-p0 .name-en { font-size: 4.2pt; color: #64748b; white-space: nowrap; }
+    .card-p0 .mass { font-family: var(--font-mono); font-size: 4.8pt; font-weight: 700; color: #0f172a; white-space: nowrap; }
+
+    /* 제1편: 기본 명칭판 */
+    .card-p1 .sym { font-family: var(--font-mono); font-size: 10.5pt; font-weight: 900; margin: 1px 0; }
+    .card-p1 .name-ko { font-size: 6pt; font-weight: 800; color: #0f172a; white-space: nowrap; }
+    .card-p1 .name-en { font-size: 4.3pt; color: #64748b; white-space: nowrap; }
+
+    /* 제2편: 원자량 & 이명/전자배치 (숫자 잘림 완벽 방지) */
+    .card-p2 .sym { font-family: var(--font-mono); font-size: 9pt; font-weight: 900; }
+    .card-p2 .alt-name { font-size: 5.2pt; font-weight: 800; color: #0284c7; white-space: nowrap; }
+    .card-p2 .mass { font-family: var(--font-mono); font-size: 4.8pt; font-weight: 700; color: #0f172a; white-space: nowrap; margin-top: 1px; }
+    .card-p2 .electron { font-family: var(--font-mono); font-size: 4pt; color: #64748b; white-space: nowrap; }
+
+    /* 제3편: 열역학 & 물리데이터판 */
+    .card-p3 .sym { font-family: var(--font-mono); font-size: 9pt; font-weight: 900; }
+    .card-p3 .temp-row { font-size: 4.5pt; font-family: var(--font-mono); color: #0f172a; white-space: nowrap; line-height: 1.1; }
+    .card-p3 .density { font-size: 4.3pt; font-family: var(--font-mono); color: #0284c7; font-weight: 700; white-space: nowrap; }
+    .card-p3 .phase { font-size: 4.2pt; color: #64748b; font-weight: 700; }
+
+    /* 제4편: 화학결합 & 산화수판 */
+    .card-p4 .sym { font-family: var(--font-mono); font-size: 9.2pt; font-weight: 900; }
+    .card-p4 .ox-states { font-size: 4.6pt; font-family: var(--font-mono); font-weight: 800; color: #b45309; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-p4 .en-val { font-size: 4.6pt; font-family: var(--font-mono); font-weight: 700; color: #0284c7; white-space: nowrap; }
+    .card-p4 .name-mini { font-size: 4.5pt; color: #475569; }
+
+    /* 제5편: 역사 & 실생활 용도판 */
+    .card-p5 .sym { font-family: var(--font-mono); font-size: 8.8pt; font-weight: 900; }
+    .card-p5 .year { font-size: 4.6pt; font-family: var(--font-mono); font-weight: 700; color: #475569; }
+    .card-p5 .usage { font-size: 4.4pt; font-weight: 800; color: #0369a1; line-height: 1.1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+    /* 제6편: 실생활 대표 물건 및 일러스트 그림판 (신규) */
+    .card-p6 .sym { font-family: var(--font-mono); font-size: 8.5pt; font-weight: 900; line-height: 1; }
+    .card-p6 .item-icon { font-size: 13pt; line-height: 1; margin: 1px 0; }
+    .card-p6 .item-name { font-size: 4.8pt; font-weight: 800; color: #0284c7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; }
+
+    /* 제7편: 실제 원소 표본 사진판 (신규) */
+    .card-p7 .sym { font-family: var(--font-mono); font-size: 8.5pt; font-weight: 900; line-height: 1; }
+    .card-p7 .card-photo-img {
+      width: 100%;
+      height: 22px;
+      object-fit: cover;
+      border-radius: 2px;
+      margin: 1px 0;
+      background: #e2e8f0;
+    }
+    .card-p7 .card-photo-fallback {
+      font-size: 8pt;
+      font-family: var(--font-mono);
+      font-weight: 900;
+      color: #0284c7;
+      margin: 2px 0;
+    }
+    .card-p7 .look-text {
+      font-size: 4pt;
+      font-weight: 700;
+      color: #334155;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1;
+    }
+
+    /* 란타넘 & 악티늄족 */
+    .f-wrap {
+      margin-top: 3px;
+      padding-top: 3px;
+      border-top: 0.5pt dashed #cbd5e1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .f-row {
+      display: grid;
+      grid-template-columns: 80px repeat(15, minmax(0, 1fr));
+      grid-template-rows: 53px;
+      gap: 1.5px;
+    }
+
+    .f-label {
+      font-size: 5.5pt;
+      font-weight: 700;
+      color: #475569;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-end;
+      padding-right: 4px;
+      text-align: right;
+      line-height: 1.1;
+    }
+
+    /* 하단 범례 */
+    .legend-box {
+      margin-top: 3px;
+      padding-top: 3px;
+      border-top: 0.5pt solid #cbd5e1;
+    }
+
+    .legend-title {
+      font-size: 6.5pt;
+      font-weight: 800;
+      color: #334155;
+      margin-bottom: 2px;
+    }
+
+    .legend-items {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 1.5px 3px;
+      border: 0.5pt solid #cbd5e1;
+      border-radius: 2px;
+      background: #f8fafc;
+      font-size: 5.5pt;
+      font-weight: 700;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    @media print {
+      body {
+        background: #ffffff !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      #sheetContainer {
+        zoom: 1 !important;
+        transform: none !important;
+        padding-bottom: 0 !important;
+      }
+      .print-sheet {
+        width: 100% !important;
+        height: auto !important;
+        min-height: 198mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 상단 컨트롤 툴바 -->
+  <div class="top-toolbar no-print">
+    <div class="toolbar-left">
+      <h1>표준 원소 주기율표 - N장 다기능 인쇄 스위트</h1>
+      <p>동일한 18×7 격자 틀에 각 장마다 고유한 화학/물리/역사 데이터를 담아 인쇄합니다.</p>
+    </div>
+    <div class="toolbar-controls">
+      <!-- 장별 출력 선택 체크박스 -->
+      <div class="page-toggles">
+        <label class="page-check-label"><input type="checkbox" id="chkP0" checked onchange="toggleSheet(0)"> 🌟 종합판(1+2편)</label>
+        <label class="page-check-label"><input type="checkbox" id="chkP1" checked onchange="toggleSheet(1)"> 1편(명칭)</label>
+        <label class="page-check-label"><input type="checkbox" id="chkP2" checked onchange="toggleSheet(2)"> 2편(원자량)</label>
+        <label class="page-check-label"><input type="checkbox" id="chkP3" checked onchange="toggleSheet(3)"> 3편(열역학)</label>
+        <label class="page-check-label"><input type="checkbox" id="chkP4" checked onchange="toggleSheet(4)"> 4편(산화수)</label>
+        <label class="page-check-label"><input type="checkbox" id="chkP5" checked onchange="toggleSheet(5)"> 5편(역사/용도)</label>
+        <label class="page-check-label"><input type="checkbox" id="chkP6" checked onchange="toggleSheet(6)"> 🎨 6편(대표물건)</label>
+        <label class="page-check-label"><input type="checkbox" id="chkP7" checked onchange="toggleSheet(7)"> 📸 7편(실제사진)</label>
+      </div>
+
+      <!-- 화면 배율 및 꽉 찬 화면 조절 (요구사항: 작은 글씨/화면을 꽉 찬 화면으로 키우기) -->
+      <div class="zoom-controls">
+        <span class="zoom-label">화면 크기:</span>
+        <button class="zoom-btn" id="zoomOutBtn" title="화면 축소 (10%씩)">➖</button>
+        <span class="zoom-value" id="zoomValue">100%</span>
+        <button class="zoom-btn" id="zoomInBtn" title="화면 확대 (10%씩)">➕</button>
+        <button class="zoom-btn active-mode" id="fitWidthBtn" title="모니터 화면 너비에 맞춰 큼직하게 꽉 채우기">🖥️ 꽉 찬 화면</button>
+        <button class="zoom-btn" id="zoomResetBtn" title="A4 용지 기본 비율(100%)로 보기">📄 A4 크기</button>
+      </div>
+
+      <button class="btn-print" onclick="window.print()">🖨️ 선택한 장 인쇄하기</button>
+    </div>
+  </div>
+
+  <!-- 메인 시트 컨테이너들 -->
+  <main id="sheetContainer"></main>
+
+  <script src="elements.js"></script>
+  <script src="elements_extra.js"></script>
+  <script src="elements_photos.js"></script>
+  <script>
+    const elMap = new Map();
+    ELEMENTS_DATA.forEach(el => {
+      const extra = (typeof ELEMENTS_EXTRA_DATA !== 'undefined' && ELEMENTS_EXTRA_DATA[el.atomicNumber]) || {};
+      const photo = (typeof ELEMENTS_PHOTOS_DATA !== 'undefined' && ELEMENTS_PHOTOS_DATA[el.atomicNumber]) || {};
+      elMap.set(el.atomicNumber, { ...el, ...extra, ...photo });
+    });
+
+    function getCatColor(catKey) {
+      const c = CATEGORIES[catKey];
+      return c ? c.color : '#94a3b8';
+    }
+
+    // 8대 테마 정의 (0편 종합판 + 1~7편 분할판)
+    const THEMES = [
+      {
+        id: 0,
+        title: "종합판: 표준 원소 주기율표 (1+2편 통합 A4 1장 완성형)",
+        badge: "종합 완성판 (A4 1장)",
+        info: "구성: 원자번호 · 원소기호 · 한글표준명 · 관용명/이명[나트륨] · 영문명 · 원자량 · 방사능 ☢️ 모두 포함",
+        badgeBg: "#e0f2fe", badgeColor: "#0284c7",
+        cardBuilder: (el) => {
+          const div = document.createElement('div');
+          div.className = 'element-card card-p0';
+          div.style.setProperty('--card-color', getCatColor(el.category));
+          const cleanAlt = el.altNameKo ? `[${el.altNameKo.split('/')[0].split('(')[0].trim()}]` : '';
+          div.innerHTML = `
+            <div class="card-top">
+              <span>${el.atomicNumber}</span>
+              ${el.isRadioactive ? '<span class="rad-mark">☢️</span>' : ''}
+            </div>
+            <div class="sym">${el.symbol}</div>
+            <div>
+              <div class="name-ko">${el.nameKo}</div>
+              ${cleanAlt ? `<div class="alt-name">${cleanAlt}</div>` : ''}
+              <div class="name-en">${el.nameEn}</div>
+              <div class="mass">${el.atomicMass}</div>
+            </div>
+          `;
+          return div;
+        }
+      },
+      {
+        id: 1,
+        title: "제1편: 원소 기본 및 명칭판",
+        badge: "기본 학습용",
+        info: "구성: 원자번호 · 원소기호 · 한글 표준명 · 영문 명칭 · 7개 족 색상 분류",
+        badgeBg: "#e0f2fe", badgeColor: "#0369a1",
+        cardBuilder: (el) => {
+          const div = document.createElement('div');
+          div.className = 'element-card card-p1';
+          div.style.setProperty('--card-color', getCatColor(el.category));
+          div.innerHTML = `
+            <div class="card-top">
+              <span>${el.atomicNumber}</span>
+              ${el.isRadioactive ? '<span class="rad-mark">☢️</span>' : ''}
+            </div>
+            <div class="sym">${el.symbol}</div>
+            <div>
+              <div class="name-ko">${el.nameKo}</div>
+              <div class="name-en">${el.nameEn}</div>
+            </div>
+          `;
+          return div;
+        }
+      },
+      {
+        id: 2,
+        title: "제2편: 원자량 · 관용명(이명) · 전자배치판",
+        badge: "동위원소/명칭",
+        info: "구성: 원자번호 · 원소기호 · 관용명/구명칭(나트륨 등) · 원자량 · 전자배치 · 방사능 ☢️",
+        badgeBg: "#fef3c7", badgeColor: "#b45309",
+        cardBuilder: (el) => {
+          const div = document.createElement('div');
+          div.className = 'element-card card-p2';
+          div.style.setProperty('--card-color', getCatColor(el.category));
+          const cleanAlt = el.altNameKo ? `[${el.altNameKo.split('/')[0].split('(')[0].trim()}]` : el.nameKo;
+          div.innerHTML = `
+            <div class="card-top">
+              <span>${el.atomicNumber}</span>
+              ${el.isRadioactive ? '<span class="rad-mark">☢️</span>' : ''}
+            </div>
+            <div class="sym">${el.symbol}</div>
+            <div>
+              <div class="alt-name">${cleanAlt}</div>
+              <div class="mass">${el.atomicMass}</div>
+              <div class="electron">${el.electronConfig}</div>
+            </div>
+          `;
+          return div;
+        }
+      },
+      {
+        id: 3,
+        title: "제3편: 열역학 및 밀도 · 상태판 (신규)",
+        badge: "물리/열역학",
+        info: "구성: 원자번호 · 원소기호 · 녹는점(℃) · 끓는점(℃) · 밀도 · 상온 상태(고체/액체/기체)",
+        badgeBg: "#dcfce7", badgeColor: "#15803d",
+        cardBuilder: (el) => {
+          const div = document.createElement('div');
+          div.className = 'element-card card-p3';
+          div.style.setProperty('--card-color', getCatColor(el.category));
+          div.innerHTML = `
+            <div class="card-top">
+              <span>${el.atomicNumber}</span>
+              <span class="phase">${el.phase}</span>
+            </div>
+            <div class="sym">${el.symbol}</div>
+            <div>
+              <div class="temp-row">녹 ${el.melting}℃</div>
+              <div class="temp-row">끓 ${el.boiling}℃</div>
+              <div class="density">${el.density}</div>
+            </div>
+          `;
+          return div;
+        }
+      },
+      {
+        id: 4,
+        title: "제4편: 산화수 및 전기음성도 · 화학결합판 (신규)",
+        badge: "화학 반응성",
+        info: "구성: 원자번호 · 원소기호 · 주요 산화수(Oxidation States) · 전기음성도(Pauling) · 원소명",
+        badgeBg: "#f3e8ff", badgeColor: "#7e22ce",
+        cardBuilder: (el) => {
+          const div = document.createElement('div');
+          div.className = 'element-card card-p4';
+          div.style.setProperty('--card-color', getCatColor(el.category));
+          div.innerHTML = `
+            <div class="card-top">
+              <span>${el.atomicNumber}</span>
+              <span class="name-mini">${el.nameKo}</span>
+            </div>
+            <div class="sym">${el.symbol}</div>
+            <div>
+              <div class="ox-states" title="${el.oxStates}">산화수: ${el.oxStates}</div>
+              <div class="en-val">전기음성: ${el.en}</div>
+            </div>
+          `;
+          return div;
+        }
+      },
+      {
+        id: 5,
+        title: "제5편: 발견 역사 및 대표 실생활 용도판 (신규)",
+        badge: "역사/산업용도",
+        info: "구성: 원자번호 · 원소기호 · 발견연도 · 발견자 · 대표적 실생활 및 첨단 산업 활용처",
+        badgeBg: "#ffe4e6", badgeColor: "#be123c",
+        cardBuilder: (el) => {
+          const div = document.createElement('div');
+          div.className = 'element-card card-p5';
+          div.style.setProperty('--card-color', getCatColor(el.category));
+          div.innerHTML = `
+            <div class="card-top">
+              <span>${el.atomicNumber}</span>
+              <span class="year">${el.year}년</span>
+            </div>
+            <div class="sym">${el.symbol}</div>
+            <div>
+              <div class="usage" title="${el.usage}">${el.usage}</div>
+            </div>
+          `;
+          return div;
+        }
+      },
+      {
+        id: 6,
+        title: "제6편: 실생활 대표 물건 및 일러스트 그림판 (신규)",
+        badge: "실생활 물건/사물",
+        info: "구성: 원자번호 · 원소기호 · 한글명 · 실생활 대표 물건 그림(이모지) · 대표 물건 명칭",
+        badgeBg: "#fef3c7", badgeColor: "#d97706",
+        cardBuilder: (el) => {
+          const div = document.createElement('div');
+          div.className = 'element-card card-p6';
+          div.style.setProperty('--card-color', getCatColor(el.category));
+          const icon = el.icon || "🧪";
+          const item = el.item || el.nameKo;
+          div.innerHTML = `
+            <div class="card-top">
+              <span>${el.atomicNumber}</span>
+              <span style="font-size:4.8pt;font-weight:700;color:#64748b;">${el.nameKo}</span>
+            </div>
+            <div class="sym">${el.symbol}</div>
+            <div class="item-icon">${icon}</div>
+            <div class="item-name" title="${item}">${item}</div>
+          `;
+          return div;
+        }
+      },
+      {
+        id: 7,
+        title: "제7편: 실제 원소 표본 사진 및 실물 외형판 (신규)",
+        badge: "실제 표본 사진",
+        info: "구성: 원자번호 · 원소기호 · 한글명 · 실제 표본 사진(Wikimedia Commons) · 실물 외형 및 상태",
+        badgeBg: "#e0e7ff", badgeColor: "#4338ca",
+        cardBuilder: (el) => {
+          const div = document.createElement('div');
+          div.className = 'element-card card-p7';
+          div.style.setProperty('--card-color', getCatColor(el.category));
+          const photo = el.photo || '';
+          const look = el.look || el.nameKo;
+          div.innerHTML = `
+            <div class="card-top">
+              <span>${el.atomicNumber}</span>
+              <span style="font-size:4.8pt;font-weight:700;color:#64748b;">${el.nameKo}</span>
+            </div>
+            ${photo ? `<img src="${photo}" class="card-photo-img" alt="${el.nameKo}" onerror="this.style.display='none';this.nextElementSibling.style.display='block';"/>` : ''}
+            <div class="card-photo-fallback" style="${photo ? 'display:none;' : ''}">${el.symbol}</div>
+            <div class="look-text" title="${look}">${look}</div>
+          `;
+          return div;
+        }
+      }
+    ];
+
+    function createSheetElement(theme) {
+      const sheet = document.createElement('section');
+      sheet.className = 'print-sheet';
+      sheet.id = `sheet-${theme.id}`;
+
+      sheet.innerHTML = `
+        <div>
+          <div class="sheet-header">
+            <div class="sheet-title-group">
+              <span class="sheet-main-title">표준 원소 주기율표</span>
+              <span class="sheet-badge" style="background:${theme.badgeBg};color:${theme.badgeColor}">${theme.title}</span>
+            </div>
+            <div class="sheet-sub-info">${theme.info}</div>
+          </div>
+
+          <div class="group-row">
+            <div class="corner-cell">주기＼족</div>
+            <div class="group-num">1</div><div class="group-num">2</div><div class="group-num">3</div><div class="group-num">4</div>
+            <div class="group-num">5</div><div class="group-num">6</div><div class="group-num">7</div><div class="group-num">8</div>
+            <div class="group-num">9</div><div class="group-num">10</div><div class="group-num">11</div><div class="group-num">12</div>
+            <div class="group-num">13</div><div class="group-num">14</div><div class="group-num">15</div><div class="group-num">16</div>
+            <div class="group-num">17</div><div class="group-num">18</div>
+          </div>
+
+          <div class="grid-table" id="grid-${theme.id}"></div>
+
+          <div class="f-wrap">
+            <div class="f-row">
+              <div class="f-label">란타넘족 <span>57-71</span></div>
+              <div style="display:contents" id="lanth-${theme.id}"></div>
+            </div>
+            <div class="f-row">
+              <div class="f-label">악티늄족 <span>89-103</span></div>
+              <div style="display:contents" id="actin-${theme.id}"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="legend-box">
+          <div class="legend-title">7대 족 및 화학 계열 분류 (색상별 범례)</div>
+          <div class="legend-items" id="legend-${theme.id}"></div>
+        </div>
+      `;
+
+      return sheet;
+    }
+
+    function renderAllSheets() {
+      const container = document.getElementById('sheetContainer');
+      container.innerHTML = '';
+
+      THEMES.forEach(theme => {
+        const sheet = createSheetElement(theme);
+        container.appendChild(sheet);
+
+        const grid = sheet.querySelector(`#grid-${theme.id}`);
+        const lanth = sheet.querySelector(`#lanth-${theme.id}`);
+        const actin = sheet.querySelector(`#actin-${theme.id}`);
+        const leg = sheet.querySelector(`#legend-${theme.id}`);
+
+        // 18x7 채우기
+        for (let p = 1; p <= 7; p++) {
+          const pLabel = document.createElement('div');
+          pLabel.className = 'period-label';
+          pLabel.textContent = p;
+          pLabel.style.gridRow = p;
+          pLabel.style.gridColumn = 1;
+          grid.appendChild(pLabel);
+
+          for (let g = 1; g <= 18; g++) {
+            const col = g + 1;
+            if (p === 6 && g === 3) {
+              const ph = document.createElement('div');
+              ph.className = 'cell-placeholder';
+              ph.innerHTML = '57-71<br>란타넘';
+              ph.style.gridRow = p;
+              ph.style.gridColumn = col;
+              grid.appendChild(ph);
+              continue;
+            }
+            if (p === 7 && g === 3) {
+              const ph = document.createElement('div');
+              ph.className = 'cell-placeholder';
+              ph.innerHTML = '89-103<br>악티늄';
+              ph.style.gridRow = p;
+              ph.style.gridColumn = col;
+              grid.appendChild(ph);
+              continue;
+            }
+
+            const found = ELEMENTS_DATA.find(e => {
+              if (e.atomicNumber >= 57 && e.atomicNumber <= 71) return false;
+              if (e.atomicNumber >= 89 && e.atomicNumber <= 103) return false;
+              return e.period === p && e.group === g;
+            });
+
+            if (found) {
+              const fullEl = elMap.get(found.atomicNumber);
+              const card = theme.cardBuilder(fullEl);
+              card.style.gridRow = p;
+              card.style.gridColumn = col;
+              grid.appendChild(card);
+            } else {
+              const emp = document.createElement('div');
+              emp.className = 'cell-empty';
+              emp.style.gridRow = p;
+              emp.style.gridColumn = col;
+              grid.appendChild(emp);
+            }
+          }
+        }
+
+        for (let n = 57; n <= 71; n++) {
+          const el = elMap.get(n);
+          if (el) lanth.appendChild(theme.cardBuilder(el));
+        }
+        for (let n = 89; n <= 103; n++) {
+          const el = elMap.get(n);
+          if (el) actin.appendChild(theme.cardBuilder(el));
+        }
+
+        // 범례
+        Object.values(CATEGORIES).forEach(cat => {
+          const item = document.createElement('div');
+          item.className = 'legend-item';
+          item.innerHTML = `
+            <span class="dot" style="background:${cat.color}"></span>
+            <span>${cat.nameKo}</span>
+          `;
+          leg.appendChild(item);
+        });
+      });
+    }
+
+    function toggleSheet(id) {
+      const chk = document.getElementById(`chkP${id}`);
+      const sheet = document.getElementById(`sheet-${id}`);
+      if (sheet) {
+        sheet.style.display = chk.checked ? 'flex' : 'none';
+      }
+    }
+
+    // 화면 배율(Zoom) 및 꽉 찬 화면 조절 제어 (요구사항 반영)
+    let currentZoom = 1.0;
+    const SHEET_BASE_WIDTH = 1085; // 287mm의 픽셀 환산 기준 너비
+
+    function updateZoom(newZoom) {
+      currentZoom = Math.min(Math.max(newZoom, 0.6), 2.5);
+      const container = document.getElementById('sheetContainer');
+      const zoomValueEl = document.getElementById('zoomValue');
+      const fitBtn = document.getElementById('fitWidthBtn');
+
+      if (container) {
+        container.style.zoom = currentZoom;
+      }
+      if (zoomValueEl) {
+        zoomValueEl.textContent = `${Math.round(currentZoom * 100)}%`;
+      }
+      if (fitBtn) {
+        const expectedFit = (window.innerWidth - 60) / SHEET_BASE_WIDTH;
+        if (Math.abs(currentZoom - expectedFit) < 0.08) {
+          fitBtn.classList.add('active-mode');
+        } else {
+          fitBtn.classList.remove('active-mode');
+        }
+      }
+    }
+
+    function fitToScreenWidth() {
+      const availWidth = window.innerWidth - 60; // 좌우 여백
+      const fitZoom = Math.max(availWidth / SHEET_BASE_WIDTH, 0.85);
+      updateZoom(fitZoom);
+    }
+
+    function initZoomControls() {
+      const zoomInBtn = document.getElementById('zoomInBtn');
+      const zoomOutBtn = document.getElementById('zoomOutBtn');
+      const zoomResetBtn = document.getElementById('zoomResetBtn');
+      const fitWidthBtn = document.getElementById('fitWidthBtn');
+
+      if (zoomInBtn) zoomInBtn.addEventListener('click', () => updateZoom(currentZoom + 0.1));
+      if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => updateZoom(currentZoom - 0.1));
+      if (zoomResetBtn) zoomResetBtn.addEventListener('click', () => updateZoom(1.0));
+      if (fitWidthBtn) fitWidthBtn.addEventListener('click', () => fitToScreenWidth());
+
+      // 기본 모드: 화면에 시원하게 꽉 찬 비율로 자동 조절
+      fitToScreenWidth();
+
+      window.addEventListener('resize', () => {
+        const fitBtn = document.getElementById('fitWidthBtn');
+        if (fitBtn && fitBtn.classList.contains('active-mode')) {
+          fitToScreenWidth();
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderAllSheets();
+      initZoomControls();
+
+      // URL 파라미터 처리 (예: ?page=3 또는 ?print=true)
+      const params = new URLSearchParams(window.location.search);
+      const targetPage = params.get('page');
+
+      if (targetPage !== null && targetPage !== undefined) {
+        const pageNum = parseInt(targetPage, 10);
+        for (let i = 0; i <= 7; i++) {
+          const chk = document.getElementById(`chkP${i}`);
+          if (chk) chk.checked = (i === pageNum);
+          toggleSheet(i);
+        }
+      }
+
+      if (params.get('print') === 'true') {
+        setTimeout(() => { window.print(); }, 400);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <title>표준 주기율표 - Interactive & Printable Periodic Table</title>
+  <meta name="description" content="한글 및 영문 이중 표기, 원자량, 방사능 표시 및 7개 족 색상 분류와 A4 1장/2장 맞춤 인쇄를 지원하는 반응형 표준 주기율표">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-theme">
+  <!-- 상단 컨트롤 헤더 (화면 출력 전용, 인쇄 시 숨김) -->
+  <header class="app-header no-print">
+    <div class="header-left">
+      <div class="logo-box">
+        <span class="logo-icon">⚛️</span>
+        <div>
+          <h1 class="app-title">표준 원소 주기율표</h1>
+          <p class="app-subtitle">IUPAC 표준 명칭 · 관용명(이명) 동시 표기 · 방사능 ☢️ 표기 · 원자량</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="원소명, 구명칭(나트륨 등), 기호, 원자번호 검색..." autocomplete="off">
+        <button id="clearSearchBtn" class="clear-btn" title="검색어 지우기">✕</button>
+      </div>
+      <div class="filter-pills">
+        <button class="pill-btn active" data-filter="all">전체 원소</button>
+        <button class="pill-btn radioactive-pill" data-filter="radioactive">
+          <span class="rad-icon">☢️</span> 방사성 원소만 보기
+        </button>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <!-- 종합판(최초 1+2편 합본) 및 1~7편, 전체 N장 토글 탭 -->
+      <div class="theme-tabs-wrap">
+        <button class="theme-tab-btn active" data-theme-id="0" title="종합판: 최초에 개발했던 1편+2편 합본 1장 완성형 (원자번호, 기호, 한글, 이명[나트륨], 영문, 원자량, 방사능 ☢️ 모두 포함)">🌟 종합 1장판 (1+2편 통합)</button>
+        <button class="theme-tab-btn" data-theme-id="1" title="1편: 원자번호, 큰 기호, 한글표준명, 영문명">1편: 기본명칭</button>
+        <button class="theme-tab-btn" data-theme-id="2" title="2편: 원자량, 관용명[나트륨], 전자배치, 방사능">2편: 원자량·이명</button>
+        <button class="theme-tab-btn" data-theme-id="3" title="3편: 녹는점, 끓는점, 밀도, 상온 상태">3편: 열역학·밀도</button>
+        <button class="theme-tab-btn" data-theme-id="4" title="4편: 산화수, 전기음성도, 원소명">4편: 산화수·결합</button>
+        <button class="theme-tab-btn" data-theme-id="5" title="5편: 발견연도, 발견자, 대표 실생활 활용처">5편: 역사·용도</button>
+        <button class="theme-tab-btn special-theme-btn" data-theme-id="6" title="6편: 실생활 대표 물건 및 일러스트 그림(이모지) 포스터판">🎨 6편: 대표물건</button>
+        <button class="theme-tab-btn special-theme-btn" data-theme-id="7" title="7편: 실제 원소 표본 사진 및 외형 묘사 포스터판">📸 7편: 실제사진</button>
+        <button class="theme-tab-btn all-pages-tab" data-theme-id="all" title="1~7편 전체를 연속으로 펼쳐보는 N장 뷰">📜 전체 N장 뷰</button>
+      </div>
+
+      <div class="print-actions">
+        <button id="printCurrentBtn" class="action-btn primary" title="현재 선택된 편을 A4 1장으로 인쇄합니다">
+          🖨️ 현재 편 인쇄 (1장)
+        </button>
+        <button id="printAllBtn" class="action-btn secondary" title="1~7편 전체를 각 장마다 1장씩 총 7장으로 일괄 인쇄합니다">
+          📑 전체 N장 일괄 인쇄
+        </button>
+      </div>
+
+      <!-- 화면 확대/축소 및 꽉 찬 화면 컨트롤 (요구사항) -->
+      <div class="screen-zoom-controls">
+        <button id="screenZoomOutBtn" class="zoom-mini-btn" title="주기율표 화면 축소">➖</button>
+        <span id="screenZoomVal" class="zoom-mini-val">100%</span>
+        <button id="screenZoomInBtn" class="zoom-mini-btn" title="주기율표 화면 확대">➕</button>
+        <button id="screenFitBtn" class="zoom-mini-btn fit-btn" title="화면 너비에 맞춰 큼직하게 꽉 채우기">🖥️ 꽉 찬 화면</button>
+      </div>
+
+      <button id="themeToggleBtn" class="icon-btn" title="테마 전환 (다크/라이트)">🌓</button>
+    </div>
+  </header>
+
+  <!-- 메인 주기율표 화면 뷰 (화면 표시용 및 1장 종합 인쇄용) -->
+  <main class="main-container" id="screenContainer">
+    <div id="tableWrapper" class="table-wrapper">
+      
+      <!-- 상단 주기/족 인덱스 안내 -->
+      <div class="periodic-grid-container" id="periodicGrid">
+        <div class="page-header-print-only no-screen">
+          <h2 class="print-doc-title">표준 원소 주기율표 (A4 종합판)</h2>
+          <span class="print-doc-sub">원소기호 · 한글명(이명) · 영문명 · 원자량 · 방사능 ☢️ 표기</span>
+        </div>
+
+        <!-- 족 번호 헤더 (1~18) -->
+        <div class="group-header-row">
+          <div class="corner-cell">주기＼족</div>
+          <div class="group-num">1</div>
+          <div class="group-num">2</div>
+          <div class="group-num">3</div>
+          <div class="group-num">4</div>
+          <div class="group-num">5</div>
+          <div class="group-num">6</div>
+          <div class="group-num">7</div>
+          <div class="group-num">8</div>
+          <div class="group-num">9</div>
+          <div class="group-num">10</div>
+          <div class="group-num">11</div>
+          <div class="group-num">12</div>
+          <div class="group-num">13</div>
+          <div class="group-num">14</div>
+          <div class="group-num">15</div>
+          <div class="group-num">16</div>
+          <div class="group-num">17</div>
+          <div class="group-num">18</div>
+        </div>
+
+        <!-- 18x7 메인 격자 테이블 -->
+        <div class="periodic-grid" id="mainPeriodicTable"></div>
+
+        <!-- 란타넘족 & 악티늄족 분리 배치 구역 -->
+        <div class="f-block-wrapper">
+          <div class="f-block-row" id="lanthanideRow">
+            <div class="f-block-label">란타넘족 <span class="range">57-71</span></div>
+            <div class="f-block-elements" id="lanthanideElements"></div>
+          </div>
+          <div class="f-block-row" id="actinideRow">
+            <div class="f-block-label">악티늄족 <span class="range">89-103</span></div>
+            <div class="f-block-elements" id="actinideElements"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 하단 7개 족/계열 범례 영역 (요구사항 1, 5) -->
+      <footer class="legend-section" id="legendSection">
+        <div class="legend-header">
+          <h2 class="legend-title">7대 족 및 화학 계열 분류 (색상별 범례)</h2>
+          <span class="legend-tip no-print">※ 범례 카테고리를 클릭하면 해당 원소들이 하이라이트됩니다.</span>
+        </div>
+        <div class="legend-grid" id="legendGrid"></div>
+        
+        <div class="print-meta-footer">
+          <span>* 기호 설명: [☢️] 방사능 함유 원소 | ( ) 괄호 안은 관용명/구 명칭(예: 소듐-나트륨, 포타슘-칼륨)</span>
+          <span>원자량: 괄호/정수 표기는 가장 안정한 방사성 동위원소 질량수</span>
+        </div>
+      </footer>
+    </div>
+  </main>
+
+  <!-- 2장 정보 분할 인쇄 전용 컨테이너 (틀은 동일하고 칸마다 서로 다른 정보를 담은 2장 인쇄 모드) -->
+  <div id="twoPagesPrintContainer" class="two-pages-print-container">
+    <!-- 1페이지: [기본 정보판] - 원자번호, 원소기호, 한글 표준명, 영문명, 7대 족 색상 -->
+    <section class="split-print-page" id="splitPage1">
+      <div class="split-page-header">
+        <h2 class="split-title">표준 원소 주기율표 - [제1편: 원소 기본 및 명칭판]</h2>
+        <span class="split-sub">구성: 원자번호 · 원소기호 · 한글 표준명 · 영문 명칭 · 7개 족 색상 분류</span>
+      </div>
+      <div class="group-header-row">
+        <div class="corner-cell">주기＼족</div>
+        <div class="group-num">1</div><div class="group-num">2</div><div class="group-num">3</div><div class="group-num">4</div>
+        <div class="group-num">5</div><div class="group-num">6</div><div class="group-num">7</div><div class="group-num">8</div>
+        <div class="group-num">9</div><div class="group-num">10</div><div class="group-num">11</div><div class="group-num">12</div>
+        <div class="group-num">13</div><div class="group-num">14</div><div class="group-num">15</div><div class="group-num">16</div>
+        <div class="group-num">17</div><div class="group-num">18</div>
+      </div>
+      <div class="periodic-grid split-grid" id="splitGrid1"></div>
+      <div class="f-block-wrapper">
+        <div class="f-block-row">
+          <div class="f-block-label">란타넘족 <span class="range">57-71</span></div>
+          <div class="f-block-elements" id="splitLanthanide1"></div>
+        </div>
+        <div class="f-block-row">
+          <div class="f-block-label">악티늄족 <span class="range">89-103</span></div>
+          <div class="f-block-elements" id="splitActinide1"></div>
+        </div>
+      </div>
+      <footer class="legend-section">
+        <div class="legend-header">
+          <h3 class="legend-title">7대 족 및 화학 계열 분류 (색상 범례)</h3>
+        </div>
+        <div class="legend-grid" id="splitLegend1"></div>
+      </footer>
+    </section>
+
+    <!-- 2페이지: [물성 및 상세정보판] - 동일한 격자 틀에 원자량, 관용명(나트륨 등), 전자배치, 방사능 ☢️ 표기 -->
+    <section class="split-print-page" id="splitPage2">
+      <div class="split-page-header">
+        <h2 class="split-title">표준 원소 주기율표 - [제2편: 원자량 · 관용명(이명) · 물성 상세판]</h2>
+        <span class="split-sub">동일 격자 틀 | 구성: 원소기호 · 원자량 · 구 명칭(나트륨/칼륨 등) · 전자배치 · 방사능 ☢️ 유무</span>
+      </div>
+      <div class="group-header-row">
+        <div class="corner-cell">주기＼족</div>
+        <div class="group-num">1</div><div class="group-num">2</div><div class="group-num">3</div><div class="group-num">4</div>
+        <div class="group-num">5</div><div class="group-num">6</div><div class="group-num">7</div><div class="group-num">8</div>
+        <div class="group-num">9</div><div class="group-num">10</div><div class="group-num">11</div><div class="group-num">12</div>
+        <div class="group-num">13</div><div class="group-num">14</div><div class="group-num">15</div><div class="group-num">16</div>
+        <div class="group-num">17</div><div class="group-num">18</div>
+      </div>
+      <div class="periodic-grid split-grid" id="splitGrid2"></div>
+      <div class="f-block-wrapper">
+        <div class="f-block-row">
+          <div class="f-block-label">란타넘족 <span class="range">57-71</span></div>
+          <div class="f-block-elements" id="splitLanthanide2"></div>
+        </div>
+        <div class="f-block-row">
+          <div class="f-block-label">악티늄족 <span class="range">89-103</span></div>
+          <div class="f-block-elements" id="splitActinide2"></div>
+        </div>
+      </div>
+      <footer class="legend-section">
+        <div class="legend-header">
+          <h3 class="legend-title">7대 족 및 화학 계열 분류 (색상 범례)</h3>
+        </div>
+        <div class="legend-grid" id="splitLegend2"></div>
+      </footer>
+    </section>
+  </div>
+
+  <!-- 원소 상세 정보 모달 다이얼로그 (화면 클릭 시) -->
+  <div id="elementModal" class="modal-backdrop no-print hidden">
+    <div class="modal-card">
+      <div class="modal-header" id="modalHeader">
+        <div class="modal-title-wrap">
+          <span class="modal-atomic-number" id="modalNum"></span>
+          <div>
+            <div class="modal-name-group">
+              <h2 id="modalNameKo"></h2>
+              <span id="modalAltNameKo" class="modal-alt-badge"></span>
+            </div>
+            <div class="modal-subtext">
+              <span id="modalNameEn"></span> · <span id="modalCategoryName"></span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-symbol-badge" id="modalSymbol"></div>
+        <button id="modalCloseBtn" class="modal-close-btn">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-stat-grid">
+          <div class="stat-item">
+            <span class="stat-label">원자량</span>
+            <span class="stat-value" id="modalMass"></span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">주기 / 족</span>
+            <span class="stat-value" id="modalPeriodGroup"></span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">상온 상태</span>
+            <span class="stat-value" id="modalPhase"></span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">방사능 여부</span>
+            <span class="stat-value" id="modalRadioactive"></span>
+          </div>
+          <div class="stat-item full-width">
+            <span class="stat-label">전자 배치</span>
+            <span class="stat-value code-font" id="modalElectron"></span>
+          </div>
+        </div>
+
+        <div class="modal-desc-box">
+          <h3>원소 특징 및 용도</h3>
+          <p id="modalDesc"></p>
+        </div>
+
+        <!-- 실제 원소 사진 및 외형 섹션 -->
+        <div class="modal-photo-section">
+          <h3>실제 원소 표본 사진 & 외형</h3>
+          <div class="modal-photo-card">
+            <div class="modal-img-container">
+              <img id="modalPhotoImg" src="" alt="원소 실제 표본 사진" loading="lazy" />
+              <div id="modalPhotoFallback" class="photo-fallback hidden">표본 사진 준비중</div>
+            </div>
+            <div class="modal-look-info">
+              <div class="look-label">실물 외형 특성</div>
+              <p id="modalLookText"></p>
+              <div class="item-label">실생활 대표 물건</div>
+              <p id="modalItemText"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="elements.js"></script>
+  <script src="elements_extra.js"></script>
+  <script src="elements_photos.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
