@@ -45,9 +45,9 @@
       </div>
 
       <div class="header-right">
-        <!-- PWA 원클릭 앱 설치 버튼 (지원 브라우저에서 자동 노출) -->
-        <button id="installAppBtn" class="action-btn install-btn" style="display:none;" title="스마트폰/PC에 독립 앱으로 설치">
-          📲 앱 설치
+        <!-- PWA 원클릭 앱 설치 및 다운로드 안내 버튼 -->
+        <button id="installAppBtn" class="action-btn install-btn" title="스마트폰/PC에 독립 앱으로 설치 및 다운로드 방법 보기">
+          📲 앱 다운로드/설치
         </button>
 
         <!-- 화면 확대/축소 및 꽉 찬 화면 컨트롤 -->
@@ -302,6 +302,112 @@
     </div>
   </div>
 
+  <!-- 앱 다운로드 & 설치 가이드 모달 -->
+  <div id="installGuideModal" class="app-modal-backdrop" style="display: none;">
+    <div class="app-modal-card">
+      <div class="app-modal-header">
+        <div class="modal-title-group">
+          <span class="modal-title-icon">📲</span>
+          <div>
+            <h3 class="modal-title">스마트폰 & PC 앱 설치 / 다운로드 안내</h3>
+            <p class="modal-desc">앱스토어 갈 필요 없이 터치 한 번으로 홈 화면에 설치하여 네이티브 앱처럼 사용하세요!</p>
+          </div>
+        </div>
+        <button id="closeInstallGuideBtn" class="modal-close-btn" title="닫기">✕</button>
+      </div>
+      
+      <div class="app-modal-body">
+        <!-- 네이티브 설치 버튼 (지원되는 경우 최상단 노출) -->
+        <div id="directInstallBox" style="display: none;" class="guide-box direct-install-box">
+          <div class="guide-box-header">
+            <span class="guide-badge">원클릭 설치</span>
+            <strong>지금 바로 기기에 설치할 수 있습니다</strong>
+          </div>
+          <p>브라우저 프롬프트를 통해 홈 화면에 아이콘을 바로 등록합니다.</p>
+          <button id="modalDirectInstallBtn" class="action-btn primary large-btn">
+            ⚡ 즉시 홈 화면에 앱 다운로드 및 설치
+          </button>
+        </div>
+
+        <!-- 기기별 설치 방법 안내 가이드 -->
+        <div class="device-guides-grid">
+          <!-- 안드로이드 (크롬 / 삼성인터넷) -->
+          <div class="device-guide-card">
+            <div class="device-card-header">
+              <span class="device-icon">🤖</span>
+              <h4>안드로이드 (Galaxy, 픽셀 등)</h4>
+            </div>
+            <ol class="guide-steps">
+              <li><strong>크롬 / 삼성 인터넷</strong> 브라우저로 접속합니다.</li>
+              <li>우측 상단 또는 하단의 <strong>더보기(⋮ 또는 ≡)</strong>를 누릅니다.</li>
+              <li><strong>[앱 설치]</strong> 또는 <strong>[현재 페이지 추가 ➔ 홈 화면]</strong>을 터치합니다.</li>
+              <li>바탕화면에 생성된 원소 주기율표 앱을 언제든 바로 실행할 수 있습니다.</li>
+            </ol>
+          </div>
+
+          <!-- 아이폰 / 아이패드 (iOS 사파리) -->
+          <div class="device-guide-card">
+            <div class="device-card-header">
+              <span class="device-icon">🍎</span>
+              <h4>아이폰 & 아이패드 (iOS)</h4>
+            </div>
+            <ol class="guide-steps">
+              <li><strong>Safari(사파리)</strong> 브라우저로 접속합니다.</li>
+              <li>화면 하단 중앙의 <strong>공유 아이콘 (네모 위 화살표 📤)</strong>을 터치합니다.</li>
+              <li>메뉴 스크롤 후 <strong>[홈 화면에 추가 ➕]</strong>를 선택합니다.</li>
+              <li>우측 상단 <strong>[추가]</strong>를 누르면 홈 화면에 앱 아이콘이 등록됩니다.</li>
+            </ol>
+          </div>
+
+          <!-- PC 데스크톱 (Chrome / Edge) -->
+          <div class="device-guide-card">
+            <div class="device-card-header">
+              <span class="device-icon">💻</span>
+              <h4>PC (Windows / Mac)</h4>
+            </div>
+            <ol class="guide-steps">
+              <li>Chrome 또는 Edge 브라우저로 접속합니다.</li>
+              <li>상단 URL 주소창 우측 끝의 <strong>설치 아이콘(⊕ 또는 컴퓨터 모양)</strong>을 클릭합니다.</li>
+              <li>바탕화면 및 시작 메뉴에 독립 창으로 실행되는 앱이 등록됩니다.</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="app-benefits-box">
+          <div class="benefit-item">
+            <span class="benefit-icon">🚀</span>
+            <div>
+              <strong>인터넷 없이도 작동 (오프라인 지원)</strong>
+              <p>핵심 원소 데이터와 퀴즈 엔진이 기기에 저장되어 비행기 모드나 오프라인에서도 작동합니다.</p>
+            </div>
+          </div>
+          <div class="benefit-item">
+            <span class="benefit-icon">🔄</span>
+            <div>
+              <strong>실시간 자동 업데이트 (무설치 갱신)</strong>
+              <p>새로운 원소 데이터나 퀴즈 문제가 추가되면, 앱 실행 시 자동으로 최신 버전으로 갈아끼워집니다.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 실시간 자동 업데이트 알림 플로팅 토스트 -->
+  <div id="updateToast" class="update-toast-banner" style="display: none;">
+    <div class="update-toast-content">
+      <span class="update-toast-icon">✨</span>
+      <div class="update-toast-text">
+        <strong id="updateToastTitle">새로운 버전이 배포되었습니다!</strong>
+        <p id="updateToastDesc">새로운 원소 퀴즈 및 개선 사항을 적용하시겠습니까?</p>
+      </div>
+    </div>
+    <div class="update-toast-actions">
+      <button id="applyUpdateBtn" class="action-btn primary small-btn">지금 업데이트</button>
+      <button id="dismissUpdateBtn" class="icon-btn close-toast-btn" title="닫기">✕</button>
+    </div>
+  </div>
+
   <script src="elements.js"></script>
   <script src="elements_extra.js"></script>
   <script src="elements_photos.js"></script>
@@ -309,38 +415,163 @@
   <script src="quiz.js"></script>
   <script src="app.js"></script>
   <script>
-    // PWA 서비스 워커 등록
+    // PWA 서비스 워커 등록 및 실시간 자동 업데이트 감지 시스템
+    let deferredPrompt = null;
+    let newWorkerWaiting = null;
+    const installBtn = document.getElementById('installAppBtn');
+    const guideModal = document.getElementById('installGuideModal');
+    const closeGuideBtn = document.getElementById('closeInstallGuideBtn');
+    const directInstallBox = document.getElementById('directInstallBox');
+    const modalDirectInstallBtn = document.getElementById('modalDirectInstallBtn');
+    const updateToast = document.getElementById('updateToast');
+    const applyUpdateBtn = document.getElementById('applyUpdateBtn');
+    const dismissUpdateBtn = document.getElementById('dismissUpdateBtn');
+
+    // 1. 브라우저 설치 프롬프트 감지
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (directInstallBox) directInstallBox.style.display = 'block';
+    });
+
+    function openInstallGuide() {
+      if (deferredPrompt) {
+        if (directInstallBox) directInstallBox.style.display = 'block';
+      }
+      if (guideModal) guideModal.style.display = 'flex';
+    }
+
+    function closeInstallGuide() {
+      if (guideModal) guideModal.style.display = 'none';
+    }
+
+    if (installBtn) {
+      installBtn.addEventListener('click', () => {
+        if (deferredPrompt) {
+          // 브라우저 프롬프트가 지원되면 바로 실행
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+              console.log('사용자가 앱 설치를 승인했습니다.');
+              deferredPrompt = null;
+            } else {
+              openInstallGuide();
+            }
+          });
+        } else {
+          // 지원 프롬프트가 없거나 iOS, PC인 경우 안내 모달 노출
+          openInstallGuide();
+        }
+      });
+    }
+
+    if (modalDirectInstallBtn) {
+      modalDirectInstallBtn.addEventListener('click', () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+              closeInstallGuide();
+              deferredPrompt = null;
+            }
+          });
+        }
+      });
+    }
+
+    if (closeGuideBtn) closeGuideBtn.addEventListener('click', closeInstallGuide);
+    if (guideModal) {
+      guideModal.addEventListener('click', (e) => {
+        if (e.target === guideModal) closeInstallGuide();
+      });
+    }
+
+    // 2. 서비스 워커 등록 및 업데이트 감지
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js').catch(err => {
-          console.log('Service Worker 등록 생략:', err);
+        navigator.serviceWorker.register('./service-worker.js').then((reg) => {
+          // 서비스 워커 업데이트 주기적 검사 (1시간마다)
+          setInterval(() => {
+            reg.update();
+          }, 60 * 60 * 1000);
+
+          // 새로운 서비스 워커 대기 상태 감지
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                newWorkerWaiting = newWorker;
+                showUpdateToast('앱의 새로운 버전이 준비되었습니다!');
+              }
+            });
+          });
+        }).catch((err) => {
+          console.log('Service Worker 등록 실패:', err);
+        });
+
+        // 컨트롤러 변경 시(새 버전 적용 시) 새로고침
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          window.location.reload();
         });
       });
     }
 
-    let deferredPrompt;
-    const installBtn = document.getElementById('installAppBtn');
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      if (installBtn) installBtn.style.display = 'inline-flex';
-    });
-
-    if (installBtn) {
-      installBtn.addEventListener('click', async () => {
-        if (!deferredPrompt) {
-          alert('이미 앱이 설치되어 있거나, 브라우저 메뉴의 [홈 화면에 추가 / 앱 설치]를 통해 설치하실 수 있습니다.');
-          return;
+    // 3. version.json 기반 자체 인앱 버전 감지
+    async function checkForNewAppVersion() {
+      try {
+        const res = await fetch('./version.json?_t=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const savedBuild = localStorage.getItem('app_build_number');
+        if (savedBuild && parseInt(savedBuild, 10) < data.build) {
+          showUpdateToast(`새 버전(v${data.version})이 배포되었습니다!`, data.notes);
         }
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-          installBtn.style.display = 'none';
+        localStorage.setItem('app_build_number', data.build);
+        localStorage.setItem('app_version', data.version);
+      } catch (err) {
+        console.warn('버전 확인 실패:', err);
+      }
+    }
+
+    function showUpdateToast(title, desc) {
+      if (updateToast) {
+        const titleEl = document.getElementById('updateToastTitle');
+        const descEl = document.getElementById('updateToastDesc');
+        if (titleEl && title) titleEl.textContent = title;
+        if (descEl && desc) descEl.textContent = desc;
+        updateToast.style.display = 'flex';
+      }
+    }
+
+    if (applyUpdateBtn) {
+      applyUpdateBtn.addEventListener('click', async () => {
+        if (newWorkerWaiting) {
+          newWorkerWaiting.postMessage({ action: 'skipWaiting' });
         }
-        deferredPrompt = null;
+        // 모든 캐시 비우고 강제 새로고침
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+        window.location.reload(true);
       });
     }
+
+    if (dismissUpdateBtn) {
+      dismissUpdateBtn.addEventListener('click', () => {
+        if (updateToast) updateToast.style.display = 'none';
+      });
+    }
+
+    // 창이 다시 활성화될 때 새 버전 체크
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        checkForNewAppVersion();
+      }
+    });
+
+    // 시작 시 1회 버전 체크
+    setTimeout(checkForNewAppVersion, 2000);
   </script>
 </body>
 </html>
