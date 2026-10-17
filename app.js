@@ -130,7 +130,7 @@ function createElementCellByTheme(element, themeId) {
       </div>
       <div class="cell-names">
         <span class="name-ko-main">${element.nameKo}</span>
-        ${cleanAlt ? `<span class="name-ko-alt" style="font-size:0.56rem;color:#38bdf8;font-weight:700;">${cleanAlt}</span>` : ''}
+        ${cleanAlt ? `<span class="name-ko-alt">${cleanAlt}</span>` : ''}
         <span class="name-en">${element.nameEn}</span>
         <span class="cell-mass">${element.atomicMass}</span>
       </div>
@@ -143,7 +143,7 @@ function createElementCellByTheme(element, themeId) {
         ${radMark}
       </div>
       <div class="cell-symbol-wrap">
-        <span class="element-symbol" style="font-size:1.25rem;">${element.symbol}</span>
+        <span class="element-symbol">${element.symbol}</span>
       </div>
       <div class="cell-names">
         <span class="name-ko-main">${element.nameKo}</span>
@@ -162,17 +162,17 @@ function createElementCellByTheme(element, themeId) {
         <span class="element-symbol">${element.symbol}</span>
       </div>
       <div class="cell-names">
-        <span class="name-ko-alt" style="font-size:0.68rem;font-weight:800;">${cleanAlt}</span>
+        <span class="name-ko-alt">${cleanAlt}</span>
         <span class="cell-mass">${element.atomicMass}</span>
-        <span style="font-family:var(--font-mono);font-size:0.52rem;color:var(--text-muted);">${element.electronConfig}</span>
+        <span class="electron-config">${element.electronConfig}</span>
       </div>
     `;
   } else if (themeId === 3) {
-    // 제3편: 열역학 및 밀도·물리상태판 (신규)
+    // 제3편: 열역학 및 밀도·물리상태판
     cell.innerHTML = `
       <div class="cell-top">
         <span class="atomic-number">${element.atomicNumber}</span>
-        <span class="phase">${element.phase}</span>
+        <span class="phase">${element.phase || '-'}</span>
       </div>
       <div class="cell-symbol-wrap">
         <span class="element-symbol">${element.symbol}</span>
@@ -184,17 +184,17 @@ function createElementCellByTheme(element, themeId) {
       </div>
     `;
   } else if (themeId === 4) {
-    // 제4편: 산화수 및 전기음성도판 (신규)
+    // 제4편: 산화수 및 전기음성도판
     cell.innerHTML = `
       <div class="cell-top">
         <span class="atomic-number">${element.atomicNumber}</span>
-        <span style="font-size:0.6rem;color:var(--text-muted);">${element.nameKo}</span>
+        <span class="name-ko-sub">${element.nameKo}</span>
       </div>
       <div class="cell-symbol-wrap">
         <span class="element-symbol">${element.symbol}</span>
       </div>
       <div class="cell-names">
-        <span class="ox-states" title="${element.oxStates || ''}">산화수: ${element.oxStates || '-'}</span>
+        <span class="ox-states" title="${element.oxStates || ''}">산화: ${element.oxStates || '-'}</span>
         <span class="en-val">전기음성: ${element.en || '-'}</span>
       </div>
     `;
@@ -203,7 +203,7 @@ function createElementCellByTheme(element, themeId) {
     cell.innerHTML = `
       <div class="cell-top">
         <span class="atomic-number">${element.atomicNumber}</span>
-        <span class="year">${element.year || ''}년</span>
+        <span class="year">${element.year || ''}</span>
       </div>
       <div class="cell-symbol-wrap">
         <span class="element-symbol">${element.symbol}</span>
@@ -213,38 +213,38 @@ function createElementCellByTheme(element, themeId) {
       </div>
     `;
   } else if (themeId === 6) {
-    // 제6편: 실생활 대표 물건 및 일러스트 그림(이모지) 판 (신규)
+    // 제6편: 실생활 대표 물건 및 일러스트 그림(이모지) 판
     const icon = element.icon || "🧪";
     const item = element.item || element.nameKo;
     cell.innerHTML = `
       <div class="cell-top">
         <span class="atomic-number">${element.atomicNumber}</span>
-        <span style="font-size:0.58rem;font-weight:700;color:var(--text-muted);">${element.nameKo}</span>
+        <span class="name-ko-sub">${element.nameKo}</span>
       </div>
-      <div class="cell-symbol-wrap" style="margin:0;">
-        <span class="element-symbol" style="font-size:0.95rem;">${element.symbol}</span>
+      <div class="cell-symbol-wrap">
+        <span class="element-symbol">${element.symbol}</span>
       </div>
-      <div class="cell-names" style="align-items:center;text-align:center;">
-        <div style="font-size:1.15rem;line-height:1;margin:1px 0;">${icon}</div>
-        <span style="font-size:0.58rem;font-weight:800;color:#38bdf8;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;" title="${item}">${item}</span>
+      <div class="cell-names theme-6-content">
+        <div class="item-icon">${icon}</div>
+        <span class="item-name" title="${item}">${item}</span>
       </div>
     `;
   } else if (themeId === 7) {
-    // 제7편: 실제 원소 표본 사진 및 외형 판 (신규)
+    // 제7편: 실제 원소 표본 사진 및 외형 판
     const photoUrl = element.photo || '';
     const lookText = element.look || '';
     cell.innerHTML = `
       <div class="cell-top">
         <span class="atomic-number">${element.atomicNumber}</span>
-        <span style="font-size:0.55rem;font-weight:700;color:var(--text-muted);">${element.nameKo}</span>
+        <span class="name-ko-sub">${element.nameKo}</span>
       </div>
       <div class="cell-photo-thumb-wrap">
-        ${photoUrl ? `<img src="${photoUrl}" alt="${element.nameKo} 표본" class="cell-photo-thumb" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';"/>` : ''}
-        <div class="cell-photo-symbol-fallback" style="${photoUrl ? 'display:none;' : ''}">
-          <span class="element-symbol" style="font-size:0.95rem;">${element.symbol}</span>
+        ${photoUrl ? `<img src="${photoUrl}" alt="${element.nameKo} 표본" class="cell-photo-thumb" loading="lazy" onerror="this.style.display='none';if(this.nextElementSibling)this.nextElementSibling.style.display='flex';"/>` : ''}
+        <div class="cell-photo-symbol-fallback" style="${photoUrl ? 'display:none;' : 'display:flex;'}">
+          <span class="element-symbol">${element.symbol}</span>
         </div>
       </div>
-      <div class="cell-names" style="align-items:center;text-align:center;">
+      <div class="cell-names">
         <span class="cell-photo-look" title="${lookText}">${lookText || element.symbol}</span>
       </div>
     `;
@@ -258,12 +258,14 @@ function createElementCellByTheme(element, themeId) {
 }
 
 /**
- * 2. 상단 테마 탭 (1, 2, 3, 4, 5, N) 토글 제어
+ * 2. 상단 테마 탭 (0~7편, N장 뷰, 카드 탐색기, 원소 퀴즈) 토글 제어
  */
 function initThemeTabs() {
   const themeBtns = document.querySelectorAll('.theme-tab-btn');
   const screenContainer = document.getElementById('screenContainer');
   const twoPagesPrintContainer = document.getElementById('twoPagesPrintContainer');
+  const cardExplorerContainer = document.getElementById('cardExplorerContainer');
+  const quizContainer = document.getElementById('quizContainer');
 
   themeBtns.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -272,19 +274,37 @@ function initThemeTabs() {
 
       const themeAttr = btn.dataset.themeId;
 
-      if (themeAttr === 'all') {
-        // 전체 N장 뷰: 화면에서도 1~5편을 연속으로 펼치거나 다기능 뷰 노출
-        document.body.classList.add('view-mode-split');
-        if (screenContainer) screenContainer.style.display = 'none';
-        if (twoPagesPrintContainer) twoPagesPrintContainer.style.display = 'flex';
-      } else {
-        // 개별 1~5편 뷰
-        document.body.classList.remove('view-mode-split');
-        if (screenContainer) screenContainer.style.display = 'block';
-        if (twoPagesPrintContainer) twoPagesPrintContainer.style.display = 'none';
+      // 1) 모든 메인 뷰 숨김 초기화
+      if (screenContainer) screenContainer.style.display = 'none';
+      if (twoPagesPrintContainer) twoPagesPrintContainer.style.display = 'none';
+      if (cardExplorerContainer) cardExplorerContainer.style.display = 'none';
+      if (quizContainer) quizContainer.style.display = 'none';
+      document.body.classList.remove('view-mode-split');
 
+      if (themeAttr === 'all') {
+        // 전체 N장 뷰
+        document.body.classList.add('view-mode-split');
+        if (twoPagesPrintContainer) twoPagesPrintContainer.style.display = 'flex';
+      } else if (themeAttr === 'cards') {
+        // 📱 모바일 카드 탐색기 뷰
+        if (cardExplorerContainer) {
+          cardExplorerContainer.style.display = 'block';
+          if (typeof initCardExplorer === 'function') initCardExplorer();
+        }
+      } else if (themeAttr === 'quiz') {
+        // 🎯 원소 퀴즈 뷰
+        if (quizContainer) {
+          quizContainer.style.display = 'block';
+          if (typeof initQuiz === 'function') initQuiz();
+        }
+      } else {
+        // 개별 주기율표 편별 뷰 (0~7편)
+        if (screenContainer) screenContainer.style.display = 'block';
         const tid = parseInt(themeAttr, 10);
         initPeriodicTable(tid);
+        if (isFitMode && typeof fitScreenProportionally === 'function') {
+          fitScreenProportionally();
+        }
       }
     });
   });
@@ -689,12 +709,15 @@ function openElementModal(element) {
  * 9. 화면 확대/축소 및 꽉 찬 화면 조절 제어 (가로세로 완벽한 정비례 스케일링)
  */
 let screenScaleFactor = 1.0;
-const BASE_TABLE_WIDTH = 1500; // 표준 100% 기준 가로폭 (px)
+let isFitMode = true; // 기본적으로 화면 크기에 맞게 자동 최적화
+const BASE_TABLE_WIDTH = 1440; // 기준 표준 폭 (px)
 
-function applyScreenScale(factor) {
-  screenScaleFactor = Math.min(Math.max(factor, 0.6), 2.5);
+function applyScreenScale(factor, isFit = false) {
+  isFitMode = isFit;
+  screenScaleFactor = Math.min(Math.max(factor, 0.55), 2.2);
   const container = document.getElementById('screenContainer');
   const zoomVal = document.getElementById('screenZoomVal');
+  const fitBtn = document.getElementById('screenFitBtn');
   const tableWrapper = document.getElementById('tableWrapper');
 
   if (tableWrapper) {
@@ -702,29 +725,43 @@ function applyScreenScale(factor) {
   }
 
   const targetWidth = Math.round(BASE_TABLE_WIDTH * screenScaleFactor);
+
   if (container) {
-    container.style.setProperty('--table-max-width', `${targetWidth}px`);
+    if (isFit) {
+      container.style.setProperty('--table-width', `${targetWidth}px`);
+      container.style.setProperty('--table-max-width', '100%');
+    } else {
+      container.style.setProperty('--table-width', `${targetWidth}px`);
+      container.style.setProperty('--table-max-width', `${targetWidth}px`);
+    }
   }
+
   if (zoomVal) {
     zoomVal.textContent = `${Math.round(screenScaleFactor * 100)}%`;
+  }
+
+  if (fitBtn) {
+    if (isFit) {
+      fitBtn.classList.add('active');
+    } else {
+      fitBtn.classList.remove('active');
+    }
   }
 }
 
 function fitScreenProportionally() {
   const header = document.querySelector('.app-header');
-  const headerHeight = header ? header.offsetHeight : 60;
-  const availW = window.innerWidth - 48; // 좌우 안전 여백
-  const availH = window.innerHeight - headerHeight - 36; // 상하 안전 여백
+  const headerHeight = header ? header.offsetHeight : 105;
+  const availW = window.innerWidth - 32; // 좌우 안전 여백
+  const availH = window.innerHeight - headerHeight - 32; // 상하 안전 여백
 
-  // 주기율표의 전체 가로:세로 종횡비는 약 1.55 : 1 (18열 x 11.5유닛)
-  // 가로와 세로가 화면을 넘치지 않으면서 정비례로 꽉 차도록 계산:
-  const targetW = Math.min(availW, availH * 1.55);
-  const optimalFactor = Math.max(targetW / BASE_TABLE_WIDTH, 0.7);
+  // 전체 주기율표 종횡비 (가로 18.6열 : 세로 약 12.2단위) -> 약 1.52 : 1
+  // 세로와 가로 양방향 모두 넘치지 않도록 최적 너비 산출
+  const fitWidthByHeight = Math.max(680, availH * 1.52);
+  const optimalWidth = Math.min(availW, fitWidthByHeight);
+  const optimalFactor = optimalWidth / BASE_TABLE_WIDTH;
 
-  applyScreenScale(optimalFactor);
-
-  const fitBtn = document.getElementById('screenFitBtn');
-  if (fitBtn) fitBtn.classList.add('active');
+  applyScreenScale(optimalFactor, true);
 }
 
 function initScreenZoomControls() {
@@ -732,15 +769,17 @@ function initScreenZoomControls() {
   const outBtn = document.getElementById('screenZoomOutBtn');
   const fitBtn = document.getElementById('screenFitBtn');
 
-  if (inBtn) inBtn.addEventListener('click', () => {
-    if (fitBtn) fitBtn.classList.remove('active');
-    applyScreenScale(screenScaleFactor + 0.1);
-  });
+  if (inBtn) {
+    inBtn.addEventListener('click', () => {
+      applyScreenScale(screenScaleFactor + 0.1, false);
+    });
+  }
 
-  if (outBtn) outBtn.addEventListener('click', () => {
-    if (fitBtn) fitBtn.classList.remove('active');
-    applyScreenScale(screenScaleFactor - 0.1);
-  });
+  if (outBtn) {
+    outBtn.addEventListener('click', () => {
+      applyScreenScale(screenScaleFactor - 0.1, false);
+    });
+  }
 
   if (fitBtn) {
     fitBtn.addEventListener('click', () => {
@@ -748,16 +787,12 @@ function initScreenZoomControls() {
     });
   }
 
-  // 초기 로드 시 대형 모니터(1600px 이상)에서는 자동으로 화면에 딱 맞게 정비례 피팅
-  if (window.innerWidth >= 1600) {
-    fitScreenProportionally();
-  } else {
-    applyScreenScale(1.0);
-  }
+  // 초기 로드 시 자동으로 화면에 딱 맞게 정비례 피팅
+  fitScreenProportionally();
 
+  // 창 크기 변경 시 화면 맞춤 모드 유지 중이면 자동 재연산
   window.addEventListener('resize', () => {
-    const fitBtn = document.getElementById('screenFitBtn');
-    if (fitBtn && fitBtn.classList.contains('active')) {
+    if (isFitMode) {
       fitScreenProportionally();
     }
   });

@@ -1,0 +1,13 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "deploy.ps1",
+      "deploy.bat",
+      "server.js"
+    ]
+  }
+}

@@ -9,39 +9,72 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0ea5e9">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="apple-touch-icon" href="icon.svg">
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="dark-theme">
   <!-- 상단 컨트롤 헤더 (화면 출력 전용, 인쇄 시 숨김) -->
   <header class="app-header no-print">
-    <div class="header-left">
-      <div class="logo-box">
-        <span class="logo-icon">⚛️</span>
-        <div>
-          <h1 class="app-title">표준 원소 주기율표</h1>
-          <p class="app-subtitle">IUPAC 표준 명칭 · 관용명(이명) 동시 표기 · 방사능 ☢️ 표기 · 원자량</p>
+    <!-- 1행: 메인 툴바 (로고, 검색/필터, 화면 제어 및 인쇄) -->
+    <div class="header-main-row">
+      <div class="header-left">
+        <div class="logo-box">
+          <span class="logo-icon">⚛️</span>
+          <div>
+            <h1 class="app-title">표준 원소 주기율표</h1>
+            <p class="app-subtitle">IUPAC 표준 명칭 · 관용명(이명) 동시 표기 · 방사능 ☢️ 표기 · 원자량</p>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="header-center">
-      <div class="search-bar">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="searchInput" placeholder="원소명, 구명칭(나트륨 등), 기호, 원자번호 검색..." autocomplete="off">
-        <button id="clearSearchBtn" class="clear-btn" title="검색어 지우기">✕</button>
+      <div class="header-center">
+        <div class="search-bar">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="원소명, 구명칭(나트륨 등), 기호, 원자번호 검색..." autocomplete="off">
+          <button id="clearSearchBtn" class="clear-btn" title="검색어 지우기">✕</button>
+        </div>
+        <div class="filter-pills">
+          <button class="pill-btn active" data-filter="all">전체 원소</button>
+          <button class="pill-btn radioactive-pill" data-filter="radioactive">
+            <span class="rad-icon">☢️</span> 방사성 원소만 보기
+          </button>
+        </div>
       </div>
-      <div class="filter-pills">
-        <button class="pill-btn active" data-filter="all">전체 원소</button>
-        <button class="pill-btn radioactive-pill" data-filter="radioactive">
-          <span class="rad-icon">☢️</span> 방사성 원소만 보기
+
+      <div class="header-right">
+        <!-- PWA 원클릭 앱 설치 버튼 (지원 브라우저에서 자동 노출) -->
+        <button id="installAppBtn" class="action-btn install-btn" style="display:none;" title="스마트폰/PC에 독립 앱으로 설치">
+          📲 앱 설치
         </button>
+
+        <!-- 화면 확대/축소 및 꽉 찬 화면 컨트롤 -->
+        <div class="screen-zoom-controls">
+          <button id="screenZoomOutBtn" class="zoom-mini-btn" title="주기율표 화면 축소">➖</button>
+          <span id="screenZoomVal" class="zoom-mini-val">100%</span>
+          <button id="screenZoomInBtn" class="zoom-mini-btn" title="주기율표 화면 확대">➕</button>
+          <button id="screenFitBtn" class="zoom-mini-btn fit-btn" title="화면 크기에 맞춰 꽉 채우기">🖥️ 화면 맞춤</button>
+        </div>
+
+        <div class="print-actions">
+          <button id="printCurrentBtn" class="action-btn primary" title="현재 선택된 편을 A4 1장으로 인쇄합니다">
+            🖨️ 현재 편 인쇄 (1장)
+          </button>
+          <button id="printAllBtn" class="action-btn secondary" title="1~7편 전체를 각 장마다 1장씩 총 7장으로 일괄 인쇄합니다">
+            📑 전체 N장 일괄 인쇄
+          </button>
+        </div>
+
+        <button id="themeToggleBtn" class="icon-btn" title="테마 전환 (다크/라이트)">🌓</button>
       </div>
     </div>
 
-    <div class="header-right">
-      <!-- 종합판(최초 1+2편 합본) 및 1~7편, 전체 N장 토글 탭 -->
+    <!-- 2행: 테마 탭 네비게이션 (종합판 및 1~7편, 카드 탐색기, 퀴즈 모드) -->
+    <div class="header-nav-row">
       <div class="theme-tabs-wrap">
-        <button class="theme-tab-btn active" data-theme-id="0" title="종합판: 최초에 개발했던 1편+2편 합본 1장 완성형 (원자번호, 기호, 한글, 이명[나트륨], 영문, 원자량, 방사능 ☢️ 모두 포함)">🌟 종합 1장판 (1+2편 통합)</button>
+        <button class="theme-tab-btn active" data-theme-id="0" title="종합판: 최초에 개발했던 1편+2편 합본 1장 완성형 (원자번호, 기호, 한글, 이명[나트륨], 영문, 원자량, 방사능 ☢️ 모두 포함)">🌟 종합 1장판</button>
         <button class="theme-tab-btn" data-theme-id="1" title="1편: 원자번호, 큰 기호, 한글표준명, 영문명">1편: 기본명칭</button>
         <button class="theme-tab-btn" data-theme-id="2" title="2편: 원자량, 관용명[나트륨], 전자배치, 방사능">2편: 원자량·이명</button>
         <button class="theme-tab-btn" data-theme-id="3" title="3편: 녹는점, 끓는점, 밀도, 상온 상태">3편: 열역학·밀도</button>
@@ -50,26 +83,9 @@
         <button class="theme-tab-btn special-theme-btn" data-theme-id="6" title="6편: 실생활 대표 물건 및 일러스트 그림(이모지) 포스터판">🎨 6편: 대표물건</button>
         <button class="theme-tab-btn special-theme-btn" data-theme-id="7" title="7편: 실제 원소 표본 사진 및 외형 묘사 포스터판">📸 7편: 실제사진</button>
         <button class="theme-tab-btn all-pages-tab" data-theme-id="all" title="1~7편 전체를 연속으로 펼쳐보는 N장 뷰">📜 전체 N장 뷰</button>
+        <button class="theme-tab-btn special-feature-btn" data-theme-id="cards" title="모바일 최적화! 글자 잘림 없이 큼직하게 보는 대형 카드 탐색기">📱 모바일 카드 탐색기</button>
+        <button class="theme-tab-btn special-feature-btn quiz-tab-btn" data-theme-id="quiz" title="기호, 이름, 번호, 용도, 실제 사진을 맞추는 대화형 원소 퀴즈 게임">🎯 원소 퀴즈</button>
       </div>
-
-      <div class="print-actions">
-        <button id="printCurrentBtn" class="action-btn primary" title="현재 선택된 편을 A4 1장으로 인쇄합니다">
-          🖨️ 현재 편 인쇄 (1장)
-        </button>
-        <button id="printAllBtn" class="action-btn secondary" title="1~7편 전체를 각 장마다 1장씩 총 7장으로 일괄 인쇄합니다">
-          📑 전체 N장 일괄 인쇄
-        </button>
-      </div>
-
-      <!-- 화면 확대/축소 및 꽉 찬 화면 컨트롤 (요구사항) -->
-      <div class="screen-zoom-controls">
-        <button id="screenZoomOutBtn" class="zoom-mini-btn" title="주기율표 화면 축소">➖</button>
-        <span id="screenZoomVal" class="zoom-mini-val">100%</span>
-        <button id="screenZoomInBtn" class="zoom-mini-btn" title="주기율표 화면 확대">➕</button>
-        <button id="screenFitBtn" class="zoom-mini-btn fit-btn" title="화면 너비에 맞춰 큼직하게 꽉 채우기">🖥️ 꽉 찬 화면</button>
-      </div>
-
-      <button id="themeToggleBtn" class="icon-btn" title="테마 전환 (다크/라이트)">🌓</button>
     </div>
   </header>
 
@@ -138,6 +154,15 @@
       </footer>
     </div>
   </main>
+
+  <!-- 모바일 전용 카드 탐색기 컨테이너 (글자 잘림 100% 해소 뷰) -->
+  <section id="cardExplorerContainer" class="card-explorer-container no-print" style="display:none;">
+    <div id="cardExplorerControls"></div>
+    <div id="cardExplorerContent"></div>
+  </section>
+
+  <!-- 대화형 원소 퀴즈 컨테이너 -->
+  <section id="quizContainer" class="quiz-container no-print" style="display:none;"></section>
 
   <!-- 2장 정보 분할 인쇄 전용 컨테이너 (틀은 동일하고 칸마다 서로 다른 정보를 담은 2장 인쇄 모드) -->
   <div id="twoPagesPrintContainer" class="two-pages-print-container">
@@ -280,6 +305,42 @@
   <script src="elements.js"></script>
   <script src="elements_extra.js"></script>
   <script src="elements_photos.js"></script>
+  <script src="card_explorer.js"></script>
+  <script src="quiz.js"></script>
   <script src="app.js"></script>
+  <script>
+    // PWA 서비스 워커 등록
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js').catch(err => {
+          console.log('Service Worker 등록 생략:', err);
+        });
+      });
+    }
+
+    let deferredPrompt;
+    const installBtn = document.getElementById('installAppBtn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (installBtn) installBtn.style.display = 'inline-flex';
+    });
+
+    if (installBtn) {
+      installBtn.addEventListener('click', async () => {
+        if (!deferredPrompt) {
+          alert('이미 앱이 설치되어 있거나, 브라우저 메뉴의 [홈 화면에 추가 / 앱 설치]를 통해 설치하실 수 있습니다.');
+          return;
+        }
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          installBtn.style.display = 'none';
+        }
+        deferredPrompt = null;
+      });
+    }
+  </script>
 </body>
 </html>

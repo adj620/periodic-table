@@ -1,0 +1,18 @@
+{
+  "name": "표준 원소 주기율표 & 퀴즈",
+  "short_name": "원소주기율표",
+  "description": "IUPAC 표준 대화형 원소 주기율표, 118개 원소 실물 사진 및 대화형 원소 퀴즈 학습 앱",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0c1017",
+  "theme_color": "#0ea5e9",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
