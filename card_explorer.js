@@ -242,6 +242,36 @@ function renderCardExplorerView() {
         }
       });
     }
+
+    // 모바일 터치 스와이프로 카드 넘기기 제스처 지원
+    const singleCardEl = contentEl.querySelector('.single-card-container');
+    if (singleCardEl) {
+      let touchStartX = 0;
+      let touchStartY = 0;
+      singleCardEl.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+      }, { passive: true });
+
+      singleCardEl.addEventListener('touchend', (e) => {
+        const touchEndX = e.changedTouches[0].screenX;
+        const touchEndY = e.changedTouches[0].screenY;
+        const diffX = touchEndX - touchStartX;
+        const diffY = touchEndY - touchStartY;
+
+        if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY)) {
+          if (diffX > 0 && cardExplorerCurrentIndex > 0) {
+            // 오른쪽으로 밀기 ➔ 이전 원소
+            cardExplorerCurrentIndex--;
+            renderCardExplorerView();
+          } else if (diffX < 0 && cardExplorerCurrentIndex < cardExplorerFilteredList.length - 1) {
+            // 왼쪽으로 밀기 ➔ 다음 원소
+            cardExplorerCurrentIndex++;
+            renderCardExplorerView();
+          }
+        }
+      }, { passive: true });
+    }
   }
 
   // 카드 클릭 시 상세 모달 연동

@@ -496,14 +496,33 @@ function renderQuizResultScreen() {
       `}
 
       <div class="result-actions-row">
-        <button id="retryQuizBtn" class="action-btn primary">다시 도전하기 🔄</button>
+        ${quizState.wrongAnswers.length > 0 ? `
+          <button id="retryWrongOnlyBtn" class="action-btn" style="background:#f59e0b; color:#000; font-weight:800;">오답만 다시 풀기 ✏️ (${quizState.wrongAnswers.length}문제)</button>
+        ` : ''}
+        <button id="retryQuizBtn" class="action-btn primary">새 퀴즈 도전 🔄</button>
         <button id="backToLobbyBtn" class="action-btn secondary">퀴즈 로비로 🏠</button>
       </div>
     </div>
   `;
 
+  const retryWrongBtn = document.getElementById('retryWrongOnlyBtn');
   const retryBtn = document.getElementById('retryQuizBtn');
   const lobbyBtn = document.getElementById('backToLobbyBtn');
+
+  if (retryWrongBtn) {
+    retryWrongBtn.addEventListener('click', () => {
+      const wrongQuestions = quizState.wrongAnswers.map(w => w.question);
+      quizState.questions = wrongQuestions;
+      quizState.totalQuestions = wrongQuestions.length;
+      quizState.currentIndex = 0;
+      quizState.score = 0;
+      quizState.combo = 0;
+      quizState.maxCombo = 0;
+      quizState.wrongAnswers = [];
+      quizState.isAnswered = false;
+      renderQuizQuestionScreen();
+    });
+  }
 
   if (retryBtn) {
     retryBtn.addEventListener('click', () => {
