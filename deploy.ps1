@@ -17,11 +17,18 @@ $swPath          = Join-Path $proj 'service-worker.js'
 Write-Host "⚛️ [원소 주기율표 & 퀴즈] 자동 배포 파이프라인 시작..." -ForegroundColor Cyan
 
 # 1) Firebase CLI 존재 여부 확인
+$useNpx = $false
 $fb = Get-Command firebase -ErrorAction SilentlyContinue
 if (-not $fb) {
-  Write-Host "`n❌ Firebase CLI를 찾을 수 없습니다." -ForegroundColor Red
-  Write-Host "   명령 프롬프트에서 'npm install -g firebase-tools' 설치 후 'firebase login'을 진행해 주세요.`n" -ForegroundColor Yellow
-  exit 1
+  $npx = Get-Command npx -ErrorAction SilentlyContinue
+  if ($npx) {
+    Write-Host "ℹ️ 전역 firebase 대신 npx firebase-tools를 사용하여 배포를 진행합니다." -ForegroundColor Cyan
+    $useNpx = $true
+  } else {
+    Write-Host "`n❌ Firebase CLI 또는 Node.js(npx)를 찾을 수 없습니다." -ForegroundColor Red
+    Write-Host "   명령 프롬프트에서 'npm install -g firebase-tools' 설치 후 'firebase login'을 진행해 주세요.`n" -ForegroundColor Yellow
+    exit 1
+  }
 }
 
 # 2) version.json 읽기 및 빌드 번호 +1 증가
@@ -64,7 +71,11 @@ if (Test-Path $swPath) {
 
 # 6) Firebase Hosting 배포 실행
 Write-Host "`n🚀 Firebase Hosting으로 배포 중..." -ForegroundColor Yellow
-& firebase deploy --only hosting
+if ($useNpx) {
+  & npx --yes firebase-tools deploy --only hosting
+} else {
+  & firebase deploy --only hosting
+}
 
 if ($LASTEXITCODE -eq 0) {
   Write-Host "`n🎉 배포 성공 완료!" -ForegroundColor Green

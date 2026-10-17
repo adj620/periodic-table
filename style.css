@@ -969,6 +969,47 @@ body.light-theme .legend-card {
   margin-top: 2px;
 }
 
+.modal-tts-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 6px;
+}
+
+.modal-tts-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.modal-tts-btn:hover {
+  background: rgba(56, 189, 248, 0.25);
+  border-color: #38bdf8;
+  transform: translateY(-1px);
+}
+
+.modal-tts-btn.speaking {
+  background: #38bdf8;
+  color: #0c1017;
+  border-color: #38bdf8;
+  animation: ttsPulse 0.8s infinite alternate ease-in-out;
+}
+
+@keyframes ttsPulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 rgba(56, 189, 248, 0.4); }
+  100% { transform: scale(1.04); box-shadow: 0 0 10px rgba(56, 189, 248, 0.8); }
+}
+
 .modal-symbol-badge {
   font-family: var(--font-mono);
   font-size: 2rem;
@@ -1601,6 +1642,113 @@ body.light-theme .modal-photo-card {
 }
 
 /* ========================================================
+   보어 원자 모형 & 전자 껍질 애니메이션 스타일
+   ======================================================== */
+.modal-bohr-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border-color);
+}
+.bohr-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+.bohr-section-header h3 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #38bdf8;
+}
+.valence-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #facc15;
+  background: rgba(250, 204, 21, 0.15);
+  border: 1px solid rgba(250, 204, 21, 0.3);
+  padding: 2px 7px;
+  border-radius: 9999px;
+}
+.bohr-visual-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0.75rem;
+}
+body.light-theme .bohr-visual-card {
+  background: #f1f5f9;
+}
+.bohr-model-container {
+  width: 130px;
+  height: 130px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bohr-model-container svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.bohr-orbit {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.2);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+body.light-theme .bohr-orbit {
+  stroke: rgba(0, 0, 0, 0.2);
+}
+.bohr-shell-group {
+  transform-origin: 120px 120px;
+  animation: bohrOrbitSpin linear infinite;
+}
+@keyframes bohrOrbitSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.bohr-electron {
+  fill: #38bdf8;
+  filter: drop-shadow(0 0 3px rgba(56, 189, 248, 0.8));
+}
+.bohr-nucleus {
+  fill: #f43f5e;
+  filter: drop-shadow(0 0 5px rgba(244, 63, 94, 0.7));
+}
+.bohr-nucleus-text {
+  fill: #fff;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 13px;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.bohr-info-legend {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.bohr-shell-summary {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #38bdf8;
+  word-break: break-all;
+  line-height: 1.4;
+}
+.bohr-shell-tip {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+/* ========================================================
    PWA 앱 설치 버튼 & 신규 기능 탭 스타일
    ======================================================== */
 .action-btn.install-btn {
@@ -2167,6 +2315,94 @@ body.light-theme .quiz-mode-card {
   color: var(--text-main);
   font-size: 0.8rem;
   outline: none;
+}
+
+/* 타임어택 모드 설정 박스 */
+.timeattack-setting-box {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 12px;
+  padding: 0.85rem 1.25rem;
+  margin-top: 0.5rem;
+}
+.timeattack-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+}
+.timeattack-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #f59e0b;
+  cursor: pointer;
+}
+.timeattack-text-wrap {
+  display: flex;
+  flex-direction: column;
+}
+.timeattack-text-wrap strong {
+  font-size: 0.92rem;
+  color: #f59e0b;
+}
+.timeattack-text-wrap small {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* 타임어택 타이머 게이지 */
+.quiz-timer-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: -0.5rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+}
+.quiz-timer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.timer-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #f59e0b;
+}
+.timer-countdown {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #f59e0b;
+  transition: color 0.2s ease;
+}
+.timer-countdown.urgent {
+  color: #ef4444;
+  animation: pulseUrgent 0.5s infinite alternate;
+}
+.quiz-timer-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+.quiz-timer-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #f59e0b);
+  border-radius: 9999px;
+  transition: width 0.95s linear, background 0.3s ease;
+}
+.quiz-timer-bar.urgent {
+  background: #ef4444 !important;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+}
+@keyframes pulseUrgent {
+  from { transform: scale(1); }
+  to { transform: scale(1.1); }
 }
 
 /* 퀴즈 플레이 화면 */

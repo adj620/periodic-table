@@ -252,6 +252,14 @@
             <div class="modal-subtext">
               <span id="modalNameEn"></span> · <span id="modalCategoryName"></span>
             </div>
+            <div class="modal-tts-row">
+              <button id="modalSpeakKoBtn" class="modal-tts-btn" title="한국어 표준 명칭 음성 듣기">
+                <span class="tts-icon">🔊</span> 한글 발음
+              </button>
+              <button id="modalSpeakEnBtn" class="modal-tts-btn" title="IUPAC 영문 공식 명칭 발음 듣기">
+                <span class="tts-icon">🗣️</span> English
+              </button>
+            </div>
           </div>
         </div>
         <div class="modal-symbol-badge" id="modalSymbol"></div>
@@ -300,6 +308,20 @@
               <p id="modalLookText"></p>
               <div class="item-label">실생활 대표 물건</div>
               <p id="modalItemText"></p>
+            </div>
+          </div>
+        </div>
+        <!-- 보어 원자 모형 및 전자 껍질 인터랙티브 시각화 섹션 -->
+        <div class="modal-bohr-section">
+          <div class="bohr-section-header">
+            <h3>⚛️ 보어 원자 모형 (전자 껍질 회전 시각화)</h3>
+            <span id="modalValenceText" class="valence-badge">최외각 전자: -개</span>
+          </div>
+          <div class="bohr-visual-card">
+            <div id="bohrModelContainer" class="bohr-model-container"></div>
+            <div class="bohr-info-legend">
+              <div class="bohr-shell-summary" id="modalShellSummary">주양자수 껍질별 전자수</div>
+              <p class="bohr-shell-tip">※ 동심원 궤도(K, L, M...)를 따라 전자가 원자핵 주위를 공전합니다.</p>
             </div>
           </div>
         </div>

@@ -22,7 +22,9 @@ let quizState = {
   maxCombo: 0,
   wrongAnswers: [],
   isAnswered: false,
+  isTimeAttack: localStorage.getItem('periodic_quiz_time_attack') !== 'false', // 기본값: 타임어택 켜짐
   timerSeconds: 15,
+  timeLeft: 15,
   timerInterval: null,
   totalQuestions: 10
 };
@@ -38,6 +40,7 @@ function initQuiz() {
  * 1. 퀴즈 로비 화면 렌더링 (모드 선택 및 최고 점수)
  */
 function renderQuizLobby() {
+  stopQuestionTimer();
   const container = document.getElementById('quizContainer');
   if (!container) return;
 
@@ -52,6 +55,17 @@ function renderQuizLobby() {
         <div class="quiz-high-score-banner">
           <span>🏆 나의 최고 점수: <strong>${highScore}점</strong></span>
         </div>
+      </div>
+
+      <!-- 타임어택 챌린지 모드 설정 토글 -->
+      <div class="timeattack-setting-box">
+        <label class="timeattack-label" for="timeAttackToggle">
+          <input type="checkbox" id="timeAttackToggle" ${quizState.isTimeAttack ? 'checked' : ''} />
+          <span class="timeattack-text-wrap">
+            <strong>⏱️ 타임어택 모드 (문제당 15초 카운트다운 제한)</strong>
+            <small>정답 시 남은 초에 따라 최대 +150점의 스피드 보너스 점수가 가산됩니다.</small>
+          </span>
+        </label>
       </div>
 
       <div class="quiz-mode-selection">
@@ -83,6 +97,15 @@ function renderQuizLobby() {
     </div>
   `;
 
+  // 타임어택 토글 이벤트
+  const timeAttackToggle = document.getElementById('timeAttackToggle');
+  if (timeAttackToggle) {
+    timeAttackToggle.addEventListener('change', (e) => {
+      quizState.isTimeAttack = e.target.checked;
+      localStorage.setItem('periodic_quiz_time_attack', e.target.checked ? 'true' : 'false');
+    });
+  }
+
   // 모드 선택 이벤트
   const modeCards = container.querySelectorAll('.quiz-mode-card');
   modeCards.forEach(card => {
@@ -105,6 +128,88 @@ function renderQuizLobby() {
         alert('API 키가 삭제되었습니다.');
       }
     });
+  }
+}
+
+/**
+ * 타임어택 카운트다운 타이머 컨트롤러
+ */
+function startQuestionTimer() {
+  stopQuestionTimer();
+  if (!quizState.isTimeAttack) return;
+
+  quizState.timeLeft = quizState.timerSeconds;
+  updateTimerUI();
+
+  quizState.timerInterval = setInterval(() => {
+    quizState.timeLeft--;
+    updateTimerUI();
+
+    if (quizState.timeLeft <= 0) {
+      stopQuestionTimer();
+      handleTimeOut();
+    }
+  }, 1000);
+}
+
+function stopQuestionTimer() {
+  if (quizState.timerInterval) {
+    clearInterval(quizState.timerInterval);
+    quizState.timerInterval = null;
+  }
+}
+
+function updateTimerUI() {
+  const timerSecText = document.getElementById('timerSecText');
+  const timerBar = document.getElementById('quizTimerBar');
+  if (!timerSecText || !timerBar) return;
+
+  timerSecText.textContent = `${quizState.timeLeft}초`;
+  const pct = Math.max(0, (quizState.timeLeft / quizState.timerSeconds) * 100);
+  timerBar.style.width = `${pct}%`;
+
+  if (quizState.timeLeft <= 5) {
+    timerBar.classList.add('urgent');
+    timerSecText.classList.add('urgent');
+  } else {
+    timerBar.classList.remove('urgent');
+    timerSecText.classList.remove('urgent');
+  }
+}
+
+function handleTimeOut() {
+  if (quizState.isAnswered) return;
+  quizState.isAnswered = true;
+
+  const container = document.getElementById('quizContainer');
+  const choiceBtns = container ? container.querySelectorAll('.quiz-choice-btn') : [];
+  const q = quizState.questions[quizState.currentIndex];
+
+  choiceBtns.forEach((btn, idx) => {
+    btn.disabled = true;
+    if (q.choices[idx].isCorrect) {
+      btn.classList.add('correct');
+    }
+  });
+
+  quizState.combo = 0;
+  quizState.wrongAnswers.push({
+    question: q,
+    userChoice: '⏱️ 시간 초과 (15초 초과)'
+  });
+
+  const feedbackBox = document.getElementById('quizFeedbackBox');
+  const feedbackTitle = document.getElementById('feedbackTitle');
+  const feedbackDesc = document.getElementById('feedbackDesc');
+
+  if (feedbackTitle) {
+    feedbackTitle.innerHTML = `<span class="res-wrong">⏱️ 제한 시간(15초) 초과! (+0점)</span>`;
+  }
+  if (feedbackDesc) {
+    feedbackDesc.textContent = `시간 내에 정답을 선택하지 못했습니다. ` + q.explanation;
+  }
+  if (feedbackBox) {
+    feedbackBox.classList.add('active');
   }
 }
 
@@ -272,6 +377,19 @@ function renderQuizQuestionScreen() {
         </div>
       </div>
 
+      <!-- 타임어택 카운트다운 타이머 게이지 (타임어택 모드 활성화 시) -->
+      ${quizState.isTimeAttack ? `
+        <div class="quiz-timer-container">
+          <div class="quiz-timer-header">
+            <span class="timer-badge">⏱️ 남은 시간</span>
+            <span id="timerSecText" class="timer-countdown">${quizState.timerSeconds}초</span>
+          </div>
+          <div class="quiz-timer-track">
+            <div id="quizTimerBar" class="quiz-timer-bar" style="width: 100%;"></div>
+          </div>
+        </div>
+      ` : ''}
+
       <!-- 문제 영역 -->
       <div class="quiz-question-box">
         ${q.photoUrl ? `
@@ -306,6 +424,9 @@ function renderQuizQuestionScreen() {
     </div>
   `;
 
+  // 문제 타이머 가동
+  startQuestionTimer();
+
   // 화면 전환 직후 이전 클릭/터치가 새 버튼을 누르는 클릭 관통(Ghost Click) 방지 (300ms 쿨다운)
   quizState.isAnswered = true;
   setTimeout(() => {
@@ -327,6 +448,7 @@ function renderQuizQuestionScreen() {
   if (nextBtn) {
     nextBtn.addEventListener('click', (e) => {
       e.stopPropagation();
+      stopQuestionTimer();
       if (quizState.currentIndex < quizState.totalQuestions - 1) {
         quizState.currentIndex++;
         renderQuizQuestionScreen();
@@ -340,6 +462,7 @@ function renderQuizQuestionScreen() {
   if (exitBtn) {
     exitBtn.addEventListener('click', (e) => {
       e.stopPropagation();
+      stopQuestionTimer();
       if (confirm('진행 중인 퀴즈를 종료하고 로비로 돌아갈까요?')) {
         renderQuizLobby();
       }
@@ -353,6 +476,7 @@ function renderQuizQuestionScreen() {
 function handleChoiceSelect(selectedIdx, choiceBtns) {
   if (quizState.isAnswered) return;
   quizState.isAnswered = true;
+  stopQuestionTimer();
 
   const q = quizState.questions[quizState.currentIndex];
   const selectedChoice = q.choices[selectedIdx];
@@ -368,17 +492,19 @@ function handleChoiceSelect(selectedIdx, choiceBtns) {
   });
 
   if (selectedChoice.isCorrect) {
-    // 정답 처리
+    // 정답 처리 (스피드 보너스 반영)
     choiceBtns[selectedIdx].classList.add('correct');
     quizState.combo++;
     if (quizState.combo > quizState.maxCombo) {
       quizState.maxCombo = quizState.combo;
     }
     const comboBonus = (quizState.combo - 1) * 20;
-    const earned = 100 + comboBonus;
+    const timeBonus = quizState.isTimeAttack ? Math.max(0, quizState.timeLeft * 10) : 0;
+    const earned = 100 + comboBonus + timeBonus;
     quizState.score += earned;
 
-    feedbackTitle.innerHTML = `<span class="res-correct">🎉 정답입니다! (+${earned}점)</span>`;
+    const bonusTxt = (timeBonus > 0) ? ` (스피드 +${timeBonus}점)` : '';
+    feedbackTitle.innerHTML = `<span class="res-correct">🎉 정답입니다! (+${earned}점${bonusTxt})</span>`;
     feedbackDesc.textContent = q.explanation;
   } else {
     // 오답 처리
@@ -408,6 +534,7 @@ function handleChoiceSelect(selectedIdx, choiceBtns) {
  * 6. 퀴즈 최종 결과 화면 렌더링
  */
 function renderQuizResultScreen() {
+  stopQuestionTimer();
   const container = document.getElementById('quizContainer');
   if (!container) return;
 

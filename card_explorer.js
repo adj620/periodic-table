@@ -274,7 +274,19 @@ function renderCardExplorerView() {
     }
   }
 
-  // 카드 클릭 시 상세 모달 연동
+  // 카드 및 상세보기 버튼 클릭 시 상세 모달 연동
+  const cards = contentEl.querySelectorAll('.element-full-card');
+  cards.forEach(card => {
+    card.addEventListener('click', () => {
+      const btn = card.querySelector('.card-modal-open-btn');
+      const num = parseInt(btn?.dataset.num, 10);
+      const el = elementsMap.get(num);
+      if (el && typeof openElementModal === 'function') {
+        openElementModal(el);
+      }
+    });
+  });
+
   const detailBtns = contentEl.querySelectorAll('.card-modal-open-btn');
   detailBtns.forEach(btn => {
     btn.addEventListener('click', (e) => {
