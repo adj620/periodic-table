@@ -50,6 +50,11 @@
           📲 앱 다운로드/설치
         </button>
 
+        <!-- PC에서 스마트폰 화면 환경으로 실시간 디버깅하는 시뮬레이터 버튼 -->
+        <a href="mobile_simulator.html" target="_blank" class="action-btn simulator-btn" title="스마트폰 화면 크기 및 터치 환경으로 PC에서 실시간 디버깅">
+          📱 폰 시뮬레이터 (디버깅)
+        </a>
+
         <!-- 화면 확대/축소 및 꽉 찬 화면 컨트롤 -->
         <div class="screen-zoom-controls">
           <button id="screenZoomOutBtn" class="zoom-mini-btn" title="주기율표 화면 축소">➖</button>
@@ -298,9 +303,47 @@
             </div>
           </div>
         </div>
+        <!-- 이전 / 다음 원소 연속 이동 네비게이션 바 (모달 닫지 않고 즉시 이동) -->
+        <div class="modal-nav-bar">
+          <button id="modalPrevBtn" class="modal-nav-btn" title="이전 원소 보기 (키보드: ←)">
+            <span class="nav-arrow">◀</span>
+            <span class="nav-label" id="modalPrevLabel">이전 원소</span>
+          </button>
+          <div class="modal-nav-indicator" id="modalNavIndicator">1 / 118</div>
+          <button id="modalNextBtn" class="modal-nav-btn" title="다음 원소 보기 (키보드: →)">
+            <span class="nav-label" id="modalNextLabel">다음 원소</span>
+            <span class="nav-arrow">▶</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
+
+  <!-- 모바일 뷰 전용: 원터치 전체보기 / 확대 토글 플로팅 액션 버튼 (FAB) -->
+  <button id="mobileZoomToggleFab" class="mobile-zoom-fab no-print" title="전체보기 / 확대보기 전환">
+    <span id="mobileZoomFabIcon" class="fab-icon">🔍</span>
+    <span id="mobileZoomFabText" class="fab-text">전체보기</span>
+  </button>
+
+  <!-- 모바일 앱 전용 하단 고정 네비게이션 바 (스마트폰 앱 표준 UX) -->
+  <nav class="mobile-bottom-nav no-print" id="mobileBottomNav">
+    <button class="bottom-nav-item active" data-tab-id="0">
+      <span class="bottom-nav-icon">📊</span>
+      <span class="bottom-nav-label">주기율표</span>
+    </button>
+    <button class="bottom-nav-item" data-tab-id="cards">
+      <span class="bottom-nav-icon">🃏</span>
+      <span class="bottom-nav-label">카드 탐색기</span>
+    </button>
+    <button class="bottom-nav-item" data-tab-id="quiz">
+      <span class="bottom-nav-icon">🎯</span>
+      <span class="bottom-nav-label">원소 퀴즈</span>
+    </button>
+    <button class="bottom-nav-item" id="bottomNavSearchBtn">
+      <span class="bottom-nav-icon">🔍</span>
+      <span class="bottom-nav-label">원소 검색</span>
+    </button>
+  </nav>
 
   <!-- 앱 다운로드 & 설치 가이드 모달 -->
   <div id="installGuideModal" class="app-modal-backdrop" style="display: none;">

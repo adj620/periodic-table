@@ -2718,3 +2718,184 @@ body.light-theme .device-guide-card {
 .close-toast-btn:hover {
   color: #fff;
 }
+
+/* ========================================================
+   원소 상세 모달: 좌우 원소 연속 이동 내비게이션 바
+   ======================================================== */
+.modal-nav-bar {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.modal-nav-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  border-radius: 10px;
+  padding: 0.55rem 0.95rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: all 0.2s;
+  flex: 1;
+  max-width: 200px;
+}
+body.light-theme .modal-nav-btn {
+  background: #f1f5f9;
+}
+.modal-nav-btn:hover:not(:disabled) {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+}
+.modal-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.modal-nav-btn#modalNextBtn {
+  justify-content: flex-end;
+}
+.modal-nav-indicator {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ========================================================
+   모바일 뷰 전용: 원터치 전체보기 / 확대 토글 플로팅 버튼 (FAB)
+   ======================================================== */
+.mobile-zoom-fab {
+  display: none;
+  position: fixed;
+  bottom: 85px;
+  right: 1.25rem;
+  background: linear-gradient(135deg, #0ea5e9, #6366f1);
+  color: #fff;
+  border: none;
+  border-radius: 9999px;
+  padding: 0.65rem 1.15rem;
+  box-shadow: 0 10px 25px rgba(14, 165, 233, 0.4);
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  z-index: 9999;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: fabPop 0.3s ease;
+}
+@keyframes fabPop {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.mobile-zoom-fab:active {
+  transform: scale(0.94);
+}
+.fab-icon { font-size: 1.1rem; }
+.fab-text { font-size: 0.82rem; }
+
+/* ========================================================
+   모바일 앱 전용: 하단 고정 네비게이션 바 (Bottom Navigation)
+   ======================================================== */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border-color);
+  z-index: 9998;
+  display: none;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0 0.5rem;
+  box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.3);
+}
+body.light-theme .mobile-bottom-nav {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.08);
+}
+
+.bottom-nav-item {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex: 1;
+}
+.bottom-nav-icon {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+.bottom-nav-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.bottom-nav-item.active {
+  color: #38bdf8;
+}
+.bottom-nav-item:active {
+  transform: scale(0.92);
+}
+
+/* ========================================================
+   모바일 화면 및 모바일 앱 모드 미디어 쿼리
+   ======================================================== */
+@media (max-width: 768px), (display-mode: standalone) {
+  body {
+    padding-bottom: 74px; /* 하단 탭 바 높이 확보 */
+  }
+  .mobile-bottom-nav {
+    display: flex;
+  }
+  .mobile-zoom-fab {
+    display: flex;
+  }
+  /* 모바일에서는 복잡한 상단 인쇄 버튼 및 종합판 탭 숨김 */
+  .print-actions {
+    display: none !important;
+  }
+  .theme-tab-btn[data-theme-id="0"],
+  .theme-tab-btn[data-theme-id="all"] {
+    display: none !important;
+  }
+  .install-btn {
+    display: none !important;
+  }
+  /* 상단 툴바 간소화 */
+  .header-main-row {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+  }
+  .app-title {
+    font-size: 1.05rem;
+  }
+  .app-subtitle {
+    display: none;
+  }
+  .screen-zoom-controls {
+    display: none; /* 플로팅 FAB으로 대체 */
+  }
+}

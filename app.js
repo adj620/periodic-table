@@ -617,25 +617,13 @@ function initTheme() {
 
 /**
  * 8. 원소 상세 정보 모달
- */
-function initModal() {
-  const modal = document.getElementById('elementModal');
-  const closeBtn = document.getElementById('modalCloseBtn');
-  if (!modal || !closeBtn) return;
+let currentModalAtomicNumber = 1;
 
-  closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) modal.classList.add('hidden');
-  });
+function updateModalContent(atomicNum) {
+  const element = elementsMap.get(atomicNum);
+  if (!element) return;
+  currentModalAtomicNumber = atomicNum;
 
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
-      modal.classList.add('hidden');
-    }
-  });
-}
-
-function openElementModal(element) {
   const modal = document.getElementById('elementModal');
   const cat = CATEGORIES[element.category] || {};
 
@@ -702,7 +690,115 @@ function openElementModal(element) {
     itemTextEl.textContent = `${element.icon || '🧪'} ${element.item || element.nameKo} (활용처: ${element.usage || element.nameKo})`;
   }
 
+  // 이전/다음 네비게이션 버튼 및 인디케이터 상태 갱신
+  const prevBtn = document.getElementById('modalPrevBtn');
+  const nextBtn = document.getElementById('modalNextBtn');
+  const prevLabel = document.getElementById('modalPrevLabel');
+  const nextLabel = document.getElementById('modalNextLabel');
+  const indicator = document.getElementById('modalNavIndicator');
+
+  if (indicator) {
+    indicator.textContent = `${element.atomicNumber} / 118`;
+  }
+
+  if (prevBtn && prevLabel) {
+    if (atomicNum > 1) {
+      prevBtn.disabled = false;
+      const prevEl = elementsMap.get(atomicNum - 1);
+      prevLabel.textContent = prevEl ? `${prevEl.atomicNumber} ${prevEl.symbol} ${prevEl.nameKo}` : '이전 원소';
+    } else {
+      prevBtn.disabled = true;
+      prevLabel.textContent = '첫 번째 원소';
+    }
+  }
+
+  if (nextBtn && nextLabel) {
+    if (atomicNum < 118) {
+      nextBtn.disabled = false;
+      const nextEl = elementsMap.get(atomicNum + 1);
+      nextLabel.textContent = nextEl ? `${nextEl.atomicNumber} ${nextEl.symbol} ${nextEl.nameKo}` : '다음 원소';
+    } else {
+      nextBtn.disabled = true;
+      nextLabel.textContent = '마지막 원소';
+    }
+  }
+
   modal.classList.remove('hidden');
+}
+
+function openElementModal(element) {
+  if (!element || !element.atomicNumber) return;
+  updateModalContent(element.atomicNumber);
+}
+
+function initModal() {
+  const modal = document.getElementById('elementModal');
+  const closeBtn = document.getElementById('modalCloseBtn');
+  const prevBtn = document.getElementById('modalPrevBtn');
+  const nextBtn = document.getElementById('modalNextBtn');
+  if (!modal || !closeBtn) return;
+
+  closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.classList.add('hidden');
+  });
+
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+      if (currentModalAtomicNumber > 1) {
+        updateModalContent(currentModalAtomicNumber - 1);
+      }
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      if (currentModalAtomicNumber < 118) {
+        updateModalContent(currentModalAtomicNumber + 1);
+      }
+    });
+  }
+
+  // 키보드 좌우 방향키로 이전/다음 이동, ESC로 닫기
+  document.addEventListener('keydown', (e) => {
+    if (modal.classList.contains('hidden')) return;
+    if (e.key === 'Escape') {
+      modal.classList.add('hidden');
+    } else if (e.key === 'ArrowLeft' && currentModalAtomicNumber > 1) {
+      updateModalContent(currentModalAtomicNumber - 1);
+    } else if (e.key === 'ArrowRight' && currentModalAtomicNumber < 118) {
+      updateModalContent(currentModalAtomicNumber + 1);
+    }
+  });
+
+  // 모바일 스와이프(좌우 터치 넘기기) 제스처 지원
+  let touchStartX = 0;
+  let touchStartY = 0;
+  const modalCard = modal.querySelector('.modal-card');
+  if (modalCard) {
+    modalCard.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+      touchStartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+
+    modalCard.addEventListener('touchend', (e) => {
+      const touchEndX = e.changedTouches[0].screenX;
+      const touchEndY = e.changedTouches[0].screenY;
+      const diffX = touchEndX - touchStartX;
+      const diffY = touchEndY - touchStartY;
+
+      // 수평 스와이프 감지 (최소 50px 이상 이동 및 수평 이동이 수직보다 클 때)
+      if (Math.abs(diffX) > 50 && Math.abs(diffX) > Math.abs(diffY)) {
+        if (diffX > 0 && currentModalAtomicNumber > 1) {
+          // 오른쪽으로 스와이프 ➔ 이전 원소
+          updateModalContent(currentModalAtomicNumber - 1);
+        } else if (diffX < 0 && currentModalAtomicNumber < 118) {
+          // 왼쪽으로 스와이프 ➔ 다음 원소
+          updateModalContent(currentModalAtomicNumber + 1);
+        }
+      }
+    }, { passive: true });
+  }
 }
 
 /**
@@ -787,13 +883,134 @@ function initScreenZoomControls() {
     });
   }
 
-  // 초기 로드 시 자동으로 화면에 딱 맞게 정비례 피팅
-  fitScreenProportionally();
+  // 초기 로드 시 환경 감지 및 맞춤 설정
+  const isMobile = window.innerWidth <= 768;
+  if (isMobile) {
+    // 폰 화면에서는 글자가 시원하게 읽히도록 160% 적정 확대로 시작
+    applyScreenScale(1.6, false);
+  } else {
+    // PC 화면에서는 전체 맞춤으로 시작
+    fitScreenProportionally();
+  }
 
   // 창 크기 변경 시 화면 맞춤 모드 유지 중이면 자동 재연산
   window.addEventListener('resize', () => {
-    if (isFitMode) {
+    if (isFitMode && window.innerWidth > 768) {
       fitScreenProportionally();
     }
   });
+
+  // 모바일 앱 환경 최적화 및 FAB/하단 탭 바 초기화
+  initMobileAppExperience();
+}
+
+/**
+ * 10. 시니어 앱 디자이너 관점: 진정한 모바일 앱 UX 환경 고도화
+ * - 앱/모바일 환경에서 불필요한 웹 전용 UI(인쇄, 종합1장판, 앱설치버튼) 자동 제거
+ * - 원터치 전체보기 ↔ 확대보기 플로팅 토글 (FAB)
+ * - 스마트폰 엄지손가락 친화적 하단 고정 탭 바 (Bottom Navigation)
+ */
+function initMobileAppExperience() {
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                       window.navigator.standalone || 
+                       window.location.search.includes('mode=app');
+  const isMobile = window.innerWidth <= 768 || isStandalone;
+
+  if (isMobile) {
+    document.body.classList.add('mobile-app-mode');
+
+    // 1) 앱 안에서 '앱 설치' 버튼이 노출되는 어색함 100% 제거
+    const installBtn = document.getElementById('installAppBtn');
+    if (installBtn && isStandalone) {
+      installBtn.style.setProperty('display', 'none', 'important');
+    }
+
+    // 2) 웹 인쇄용 버튼 및 인쇄 전용 탭 숨김
+    const printActions = document.querySelector('.print-actions');
+    if (printActions) printActions.style.display = 'none';
+
+    const printTab0 = document.querySelector('button[data-theme-id="0"]');
+    if (printTab0) printTab0.style.display = 'none';
+
+    const printTabAll = document.querySelector('button[data-theme-id="all"]');
+    if (printTabAll) printTabAll.style.display = 'none';
+
+    // 3) 모바일 첫 진입 시 '1편: 기본명칭' 탭을 기본 활성화 (종합판 대신 모바일에 가장 적합)
+    const tab1 = document.querySelector('button[data-theme-id="1"]');
+    if (tab1 && printTab0 && printTab0.classList.contains('active')) {
+      tab1.click();
+    }
+  }
+
+  // 4) 원터치 전체보기 / 확대 토글 플로팅 버튼 (FAB)
+  const zoomFab = document.getElementById('mobileZoomToggleFab');
+  const fabIcon = document.getElementById('mobileZoomFabIcon');
+  const fabText = document.getElementById('mobileZoomFabText');
+
+  function updateFabState() {
+    if (!zoomFab) return;
+    if (screenScaleFactor >= 1.2) {
+      // 현재 확대 상태 ➔ 누르면 전체보기로 전환
+      if (fabIcon) fabIcon.textContent = '🔍';
+      if (fabText) fabText.textContent = '전체보기';
+    } else {
+      // 현재 전체보기 상태 ➔ 누르면 확대보기로 전환
+      if (fabIcon) fabIcon.textContent = '🔎';
+      if (fabText) fabText.textContent = '확대보기';
+    }
+  }
+
+  if (zoomFab) {
+    zoomFab.addEventListener('click', () => {
+      if (screenScaleFactor >= 1.2) {
+        // 전체보기 모드로 축소 맞춤 (모바일 한눈에 조감)
+        const availW = window.innerWidth - 24;
+        const optimalFactor = Math.max(0.55, availW / BASE_TABLE_WIDTH);
+        applyScreenScale(optimalFactor, true);
+      } else {
+        // 시원하게 읽히는 160% 가독성 확대 모드로 전환
+        applyScreenScale(1.6, false);
+      }
+      updateFabState();
+    });
+    updateFabState();
+  }
+
+  // 5) 모바일 하단 고정 네비게이션 바 (Bottom Navigation)
+  const bottomNavItems = document.querySelectorAll('.mobile-bottom-nav .bottom-nav-item');
+  const bottomSearchBtn = document.getElementById('bottomNavSearchBtn');
+  const searchInput = document.getElementById('searchInput');
+
+  bottomNavItems.forEach(item => {
+    const tabId = item.dataset.tabId;
+    if (!tabId) return;
+
+    item.addEventListener('click', () => {
+      bottomNavItems.forEach(b => b.classList.remove('active'));
+      item.classList.add('active');
+
+      // 상단 테마 탭 버튼과 동기화 트리거
+      const targetBtn = document.querySelector(`.theme-tab-btn[data-theme-id="${tabId}"]`);
+      if (targetBtn) {
+        targetBtn.click();
+      }
+
+      // 주기율표 탭이 아닐 때는 FAB 숨김, 주기율표일 때만 노출
+      if (zoomFab) {
+        if (tabId === 'cards' || tabId === 'quiz') {
+          zoomFab.style.display = 'none';
+        } else {
+          zoomFab.style.display = 'flex';
+          updateFabState();
+        }
+      }
+    });
+  });
+
+  if (bottomSearchBtn && searchInput) {
+    bottomSearchBtn.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      searchInput.focus();
+    });
+  }
 }
