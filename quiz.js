@@ -293,8 +293,8 @@ function renderQuizQuestionScreen() {
         `).join('')}
       </div>
 
-      <!-- 결과 피드백 및 다음 문제 버튼 (답변 후 표시) -->
-      <div id="quizFeedbackBox" class="quiz-feedback-box hidden">
+      <!-- 결과 피드백 및 다음 문제 버튼 (답변 후에만 active 클래스로 표시) -->
+      <div id="quizFeedbackBox" class="quiz-feedback-box">
         <div class="feedback-content">
           <div id="feedbackTitle" class="feedback-title"></div>
           <p id="feedbackDesc" class="feedback-desc"></p>
@@ -306,10 +306,17 @@ function renderQuizQuestionScreen() {
     </div>
   `;
 
+  // 화면 전환 직후 이전 클릭/터치가 새 버튼을 누르는 클릭 관통(Ghost Click) 방지 (300ms 쿨다운)
+  quizState.isAnswered = true;
+  setTimeout(() => {
+    quizState.isAnswered = false;
+  }, 300);
+
   // 보기 클릭 이벤트
   const choiceBtns = container.querySelectorAll('.quiz-choice-btn');
   choiceBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
       if (quizState.isAnswered) return;
       const idx = parseInt(btn.dataset.choiceIdx, 10);
       handleChoiceSelect(idx, choiceBtns);
@@ -318,7 +325,8 @@ function renderQuizQuestionScreen() {
 
   const nextBtn = document.getElementById('quizNextBtn');
   if (nextBtn) {
-    nextBtn.addEventListener('click', () => {
+    nextBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       if (quizState.currentIndex < quizState.totalQuestions - 1) {
         quizState.currentIndex++;
         renderQuizQuestionScreen();
@@ -330,7 +338,8 @@ function renderQuizQuestionScreen() {
 
   const exitBtn = document.getElementById('exitQuizBtn');
   if (exitBtn) {
-    exitBtn.addEventListener('click', () => {
+    exitBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       if (confirm('진행 중인 퀴즈를 종료하고 로비로 돌아갈까요?')) {
         renderQuizLobby();
       }
@@ -342,7 +351,9 @@ function renderQuizQuestionScreen() {
  * 5. 보기 선택 및 정답 채점
  */
 function handleChoiceSelect(selectedIdx, choiceBtns) {
+  if (quizState.isAnswered) return;
   quizState.isAnswered = true;
+
   const q = quizState.questions[quizState.currentIndex];
   const selectedChoice = q.choices[selectedIdx];
   const feedbackBox = document.getElementById('quizFeedbackBox');
@@ -383,7 +394,7 @@ function handleChoiceSelect(selectedIdx, choiceBtns) {
   }
 
   if (feedbackBox) {
-    feedbackBox.classList.remove('hidden');
+    feedbackBox.classList.add('active');
   }
 
   // LLM API 키가 등록되어 있으면 백그라운드로 AI 팁 보강 요청 가능

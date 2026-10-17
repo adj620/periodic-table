@@ -2326,15 +2326,23 @@ body.light-theme .quiz-choice-btn {
   color: #f87171 !important;
 }
 
+/* 전역 숨김 유틸리티 */
+.hidden {
+  display: none !important;
+}
+
 .quiz-feedback-box {
+  display: none;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border-color);
   border-radius: 10px;
   padding: 1rem 1.25rem;
-  display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+}
+.quiz-feedback-box.active {
+  display: flex !important;
 }
 .feedback-title {
   font-size: 1rem;
@@ -2817,12 +2825,12 @@ body.light-theme .modal-nav-btn {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid var(--border-color);
-  z-index: 9998;
-  display: none;
+  z-index: 99999;
   justify-content: space-around;
   align-items: center;
   padding: 0 0.5rem;
   box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.3);
+  pointer-events: auto;
 }
 body.light-theme .mobile-bottom-nav {
   background: rgba(255, 255, 255, 0.95);
@@ -2843,14 +2851,17 @@ body.light-theme .mobile-bottom-nav {
   cursor: pointer;
   transition: all 0.15s;
   flex: 1;
+  pointer-events: auto;
 }
 .bottom-nav-icon {
   font-size: 1.35rem;
   line-height: 1;
+  pointer-events: none;
 }
 .bottom-nav-label {
   font-size: 0.7rem;
   font-weight: 700;
+  pointer-events: none;
 }
 .bottom-nav-item.active {
   color: #38bdf8;
@@ -2862,15 +2873,25 @@ body.light-theme .mobile-bottom-nav {
 /* ========================================================
    모바일 화면 및 모바일 앱 모드 미디어 쿼리
    ======================================================== */
+body.mobile-app-mode {
+  padding-bottom: 74px !important;
+}
+body.mobile-app-mode .mobile-bottom-nav {
+  display: flex !important;
+}
+body.mobile-app-mode .mobile-zoom-fab {
+  display: flex !important;
+}
+
 @media (max-width: 768px), (display-mode: standalone) {
   body {
     padding-bottom: 74px; /* 하단 탭 바 높이 확보 */
   }
   .mobile-bottom-nav {
-    display: flex;
+    display: flex !important;
   }
   .mobile-zoom-fab {
-    display: flex;
+    display: flex !important;
   }
   /* 모바일에서는 복잡한 상단 인쇄 버튼 및 종합판 탭 숨김 */
   .print-actions {

@@ -300,6 +300,9 @@
       </select>
 
       <!-- 화면 모드 전환 -->
+      <button id="toggleTableBtn" class="ctrl-btn" title="주기율표 화면으로 바로 전환">
+        📊 주기율표 뷰
+      </button>
       <button id="toggleCardsBtn" class="ctrl-btn" title="모바일 전용 카드 탐색기 모드로 바로 전환">
         🃏 모바일 카드 뷰
       </button>
@@ -444,30 +447,39 @@
       addLog('앱 핫 리로드 완료.');
     });
 
-    toggleCardsBtn.addEventListener('click', () => {
+    const toggleTableBtn = document.getElementById('toggleTableBtn');
+
+    function safeSwitchView(targetId, label) {
       try {
-        const frameDoc = appFrame.contentDocument || appFrame.contentWindow.document;
-        const btn = frameDoc.querySelector('button[data-theme-id="cards"]');
-        if (btn) {
-          btn.click();
-          addLog('모바일 카드 탐색기 탭으로 전환되었습니다.');
+        if (appFrame.contentWindow && appFrame.contentWindow.switchMainView) {
+          appFrame.contentWindow.switchMainView(targetId);
+          addLog(`${label} 탭으로 전환되었습니다.`);
+        } else {
+          const frameDoc = appFrame.contentDocument || appFrame.contentWindow.document;
+          const btn = frameDoc.querySelector(`button[data-theme-id="${targetId}"]`) || 
+                      frameDoc.querySelector(`button[data-tab-id="${targetId}"]`);
+          if (btn) {
+            btn.click();
+            addLog(`${label} 탭으로 전환되었습니다.`);
+          }
         }
       } catch (err) {
-        addLog('탭 전환 오류: ' + err.message, 'error');
+        addLog(`탭 전환 오류: ${err.message}`, 'error');
       }
+    }
+
+    if (toggleTableBtn) {
+      toggleTableBtn.addEventListener('click', () => {
+        safeSwitchView(1, '주기율표');
+      });
+    }
+
+    toggleCardsBtn.addEventListener('click', () => {
+      safeSwitchView('cards', '모바일 카드 탐색기');
     });
 
     toggleQuizBtn.addEventListener('click', () => {
-      try {
-        const frameDoc = appFrame.contentDocument || appFrame.contentWindow.document;
-        const btn = frameDoc.querySelector('button[data-theme-id="quiz"]');
-        if (btn) {
-          btn.click();
-          addLog('원소 퀴즈 탭으로 전환되었습니다.');
-        }
-      } catch (err) {
-        addLog('탭 전환 오류: ' + err.message, 'error');
-      }
+      safeSwitchView('quiz', '원소 퀴즈');
     });
 
     if (clearLogBtn) {
