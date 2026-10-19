@@ -1,6 +1,7 @@
 {
   "version": "1.2.0",
-  "build": 3,
-  "updatedAt": "2026-10-17T19:38:00+09:00",
-  "notes": "기본 모달 버그 완벽 수정, 한글/영문 음성 발음(TTS), 보어 원자 모형(전자 껍질 회전 애니메이션), 퀴즈 타임어택(15초 제한) 모드 탑재"
+  "build": 4,
+  "updatedAt": "2026-10-19T22:33:00+09:00",
+  "notes": "모바일 네이티브 UX 최적화(하단 탭 4개 정돈, 줌 왜곡 수정) 및 인앱 자동 업데이트 시스템 탑재",
+  "apkUrl": "https://github.com/adj620/periodic-table/releases/download/v1.2.0/periodic-table.apk"
 }

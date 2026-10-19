@@ -2,6 +2,23 @@
   "hosting": {
     "site": "periodic-table-adj",
     "public": ".",
+    "redirects": [
+      {
+        "source": "/apk",
+        "destination": "https://github.com/adj620/periodic-table/releases/download/v1.2.0/periodic-table.apk",
+        "type": 302
+      },
+      {
+        "source": "/app",
+        "destination": "https://github.com/adj620/periodic-table/releases/download/v1.2.0/periodic-table.apk",
+        "type": 302
+      },
+      {
+        "source": "/download",
+        "destination": "/download.html",
+        "type": 302
+      }
+    ],
     "ignore": [
       "firebase.json",
       ".firebaserc",
