@@ -72,9 +72,9 @@ if (Test-Path $swPath) {
 # 6) Firebase Hosting 배포 실행
 Write-Host "`n🚀 Firebase Hosting으로 배포 중..." -ForegroundColor Yellow
 if ($useNpx) {
-  & npx --yes firebase-tools deploy --only hosting
+  & npx --yes firebase-tools deploy --only hosting --project hwmgr-310f7
 } else {
-  & firebase deploy --only hosting
+  & firebase deploy --only hosting --project hwmgr-310f7
 }
 
 if ($LASTEXITCODE -eq 0) {

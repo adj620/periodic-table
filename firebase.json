@@ -1,8 +1,10 @@
 {
   "hosting": {
+    "site": "periodic-table-adj",
     "public": ".",
     "ignore": [
       "firebase.json",
+      ".firebaserc",
       "**/.*",
       "**/node_modules/**",
       "deploy.ps1",
