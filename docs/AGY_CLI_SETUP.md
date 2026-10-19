@@ -83,7 +83,7 @@ Antigravity CLI의 원활한 터미널 인터페이스(TUI) 구동 및 스크립
 3. **`launch-both.ps1`**:
    - 두 개의 프로젝트를 각각 독립된 PowerShell 창으로 동시 실행
 4. **`launch-both-wt.ps1`**:
-   - Windows Terminal(`wt.exe`)을 활용하여 한 창에서 좌/우 분할 화면(Split Pane)으로 두 프로젝트를 동시 실행
+   - Windows Terminal(`wt.exe`)을 활용하여 한 창에서 좌/우 분할 화면(Split Pane, 좌: `stock2`, 우: `periodic-table`)으로 두 프로젝트를 동시 실행
 
 ### 4.2 생성된 바탕화면 바로가기 (`C:\Users\andyg\Desktop\`)
 
@@ -92,7 +92,7 @@ Antigravity 고유 아이콘(`agy.exe`)이 적용되어 시각적으로 구분�
 | 바로가기 이름 | 동작 설명 |
 | :--- | :--- |
 | **`Antigravity CLI (All Projects).lnk`** | `periodic-table`과 `stock2` 창 2개를 독립된 PowerShell로 즉시 동시 실행 |
-| **`Antigravity CLI (Terminal Split).lnk`** | Windows Terminal 분할 화면으로 두 프로젝트 동시 실행 |
+| **`Antigravity CLI (Terminal Split).lnk`** | Windows Terminal 분할 화면(좌: `stock2`, 우: `periodic-table`)으로 두 프로젝트 동시 실행 |
 | **`Antigravity CLI (periodic-table).lnk`** | `periodic-table` 프로젝트 단독 실행 |
 | **`Antigravity CLI (stock2).lnk`** | `stock2` 프로젝트 단독 실행 |
 
