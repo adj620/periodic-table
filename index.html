@@ -142,6 +142,10 @@
 
   <!-- 메인 주기율표 화면 뷰 (화면 표시용 및 1장 종합 인쇄용) -->
   <main class="main-container" id="screenContainer">
+    <!-- 모바일 전용: 가로 스와이프 안내 힌트 바 -->
+    <div class="mobile-table-hint no-print">
+      <span>↔ 좌우로 스와이프하여 1~18족을 탐색하세요</span>
+    </div>
     <div id="tableWrapper" class="table-wrapper">
       
       <!-- 상단 주기/족 인덱스 안내 -->
@@ -403,12 +407,6 @@
     </div>
   </div>
 
-  <!-- 모바일 뷰 전용: 원터치 전체보기 / 확대 토글 플로팅 액션 버튼 (FAB) -->
-  <button id="mobileZoomToggleFab" class="mobile-zoom-fab no-print" title="전체보기 / 확대보기 전환">
-    <span id="mobileZoomFabIcon" class="fab-icon">🔍</span>
-    <span id="mobileZoomFabText" class="fab-text">전체보기</span>
-  </button>
-
   <!-- 모바일 앱 전용 하단 고정 네비게이션 바 (스마트폰 앱 표준 UX) -->
   <nav class="mobile-bottom-nav no-print" id="mobileBottomNav">
     <button class="bottom-nav-item active" data-tab-id="0">
@@ -417,19 +415,15 @@
     </button>
     <button class="bottom-nav-item" data-tab-id="cards">
       <span class="bottom-nav-icon">🃏</span>
-      <span class="bottom-nav-label">카드 탐색기</span>
+      <span class="bottom-nav-label">카드</span>
     </button>
     <button class="bottom-nav-item" data-tab-id="quiz">
       <span class="bottom-nav-icon">🎯</span>
-      <span class="bottom-nav-label">원소 퀴즈</span>
+      <span class="bottom-nav-label">퀴즈</span>
     </button>
     <button class="bottom-nav-item" id="bottomNavSearchBtn">
       <span class="bottom-nav-icon">🔍</span>
-      <span class="bottom-nav-label">원소 검색</span>
-    </button>
-    <button class="bottom-nav-item" id="bottomNavInstallBtn">
-      <span class="bottom-nav-icon">📲</span>
-      <span class="bottom-nav-label">앱 다운/설치</span>
+      <span class="bottom-nav-label">검색</span>
     </button>
   </nav>
 
@@ -562,13 +556,18 @@
     const applyUpdateBtn = document.getElementById('applyUpdateBtn');
     const dismissUpdateBtn = document.getElementById('dismissUpdateBtn');
 
-    // 이미 독립 앱으로 실행 중인지 확인
+    // 이미 독립 네이티브 앱(Capacitor) 또는 PWA standalone으로 실행 중인지 확인
     const isRunningStandalone = window.matchMedia('(display-mode: standalone)').matches || 
                                 window.navigator.standalone || 
-                                window.location.search.includes('mode=app');
+                                window.location.search.includes('mode=app') ||
+                                window.Capacitor !== undefined;
 
-    // 독립 앱이 아니고, 세션에서 닫지 않았다면 상단 배너 노출
-    if (!isRunningStandalone && mobileInstallBanner && !sessionStorage.getItem('dismiss_install_banner')) {
+    // 독립 앱 내부에서는 설치 배너 및 설치 버튼 완전 숨김
+    if (isRunningStandalone) {
+      if (mobileInstallBanner) mobileInstallBanner.style.setProperty('display', 'none', 'important');
+      if (installBtn) installBtn.style.setProperty('display', 'none', 'important');
+      if (bottomNavInstallBtn) bottomNavInstallBtn.style.setProperty('display', 'none', 'important');
+    } else if (mobileInstallBanner && !sessionStorage.getItem('dismiss_install_banner')) {
       mobileInstallBanner.style.display = 'flex';
     }
 

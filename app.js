@@ -1128,6 +1128,19 @@ function applyScreenScale(factor, isFit = false) {
     tableWrapper.style.zoom = ''; // 불균형을 유발하는 zoom 속성 제거
   }
 
+  // 모바일 앱 환경일 때는 전체 화면을 2300px로 뻥튀기하지 않고, 100% 뷰포트 유지 (가로 스와이프로 안전 탐색)
+  const isMobile = document.body.classList.contains('mobile-app-mode') || 
+                   /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || 
+                   window.innerWidth <= 840;
+
+  if (isMobile) {
+    if (container) {
+      container.style.setProperty('--table-width', '100%');
+      container.style.setProperty('--table-max-width', '100%');
+    }
+    return;
+  }
+
   const targetWidth = Math.round(BASE_TABLE_WIDTH * screenScaleFactor);
 
   if (container) {
@@ -1154,13 +1167,17 @@ function applyScreenScale(factor, isFit = false) {
 }
 
 function fitScreenProportionally() {
+  const isMobile = document.body.classList.contains('mobile-app-mode') || 
+                   /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || 
+                   window.innerWidth <= 840;
+  if (isMobile) return;
+
   const header = document.querySelector('.app-header');
   const headerHeight = header ? header.offsetHeight : 105;
   const availW = window.innerWidth - 32; // 좌우 안전 여백
   const availH = window.innerHeight - headerHeight - 32; // 상하 안전 여백
 
   // 전체 주기율표 종횡비 (가로 18.6열 : 세로 약 12.2단위) -> 약 1.52 : 1
-  // 세로와 가로 양방향 모두 넘치지 않도록 최적 너비 산출
   const fitWidthByHeight = Math.max(680, availH * 1.52);
   const optimalWidth = Math.min(availW, fitWidthByHeight);
   const optimalFactor = optimalWidth / BASE_TABLE_WIDTH;
@@ -1192,10 +1209,14 @@ function initScreenZoomControls() {
   }
 
   // 초기 로드 시 환경 감지 및 맞춤 설정
-  const isMobile = window.innerWidth <= 768;
+  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || 
+                   window.innerWidth <= 840 || 
+                   window.Capacitor !== undefined;
+
   if (isMobile) {
-    // 폰 화면에서는 글자가 시원하게 읽히도록 160% 적정 확대로 시작
-    applyScreenScale(1.6, false);
+    // 모바일 폰에서는 데스크톱 스케일 뻥튀기 대신 100% 뷰포트 고정
+    document.body.classList.add('mobile-app-mode');
+    document.body.classList.add('mobile-device');
   } else {
     // PC 화면에서는 전체 맞춤으로 시작
     fitScreenProportionally();
@@ -1203,7 +1224,7 @@ function initScreenZoomControls() {
 
   // 창 크기 변경 시 화면 맞춤 모드 유지 중이면 자동 재연산
   window.addEventListener('resize', () => {
-    if (isFitMode && window.innerWidth > 768) {
+    if (isFitMode && window.innerWidth > 840 && !document.body.classList.contains('mobile-app-mode')) {
       fitScreenProportionally();
     }
   });
@@ -1213,27 +1234,36 @@ function initScreenZoomControls() {
 }
 
 /**
- * 10. 시니어 앱 디자이너 관점: 진정한 모바일 앱 UX 환경 고도화
- * - 앱/모바일 환경에서 불필요한 웹 전용 UI(인쇄, 종합1장판, 앱설치버튼) 자동 제거
- * - 원터치 전체보기 ↔ 확대보기 플로팅 토글 (FAB)
- * - 스마트폰 엄지손가락 친화적 하단 고정 탭 바 (Bottom Navigation)
+ * 10. 진정한 모바일 앱 UX 환경 고도화
+ * - 모바일 환경에서 데스크톱 전용 UI(인쇄, 줌 버튼, 종합1장판 등) 완전 차단
+ * - 하단 고정 탭 바(Bottom Navigation)가 항상 화면 최하단에 100% 밀착 고정되도록 보장
+ * - 18열 주기율표를 폰 화면 폭(100vw) 안에서 좌우 가로 스와이프로 쾌적하게 탐색
  */
 function initMobileAppExperience() {
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
                        window.navigator.standalone || 
-                       window.location.search.includes('mode=app');
-  const isMobile = window.innerWidth <= 768 || isStandalone;
+                       window.location.search.includes('mode=app') ||
+                       window.Capacitor !== undefined;
+  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || 
+                   window.innerWidth <= 840 || 
+                   isStandalone;
 
   if (isMobile) {
     document.body.classList.add('mobile-app-mode');
+    document.body.classList.add('mobile-device');
 
-    // 1) 앱 안에서 '앱 설치' 버튼이 노출되는 어색함 100% 제거
+    // 1) 네이티브 앱/PWA 안에서 불필요한 설치 버튼/배너 100% 제거
     const installBtn = document.getElementById('installAppBtn');
-    if (installBtn && isStandalone) {
-      installBtn.style.setProperty('display', 'none', 'important');
+    const bottomNavInstallBtn = document.getElementById('bottomNavInstallBtn');
+    const mobileInstallBanner = document.getElementById('mobileInstallBanner');
+    
+    if (isStandalone) {
+      if (installBtn) installBtn.style.setProperty('display', 'none', 'important');
+      if (bottomNavInstallBtn) bottomNavInstallBtn.style.setProperty('display', 'none', 'important');
+      if (mobileInstallBanner) mobileInstallBanner.style.setProperty('display', 'none', 'important');
     }
 
-    // 2) 웹 인쇄용 버튼 및 인쇄 전용 탭 숨김
+    // 2) 데스크톱 웹 전용 인쇄 컨트롤 숨김
     const printActions = document.querySelector('.print-actions');
     if (printActions) printActions.style.display = 'none';
 
@@ -1243,7 +1273,7 @@ function initMobileAppExperience() {
     const printTabAll = document.querySelector('button[data-theme-id="all"]');
     if (printTabAll) printTabAll.style.display = 'none';
 
-    // 3) 모바일 첫 진입 시 '1편: 기본명칭' 탭을 기본 활성화 (종합판 대신 모바일에 가장 적합)
+    // 3) 모바일 첫 진입 시 '1편: 기본명칭' 탭을 활성화하여 깔끔한 모바일 시작 제공
     const tab1 = document.querySelector('button[data-theme-id="1"]');
     if (tab1 && printTab0 && printTab0.classList.contains('active')) {
       tab1.click();
