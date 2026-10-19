@@ -5,8 +5,14 @@
     "ignore": [
       "firebase.json",
       ".firebaserc",
+      ".firebase/**",
       "**/.*",
       "**/node_modules/**",
+      "android/**",
+      "www/**",
+      "*.apk",
+      "package*.json",
+      "capacitor.config.json",
       "deploy.ps1",
       "deploy.bat",
       "server.js"

@@ -3,3 +3,9 @@ node_modules/
 Thumbs.db
 *.log
 .firebase/
+android/**/build/
+android/.gradle/
+*.apk
+*.zip
+www/
+

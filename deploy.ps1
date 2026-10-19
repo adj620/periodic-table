@@ -4,6 +4,10 @@
 # 2) service-worker.js 캐시 버전 동기화 (배포 즉시 사용자 기기에서 자동 업데이트 감지)
 # 3) Firebase Hosting으로 원클릭 초고속 배포
 
+param(
+  [string]$notes = ''
+)
+
 $ErrorActionPreference = 'Stop'
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 try { [Console]::InputEncoding  = [System.Text.Encoding]::UTF8 } catch {}
@@ -46,9 +50,11 @@ if (Test-Path $versionJsonPath) {
 Write-Host "현재 버전: $oldVersion (빌드: $($vObj.build)) ➔ 새 빌드: $newBuild" -ForegroundColor Green
 
 # 3) 업데이트 메모 입력 (엔터 시 기본 문구)
-$notes = Read-Host '이번 업데이트 내용 (엔터 치면 기본 문구 사용)'
 if ([string]::IsNullOrWhiteSpace($notes)) {
-  $notes = '성능 개선 및 원소 데이터 최신화'
+  $notes = Read-Host '이번 업데이트 내용 (엔터 치면 기본 문구 사용)'
+}
+if ([string]::IsNullOrWhiteSpace($notes)) {
+  $notes = '모바일 앱 다운로드 배너 추가 및 상단 UI 최적화'
 }
 
 # 4) version.json 저장 (UTF-8)

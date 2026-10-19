@@ -3682,7 +3682,15 @@ body.mobile-app-mode .mobile-zoom-fab {
     display: none !important;
   }
   .install-btn {
-    display: none !important;
+    display: inline-flex !important;
+    padding: 6px 12px !important;
+    font-size: 0.8rem !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+    background: linear-gradient(135deg, #0284c7, #38bdf8) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 10px rgba(2, 132, 199, 0.4) !important;
+    white-space: nowrap !important;
   }
   /* 상단 툴바 간소화 */
   .header-main-row {
@@ -3802,3 +3810,81 @@ body.colorblind-mode .element-cell[data-category="nobleGas"]::after {
 body.light-theme.colorblind-mode .element-cell::after {
   filter: invert(1);
 }
+
+/* ========================================================
+   모바일 전용 상단 앱 설치/다운로드 유도 배너
+   ======================================================== */
+.mobile-install-banner {
+  background: linear-gradient(90deg, #0c4a6e, #0369a1);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.4);
+  padding: 0.65rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  color: #fff;
+  z-index: 10000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+.banner-content {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+.banner-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+.banner-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.banner-text strong {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.banner-text small {
+  font-size: 0.72rem;
+  color: #bae6fd;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.banner-install-btn {
+  background: #38bdf8;
+  color: #082f49;
+  border: none;
+  font-weight: 800;
+  font-size: 0.8rem;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.15s, background 0.15s;
+}
+.banner-install-btn:active {
+  transform: scale(0.94);
+  background: #7dd3fc;
+}
+.banner-close-btn {
+  background: transparent;
+  border: none;
+  color: #bae6fd;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+

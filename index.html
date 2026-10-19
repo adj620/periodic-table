@@ -16,6 +16,21 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="dark-theme">
+  <!-- 모바일 브라우저 전용 앱 설치 유도 상단 배너 -->
+  <div id="mobileInstallBanner" class="mobile-install-banner no-print" style="display: none;">
+    <div class="banner-content">
+      <span class="banner-icon">📲</span>
+      <div class="banner-text">
+        <strong>원소 주기율표 & 퀴즈 앱 다운로드</strong>
+        <small>홈 화면에 추가하여 네이티브 앱으로 빠르게 실행하세요!</small>
+      </div>
+    </div>
+    <div class="banner-actions">
+      <button id="bannerInstallBtn" class="banner-install-btn">⚡ 즉시 설치</button>
+      <button id="closeBannerBtn" class="banner-close-btn" title="닫기">✕</button>
+    </div>
+  </div>
+
   <!-- 상단 컨트롤 헤더 (화면 출력 전용, 인쇄 시 숨김) -->
   <header class="app-header no-print">
     <!-- 1행: 메인 툴바 (로고, 검색/필터, 화면 제어 및 인쇄) -->
@@ -536,6 +551,9 @@
     let newWorkerWaiting = null;
     const installBtn = document.getElementById('installAppBtn');
     const bottomNavInstallBtn = document.getElementById('bottomNavInstallBtn');
+    const mobileInstallBanner = document.getElementById('mobileInstallBanner');
+    const bannerInstallBtn = document.getElementById('bannerInstallBtn');
+    const closeBannerBtn = document.getElementById('closeBannerBtn');
     const guideModal = document.getElementById('installGuideModal');
     const closeGuideBtn = document.getElementById('closeInstallGuideBtn');
     const directInstallBox = document.getElementById('directInstallBox');
@@ -544,11 +562,37 @@
     const applyUpdateBtn = document.getElementById('applyUpdateBtn');
     const dismissUpdateBtn = document.getElementById('dismissUpdateBtn');
 
+    // 이미 독립 앱으로 실행 중인지 확인
+    const isRunningStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                                window.navigator.standalone || 
+                                window.location.search.includes('mode=app');
+
+    // 독립 앱이 아니고, 세션에서 닫지 않았다면 상단 배너 노출
+    if (!isRunningStandalone && mobileInstallBanner && !sessionStorage.getItem('dismiss_install_banner')) {
+      mobileInstallBanner.style.display = 'flex';
+    }
+
+    if (closeBannerBtn && mobileInstallBanner) {
+      closeBannerBtn.addEventListener('click', () => {
+        mobileInstallBanner.style.display = 'none';
+        sessionStorage.setItem('dismiss_install_banner', '1');
+      });
+    }
+
+    if (bannerInstallBtn) {
+      bannerInstallBtn.addEventListener('click', () => {
+        triggerInstallOrGuide();
+      });
+    }
+
     // 1. 브라우저 설치 프롬프트 감지
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
       if (directInstallBox) directInstallBox.style.display = 'block';
+      if (!isRunningStandalone && mobileInstallBanner && !sessionStorage.getItem('dismiss_install_banner')) {
+        mobileInstallBanner.style.display = 'flex';
+      }
     });
 
     function openInstallGuide() {
@@ -569,6 +613,7 @@
           if (choiceResult.outcome === 'accepted') {
             console.log('사용자가 앱 설치를 승인했습니다.');
             deferredPrompt = null;
+            if (mobileInstallBanner) mobileInstallBanner.style.display = 'none';
           } else {
             openInstallGuide();
           }

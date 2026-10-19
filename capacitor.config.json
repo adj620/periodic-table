@@ -1,0 +1,8 @@
+{
+  "appId": "com.adj620.periodictable",
+  "appName": "원소 주기율표 & 퀴즈",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}

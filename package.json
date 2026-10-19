@@ -1,0 +1,30 @@
+{
+  "name": "periodic-table",
+  "version": "1.0.0",
+  "description": "IUPAC 표준 명칭과 관용명(소듐-나트륨 등) 동시 표기, 원자량, 방사능(☢️) 표시, 118개 원소 실제 표본 사진, 7개 화학 계열 색상 분류 및 A4 1장/다기능 N장 맞춤 인쇄를 완벽 지원하는 웹 기반 표준 원소 주기율표 애플리케이션입니다.",
+  "main": "app.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adj620/periodic-table.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/adj620/periodic-table/issues"
+  },
+  "homepage": "https://github.com/adj620/periodic-table#readme",
+  "devDependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/cli": "^8.5.3",
+    "@capacitor/core": "^8.5.3"
+  }
+}
