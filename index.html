@@ -110,13 +110,6 @@
                 <small>화학 계열별 빗금 패턴 오버레이</small>
               </div>
             </button>
-            <a href="mobile_simulator.html" target="_blank" class="dropdown-item">
-              <span class="item-icon">📱</span>
-              <div class="item-text">
-                <strong>폰 시뮬레이터 (디버깅)</strong>
-                <small>모바일 규격 실시간 테스트 창</small>
-              </div>
-            </a>
           </div>
         </div>
       </div>
@@ -684,20 +677,35 @@
       });
     }
 
-    // 3. version.json 기반 자체 인앱 버전 감지
+    // 3. 원격 서버(Firebase Hosting) 기반 인앱 자동 업데이트 감지 (homework_manager 방식)
+    const CURRENT_EMBEDDED_BUILD = 4; // 현재 APK 앱에 내장된 빌드 번호
+    const REMOTE_VERSION_URL = 'https://periodic-table-adj.web.app/version.json';
+
+    let latestApkUrl = 'https://github.com/adj620/periodic-table/releases/download/v1.2.0/periodic-table.apk';
+
     async function checkForNewAppVersion() {
       try {
-        const res = await fetch('./version.json?_t=' + Date.now(), { cache: 'no-store' });
+        const res = await fetch(REMOTE_VERSION_URL + '?_t=' + Date.now(), { cache: 'no-store' });
         if (!res.ok) return;
         const data = await res.json();
-        const savedBuild = localStorage.getItem('app_build_number');
-        if (savedBuild && parseInt(savedBuild, 10) < data.build) {
-          showUpdateToast(`새 버전(v${data.version})이 배포되었습니다!`, data.notes);
+        
+        if (data.apkUrl) {
+          latestApkUrl = data.apkUrl;
         }
-        localStorage.setItem('app_build_number', data.build);
-        localStorage.setItem('app_version', data.version);
+
+        const localBuild = Math.max(
+          CURRENT_EMBEDDED_BUILD,
+          parseInt(localStorage.getItem('app_build_number') || '0', 10)
+        );
+
+        if (data.build && data.build > localBuild) {
+          showUpdateToast(
+            `🚀 새로운 버전(v${data.version})이 배포되었습니다!`,
+            data.notes || '새로운 기능과 성능 개선이 적용되었습니다.'
+          );
+        }
       } catch (err) {
-        console.warn('버전 확인 실패:', err);
+        console.warn('원격 업데이트 확인 실패 (오프라인):', err);
       }
     }
 
@@ -705,23 +713,27 @@
       if (updateToast) {
         const titleEl = document.getElementById('updateToastTitle');
         const descEl = document.getElementById('updateToastDesc');
+        const updateBtn = document.getElementById('applyUpdateBtn');
         if (titleEl && title) titleEl.textContent = title;
         if (descEl && desc) descEl.textContent = desc;
+        if (updateBtn) updateBtn.textContent = '⚡ 지금 업데이트 설치';
         updateToast.style.display = 'flex';
       }
     }
 
     if (applyUpdateBtn) {
       applyUpdateBtn.addEventListener('click', async () => {
+        // 1) PWA 서비스워커 환경인 경우 캐시 무효화
         if (newWorkerWaiting) {
           newWorkerWaiting.postMessage({ action: 'skipWaiting' });
         }
-        // 모든 캐시 비우고 강제 새로고침
         if ('caches' in window) {
           const keys = await caches.keys();
           await Promise.all(keys.map(k => caches.delete(k)));
         }
-        window.location.reload(true);
+
+        // 2) 안드로이드 네이티브 앱 및 폰 환경에서는 최신 APK 다운로드 링크로 직행
+        window.location.href = latestApkUrl;
       });
     }
 
@@ -739,7 +751,7 @@
     });
 
     // 시작 시 1회 버전 체크
-    setTimeout(checkForNewAppVersion, 2000);
+    setTimeout(checkForNewAppVersion, 1500);
   </script>
 </body>
 </html>
