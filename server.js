@@ -7,9 +7,11 @@ const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
-  '.json': 'application/json',
+  '.json': 'application/json; charset=utf-8',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
   '.svg': 'image/svg+xml',
-  '.png': 'image/png'
+  '.png': 'image/png',
+  '.ico': 'image/x-icon'
 };
 
 const server = http.createServer((req, res) => {
@@ -32,6 +34,7 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`Periodic Table Server running on http://localhost:${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Periodic Table Server running:`);
+  console.log(`- Local: http://localhost:${PORT}`);
 });

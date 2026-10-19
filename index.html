@@ -412,6 +412,10 @@
       <span class="bottom-nav-icon">🔍</span>
       <span class="bottom-nav-label">원소 검색</span>
     </button>
+    <button class="bottom-nav-item" id="bottomNavInstallBtn">
+      <span class="bottom-nav-icon">📲</span>
+      <span class="bottom-nav-label">앱 다운/설치</span>
+    </button>
   </nav>
 
   <!-- 앱 다운로드 & 설치 가이드 모달 -->
@@ -531,6 +535,7 @@
     let deferredPrompt = null;
     let newWorkerWaiting = null;
     const installBtn = document.getElementById('installAppBtn');
+    const bottomNavInstallBtn = document.getElementById('bottomNavInstallBtn');
     const guideModal = document.getElementById('installGuideModal');
     const closeGuideBtn = document.getElementById('closeInstallGuideBtn');
     const directInstallBox = document.getElementById('directInstallBox');
@@ -557,23 +562,30 @@
       if (guideModal) guideModal.style.display = 'none';
     }
 
+    function triggerInstallOrGuide() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            console.log('사용자가 앱 설치를 승인했습니다.');
+            deferredPrompt = null;
+          } else {
+            openInstallGuide();
+          }
+        });
+      } else {
+        openInstallGuide();
+      }
+    }
+
     if (installBtn) {
-      installBtn.addEventListener('click', () => {
-        if (deferredPrompt) {
-          // 브라우저 프롬프트가 지원되면 바로 실행
-          deferredPrompt.prompt();
-          deferredPrompt.userChoice.then((choiceResult) => {
-            if (choiceResult.outcome === 'accepted') {
-              console.log('사용자가 앱 설치를 승인했습니다.');
-              deferredPrompt = null;
-            } else {
-              openInstallGuide();
-            }
-          });
-        } else {
-          // 지원 프롬프트가 없거나 iOS, PC인 경우 안내 모달 노출
-          openInstallGuide();
-        }
+      installBtn.addEventListener('click', triggerInstallOrGuide);
+    }
+    if (bottomNavInstallBtn) {
+      bottomNavInstallBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerInstallOrGuide();
       });
     }
 
