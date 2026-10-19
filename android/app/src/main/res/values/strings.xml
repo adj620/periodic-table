@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">원소 주기율표 &amp; 퀴즈</string>
+    <string name="title_activity_main">원소 주기율표 &amp; 퀴즈</string>
+    <string name="package_name">com.adj620.periodictable</string>
+    <string name="custom_url_scheme">com.adj620.periodictable</string>
+</resources>
