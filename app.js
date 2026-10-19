@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initSearchAndFilter();
   initThemeTabs();
   initPrintHandlers();
+  initHeaderDropdowns();
+  initAccessibilityMode();
   initTheme();
   initModal();
   initScreenZoomControls();
@@ -261,6 +263,15 @@ function createElementCellByTheme(element, themeId) {
  * 2. 전역 메인 뷰 전환 컨트롤러 (상단 탭, 모바일 하단 바, 외부 시뮬레이터 모두 100% 동기화)
  */
 window.switchMainView = function(targetId) {
+  // 모달이 열려 있는 상태에서 뷰 전환 시 모달 및 음성 안전 닫기
+  const modal = document.getElementById('elementModal');
+  if (modal && !modal.classList.contains('hidden')) {
+    modal.classList.add('hidden');
+    document.body.classList.remove('modal-open');
+    document.documentElement.classList.remove('modal-locked');
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  }
+
   const screenContainer = document.getElementById('screenContainer');
   const twoPagesPrintContainer = document.getElementById('twoPagesPrintContainer');
   const cardExplorerContainer = document.getElementById('cardExplorerContainer');
@@ -352,6 +363,69 @@ function initPrintHandlers() {
   if (printAllBtn) {
     printAllBtn.addEventListener('click', () => {
       window.open('print-multi.html?print=true', '_blank');
+    });
+  }
+}
+
+/**
+ * 상단 툴바 드롭다운 메뉴 (인쇄 드롭다운 & 설정 드롭다운)
+ */
+function initHeaderDropdowns() {
+  const printDropdownBtn = document.getElementById('printDropdownBtn');
+  const printDropdownMenu = document.getElementById('printDropdownMenu');
+  const toolsDropdownBtn = document.getElementById('toolsDropdownBtn');
+  const toolsDropdownMenu = document.getElementById('toolsDropdownMenu');
+
+  if (printDropdownBtn && printDropdownMenu) {
+    printDropdownBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (toolsDropdownMenu) toolsDropdownMenu.classList.remove('show');
+      printDropdownMenu.classList.toggle('show');
+    });
+  }
+
+  if (toolsDropdownBtn && toolsDropdownMenu) {
+    toolsDropdownBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (printDropdownMenu) printDropdownMenu.classList.remove('show');
+      toolsDropdownMenu.classList.toggle('show');
+    });
+  }
+
+  // 외부 클릭 시 모든 드롭다운 닫기
+  document.addEventListener('click', () => {
+    if (printDropdownMenu) printDropdownMenu.classList.remove('show');
+    if (toolsDropdownMenu) toolsDropdownMenu.classList.remove('show');
+  });
+}
+
+/**
+ * 5단계 접근성: 색각 이상 보조 모드 (Colorblind Accessibility Pattern Mode)
+ */
+function initAccessibilityMode() {
+  const toggleBtn = document.getElementById('colorblindToggleBtn');
+  const statusText = document.getElementById('colorblindStatusText');
+  const isEnabled = localStorage.getItem('pt_colorblind_mode') === 'true';
+
+  function applyColorblindMode(enable) {
+    if (enable) {
+      document.body.classList.add('colorblind-mode');
+      if (statusText) statusText.textContent = '색각 보조 모드: 켜짐';
+      localStorage.setItem('pt_colorblind_mode', 'true');
+    } else {
+      document.body.classList.remove('colorblind-mode');
+      if (statusText) statusText.textContent = '색각 보조 모드: 끄기';
+      localStorage.setItem('pt_colorblind_mode', 'false');
+    }
+  }
+
+  applyColorblindMode(isEnabled);
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const current = document.body.classList.contains('colorblind-mode');
+      applyColorblindMode(!current);
     });
   }
 }
@@ -770,6 +844,8 @@ function updateModalContent(atomicNum) {
   currentModalAtomicNumber = atomicNum;
 
   const modal = document.getElementById('elementModal');
+  const modalBody = document.getElementById('modalBody');
+  const savedScrollTop = modalBody ? modalBody.scrollTop : 0;
   const cat = CATEGORIES[element.category] || {};
 
   document.getElementById('modalNum').textContent = element.atomicNumber;
@@ -782,6 +858,7 @@ function updateModalContent(atomicNum) {
   const altBadge = document.getElementById('modalAltNameKo');
   if (element.altNameKo) {
     altBadge.textContent = `이명: ${element.altNameKo}`;
+    altBadge.title = `이명 및 구 명칭: ${element.altNameKo}`;
     altBadge.style.display = 'inline-block';
   } else {
     altBadge.style.display = 'none';
@@ -829,10 +906,13 @@ function updateModalContent(atomicNum) {
   }
 
   if (lookTextEl) {
-    lookTextEl.textContent = element.look || '외형 정보 준비 중';
+    lookTextEl.textContent = element.look || '실물 외형 특성 정보 준비 중';
   }
   if (itemTextEl) {
-    itemTextEl.textContent = `${element.icon || '🧪'} ${element.item || element.nameKo} (활용처: ${element.usage || element.nameKo})`;
+    const icon = element.icon || '🧪';
+    const item = element.item || element.nameKo;
+    const usage = element.usage ? ` (주요 활용: ${element.usage})` : '';
+    itemTextEl.textContent = `${icon} ${item}${usage}`;
   }
 
   // 보어 원자 모형(전자 껍질 회전 애니메이션) 렌더링
@@ -880,11 +960,28 @@ function updateModalContent(atomicNum) {
     }
   }
 
+  // Next/Prev 이동 시 사용자가 보던 스크롤 위치 완벽 유지 (동기 + 비동기 보정)
+  if (modalBody && typeof savedScrollTop === 'number') {
+    modalBody.scrollTop = savedScrollTop;
+    requestAnimationFrame(() => {
+      if (modalBody) modalBody.scrollTop = savedScrollTop;
+    });
+    setTimeout(() => {
+      if (modalBody) modalBody.scrollTop = savedScrollTop;
+    }, 35);
+  }
+
   modal.classList.remove('hidden');
+  document.body.classList.add('modal-open');
+  document.documentElement.classList.add('modal-locked');
 }
 
 function openElementModal(element) {
   if (!element || !element.atomicNumber) return;
+  const modalBody = document.getElementById('modalBody');
+  if (modalBody) {
+    modalBody.scrollTop = 0; // 새로 다른 원소를 클릭해 처음 열 때만 맨 위로 초기화
+  }
   updateModalContent(element.atomicNumber);
 }
 window.openElementModal = openElementModal;
@@ -897,10 +994,13 @@ function initModal() {
   const nextBtn = document.getElementById('modalNextBtn');
   const speakKoBtn = document.getElementById('modalSpeakKoBtn');
   const speakEnBtn = document.getElementById('modalSpeakEnBtn');
+  const modalTabBar = document.getElementById('modalTabBar');
   if (!modal || !closeBtn) return;
 
   function closeModal() {
     modal.classList.add('hidden');
+    document.body.classList.remove('modal-open');
+    document.documentElement.classList.remove('modal-locked');
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
   }
 
@@ -909,6 +1009,22 @@ function initModal() {
     if (e.target === modal) closeModal();
   });
 
+  // 모달 배경에서 발생하는 마우스 휠 및 터치 이동 시 뒤쪽 메인 화면 스크롤 전파 원천 차단
+  modal.addEventListener('wheel', (e) => {
+    if (!e.target.closest('.modal-card')) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  modal.addEventListener('touchmove', (e) => {
+    if (!e.target.closest('.modal-card')) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+
+
+  // 2. TTS 발음 듣기
   if (speakKoBtn) {
     speakKoBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -923,8 +1039,10 @@ function initModal() {
     });
   }
 
+  // 3. 하단 고정 푸터 이전/다음 버튼 클릭 이벤트
   if (prevBtn) {
-    prevBtn.addEventListener('click', () => {
+    prevBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       if (currentModalAtomicNumber > 1) {
         updateModalContent(currentModalAtomicNumber - 1);
       }
@@ -932,18 +1050,19 @@ function initModal() {
   }
 
   if (nextBtn) {
-    nextBtn.addEventListener('click', () => {
+    nextBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       if (currentModalAtomicNumber < 118) {
         updateModalContent(currentModalAtomicNumber + 1);
       }
     });
   }
 
-  // 키보드 좌우 방향키로 이전/다음 이동, ESC로 닫기
+  // 4. 키보드 좌우 방향키로 이전/다음 이동, ESC로 닫기
   document.addEventListener('keydown', (e) => {
     if (modal.classList.contains('hidden')) return;
     if (e.key === 'Escape') {
-      modal.classList.add('hidden');
+      closeModal();
     } else if (e.key === 'ArrowLeft' && currentModalAtomicNumber > 1) {
       updateModalContent(currentModalAtomicNumber - 1);
     } else if (e.key === 'ArrowRight' && currentModalAtomicNumber < 118) {
@@ -951,33 +1070,42 @@ function initModal() {
     }
   });
 
-  // 모바일 스와이프(좌우 터치 넘기기) 제스처 지원
-  let touchStartX = 0;
-  let touchStartY = 0;
+  // 5. 모바일 터치 스와이프 및 PC/시뮬레이터 마우스 드래그 넘기기 지원
   const modalCard = modal.querySelector('.modal-card');
   if (modalCard) {
-    modalCard.addEventListener('touchstart', (e) => {
-      touchStartX = e.changedTouches[0].screenX;
-      touchStartY = e.changedTouches[0].screenY;
-    }, { passive: true });
+    let pointerStartX = 0;
+    let pointerStartY = 0;
+    let isTracking = false;
 
-    modalCard.addEventListener('touchend', (e) => {
-      const touchEndX = e.changedTouches[0].screenX;
-      const touchEndY = e.changedTouches[0].screenY;
-      const diffX = touchEndX - touchStartX;
-      const diffY = touchEndY - touchStartY;
+    // 포인터 이벤트(터치 + 마우스 모두 지원)
+    modalCard.addEventListener('pointerdown', (e) => {
+      // 버튼, 입력창, 닫기버튼 등 인터랙티브 요소는 드래그 제스처 제외
+      if (e.target.closest('button, input, select, a, .bohr-model-container, .modal-tab-bar')) return;
+      pointerStartX = e.clientX;
+      pointerStartY = e.clientY;
+      isTracking = true;
+    });
 
-      // 수평 스와이프 감지 (최소 50px 이상 이동 및 수평 이동이 수직보다 클 때)
-      if (Math.abs(diffX) > 50 && Math.abs(diffX) > Math.abs(diffY)) {
+    window.addEventListener('pointerup', (e) => {
+      if (!isTracking || modal.classList.contains('hidden')) {
+        isTracking = false;
+        return;
+      }
+      isTracking = false;
+      const diffX = e.clientX - pointerStartX;
+      const diffY = e.clientY - pointerStartY;
+
+      // 수평 이동 50px 이상 & 수평 이동이 수직 이동보다 클 때 이전/다음 전환
+      if (Math.abs(diffX) > 50 && Math.abs(diffX) > Math.abs(diffY) * 1.3) {
         if (diffX > 0 && currentModalAtomicNumber > 1) {
-          // 오른쪽으로 스와이프 ➔ 이전 원소
+          // 오른쪽으로 드래그/밀기 ➔ 이전 원소
           updateModalContent(currentModalAtomicNumber - 1);
         } else if (diffX < 0 && currentModalAtomicNumber < 118) {
-          // 왼쪽으로 스와이프 ➔ 다음 원소
+          // 왼쪽으로 드래그/밀기 ➔ 다음 원소
           updateModalContent(currentModalAtomicNumber + 1);
         }
       }
-    }, { passive: true });
+    });
   }
 }
 

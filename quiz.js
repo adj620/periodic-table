@@ -23,11 +23,95 @@ let quizState = {
   wrongAnswers: [],
   isAnswered: false,
   isTimeAttack: localStorage.getItem('periodic_quiz_time_attack') !== 'false', // 기본값: 타임어택 켜짐
+  isSoundEnabled: localStorage.getItem('periodic_quiz_sound_enabled') !== 'false', // 기본값: 사운드 켜짐
   timerSeconds: 15,
   timeLeft: 15,
   timerInterval: null,
   totalQuestions: 10
 };
+
+// Web Audio API 사운드 합성기 (외부 파일 없이 브라우저 내장 생성)
+let quizAudioCtx = null;
+
+function getQuizAudioContext() {
+  if (!quizAudioCtx) {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (AudioCtx) {
+      quizAudioCtx = new AudioCtx();
+    }
+  }
+  if (quizAudioCtx && quizAudioCtx.state === 'suspended') {
+    quizAudioCtx.resume();
+  }
+  return quizAudioCtx;
+}
+
+function playQuizSound(type) {
+  if (!quizState.isSoundEnabled) return;
+  try {
+    const ctx = getQuizAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+
+    if (type === 'correct') {
+      // 맑고 경쾌한 도-솔 화음 (C5: 523Hz -> G5: 784Hz)
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, now);
+      osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.12);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.35);
+    } else if (type === 'wrong') {
+      // 둔탁한 저음 버저 (180Hz -> 130Hz)
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(180, now);
+      osc.frequency.linearRampToValueAtTime(130, now + 0.22);
+      gain.gain.setValueAtTime(0.22, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.25);
+    } else if (type === 'finish') {
+      // 승리의 팡파레 (도-미-솔-높은도)
+      const notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+        gain.gain.setValueAtTime(0.22, now + idx * 0.09);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.3);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + idx * 0.09);
+        osc.stop(now + idx * 0.09 + 0.3);
+      });
+    }
+  } catch (e) {
+    // 오디오 컨텍스트 미지원 환경 무시
+  }
+}
+
+function triggerQuizHaptic(type) {
+  if (!('vibrate' in navigator)) return;
+  try {
+    if (type === 'correct') {
+      navigator.vibrate(30);
+    } else if (type === 'wrong') {
+      navigator.vibrate([40, 45, 40]);
+    } else if (type === 'finish') {
+      navigator.vibrate([40, 50, 40, 50, 80]);
+    }
+  } catch (e) {}
+}
 
 function initQuiz() {
   const container = document.getElementById('quizContainer');
@@ -57,13 +141,23 @@ function renderQuizLobby() {
         </div>
       </div>
 
-      <!-- 타임어택 챌린지 모드 설정 토글 -->
+      <!-- 퀴즈 환경 설정 바 (타임어택 & 사운드/진동 피드백) -->
       <div class="timeattack-setting-box">
         <label class="timeattack-label" for="timeAttackToggle">
           <input type="checkbox" id="timeAttackToggle" ${quizState.isTimeAttack ? 'checked' : ''} />
           <span class="timeattack-text-wrap">
             <strong>⏱️ 타임어택 모드 (문제당 15초 카운트다운 제한)</strong>
             <small>정답 시 남은 초에 따라 최대 +150점의 스피드 보너스 점수가 가산됩니다.</small>
+          </span>
+        </label>
+      </div>
+
+      <div class="timeattack-setting-box" style="margin-top: 0.5rem;">
+        <label class="timeattack-label" for="soundToggle">
+          <input type="checkbox" id="soundToggle" ${quizState.isSoundEnabled ? 'checked' : ''} />
+          <span class="timeattack-text-wrap">
+            <strong>🔊 오디오 효과음 & 모바일 햅틱 진동</strong>
+            <small>정답, 오답, 콤보 사운드 및 단말기 미세 진동 피드백을 활성화합니다.</small>
           </span>
         </label>
       </div>
@@ -103,6 +197,16 @@ function renderQuizLobby() {
     timeAttackToggle.addEventListener('change', (e) => {
       quizState.isTimeAttack = e.target.checked;
       localStorage.setItem('periodic_quiz_time_attack', e.target.checked ? 'true' : 'false');
+    });
+  }
+
+  // 효과음 & 햅틱 토글 이벤트
+  const soundToggle = document.getElementById('soundToggle');
+  if (soundToggle) {
+    soundToggle.addEventListener('change', (e) => {
+      quizState.isSoundEnabled = e.target.checked;
+      localStorage.setItem('periodic_quiz_sound_enabled', e.target.checked ? 'true' : 'false');
+      if (e.target.checked) playQuizSound('correct');
     });
   }
 
@@ -197,6 +301,9 @@ function handleTimeOut() {
     question: q,
     userChoice: '⏱️ 시간 초과 (15초 초과)'
   });
+
+  playQuizSound('wrong');
+  triggerQuizHaptic('wrong');
 
   const feedbackBox = document.getElementById('quizFeedbackBox');
   const feedbackTitle = document.getElementById('feedbackTitle');
@@ -503,6 +610,9 @@ function handleChoiceSelect(selectedIdx, choiceBtns) {
     const earned = 100 + comboBonus + timeBonus;
     quizState.score += earned;
 
+    playQuizSound('correct');
+    triggerQuizHaptic('correct');
+
     const bonusTxt = (timeBonus > 0) ? ` (스피드 +${timeBonus}점)` : '';
     feedbackTitle.innerHTML = `<span class="res-correct">🎉 정답입니다! (+${earned}점${bonusTxt})</span>`;
     feedbackDesc.textContent = q.explanation;
@@ -514,6 +624,9 @@ function handleChoiceSelect(selectedIdx, choiceBtns) {
       question: q,
       userChoice: selectedChoice.label
     });
+
+    playQuizSound('wrong');
+    triggerQuizHaptic('wrong');
 
     feedbackTitle.innerHTML = `<span class="res-wrong">❌ 아쉽네요, 틀렸습니다!</span>`;
     feedbackDesc.textContent = q.explanation;
@@ -535,6 +648,8 @@ function handleChoiceSelect(selectedIdx, choiceBtns) {
  */
 function renderQuizResultScreen() {
   stopQuestionTimer();
+  playQuizSound('finish');
+  triggerQuizHaptic('finish');
   const container = document.getElementById('quizContainer');
   if (!container) return;
 

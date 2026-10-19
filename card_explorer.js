@@ -274,10 +274,24 @@ function renderCardExplorerView() {
     }
   }
 
-  // 카드 및 상세보기 버튼 클릭 시 상세 모달 연동
+  // TTS 음성 듣기 버튼 이벤트 바인딩
+  const ttsBtns = contentEl.querySelectorAll('.card-tts-mini-btn');
+  ttsBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const ko = btn.dataset.ko;
+      const en = btn.dataset.en;
+      if (ko) speakCardExplorerName(ko, 'ko-KR');
+      else if (en) speakCardExplorerName(en, 'en-US');
+    });
+  });
+
+  // 카드 클릭 시 상세 모달 연동
   const cards = contentEl.querySelectorAll('.element-full-card');
   cards.forEach(card => {
-    card.addEventListener('click', () => {
+    card.addEventListener('click', (e) => {
+      // 버튼 클릭 시 중복 모달 오픈 방지
+      if (e.target.closest('button, a')) return;
       const btn = card.querySelector('.card-modal-open-btn');
       const num = parseInt(btn?.dataset.num, 10);
       const el = elementsMap.get(num);
@@ -301,19 +315,44 @@ function renderCardExplorerView() {
 }
 
 /**
- * 단일 원소의 대형 카드 HTML 생성 (어떤 화면에서도 글자가 1픽셀도 잘리지 않도록 정밀 디자인)
+ * 카드 탐색기 전용 Web Speech API TTS 발음 재생기
+ */
+function speakCardExplorerName(text, lang = 'ko-KR') {
+  if (!('speechSynthesis' in window)) {
+    alert('현재 브라우저에서는 음성 합성(TTS) 기능을 지원하지 않습니다.');
+    return;
+  }
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = lang;
+  utterance.rate = 0.9;
+  utterance.pitch = 1.0;
+  window.speechSynthesis.speak(utterance);
+}
+
+/**
+ * 단일 원소의 대형 백과사전식 카드 HTML 생성
+ * - 실제 표본 사진, 실물 외형, 실생활 대표 물건/용도, 특징 설명, 전자 껍질 구조, 9대 물리화학 스펙 전면 통합
  */
 function createFullCardHtml(el, isSingle = false) {
   const catObj = (typeof CATEGORIES !== 'undefined' && CATEGORIES[el.category]) || { nameKo: el.category, color: '#38bdf8' };
   const cleanAlt = el.altNameKo ? `[${el.altNameKo.split('/')[0].split('(')[0].trim()}]` : '';
-  const radBadge = el.isRadioactive ? '<span class="card-rad-badge" title="방사성 원소">☢️ 방사성</span>' : '';
+  const radBadge = el.isRadioactive ? '<span class="card-rad-badge" title="방사성 원소">☢️ 방사성 원소</span>' : '';
   const photoUrl = el.photo || '';
   const itemIcon = el.icon || '🧪';
   const itemName = el.item || el.nameKo;
 
+  // 보어 전자 껍질(K, L, M, N...) 데이터 계산
+  const shells = (typeof BOHR_SHELLS_DATA !== 'undefined' && BOHR_SHELLS_DATA[el.atomicNumber]) || [];
+  const shellNames = ['K', 'L', 'M', 'N', 'O', 'P', 'Q'];
+  const shellSummaryStr = shells.length
+    ? shells.map((cnt, idx) => `${shellNames[idx] || idx + 1}(${cnt})`).join(' · ')
+    : el.electronConfig;
+  const valenceCount = shells.length ? shells[shells.length - 1] : '-';
+
   return `
     <article class="element-full-card ${isSingle ? 'single-mode-card' : ''}" data-cat="${el.category}" style="--card-accent:${catObj.color};">
-      <!-- 카드 상단 바 -->
+      <!-- 1. 카드 상단 헤더 바 -->
       <div class="card-header-bar">
         <div class="card-header-left">
           <span class="card-atomic-num">No. ${el.atomicNumber}</span>
@@ -321,14 +360,16 @@ function createFullCardHtml(el, isSingle = false) {
           <span class="card-cat-badge" style="background:${catObj.color}22; color:${catObj.color}; border: 1px solid ${catObj.color}55;">
             ${catObj.nameKo.split('(')[0]}
           </span>
+          ${radBadge}
         </div>
         <div class="card-header-right">
-          ${radBadge}
-          <button class="card-modal-open-btn" data-num="${el.atomicNumber}" title="상세 모달 열기">상세보기 ↗</button>
+          <button class="card-tts-mini-btn" data-ko="${el.nameKo}" title="한글 발음 듣기">🔊 한글</button>
+          <button class="card-tts-mini-btn" data-en="${el.nameEn}" title="IUPAC 영문 공식 발음">🗣️ En</button>
+          <button class="card-modal-open-btn" data-num="${el.atomicNumber}" title="상세 모달 열기">상세 ↗</button>
         </div>
       </div>
 
-      <!-- 메인 정보 구역 (기호, 명칭, 사진/이모지) -->
+      <!-- 2. 메인 식별 & 실제 표본 사진 통합 영역 -->
       <div class="card-main-body">
         <div class="card-identity-box">
           <div class="card-symbol-badge" style="color:${catObj.color};">${el.symbol}</div>
@@ -341,9 +382,7 @@ function createFullCardHtml(el, isSingle = false) {
 
         <div class="card-visual-box">
           ${photoUrl ? `
-            <div class="card-photo-wrap">
-              <img src="${photoUrl}" alt="${el.nameKo} 표본 사진" class="card-photo-img" loading="lazy" onerror="this.parentElement.style.display='none';this.parentElement.nextElementSibling.style.display='flex';" />
-            </div>
+            <img src="${photoUrl}" alt="${el.nameKo} 실제 표본" class="card-photo-img" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
             <div class="card-icon-fallback" style="display:none;">
               <span class="card-item-emoji">${itemIcon}</span>
               <span class="card-item-label">${itemName}</span>
@@ -357,16 +396,36 @@ function createFullCardHtml(el, isSingle = false) {
         </div>
       </div>
 
-      <!-- 실생활 대표 용도 & 외형 설명 -->
-      <div class="card-usage-banner">
-        <span class="usage-icon">${itemIcon}</span>
-        <div class="usage-text-wrap">
-          <strong class="usage-item-title">${itemName}</strong>
-          <p class="usage-desc">${el.usage || el.description}</p>
+      <!-- 3. 실생활 대표 물건 & 실물 외형 특성 배너 (누락 없이 통합) -->
+      <div class="card-realworld-banner">
+        <div class="realworld-item-chip">
+          <span class="realworld-icon">${itemIcon}</span>
+          <div class="realworld-text">
+            <strong class="realworld-label">실생활 대표 물건: ${itemName}</strong>
+            <span class="realworld-usage">${el.usage ? `활용처: ${el.usage}` : el.description}</span>
+          </div>
+        </div>
+        <div class="realworld-look-chip">
+          <span class="look-badge-icon">👁️</span>
+          <span class="look-text"><strong>실물 외형 특성:</strong> ${el.look || '외형 정보 준비 중'}</span>
         </div>
       </div>
 
-      <!-- 핵심 물리화학 스펙 테이블 (반응형 2열/3열 그리드) -->
+      <!-- 4. 원소 본연의 특징 및 상세 설명 -->
+      <div class="card-desc-box">
+        <p class="card-desc-text">${el.description}</p>
+      </div>
+
+      <!-- 5. 보어 전자 껍질 & 최외각 전자 정보 바 -->
+      <div class="card-shells-banner">
+        <div class="shells-left">
+          <span class="shells-title">⚛️ 전자 껍질 (K~Q):</span>
+          <span class="shells-val font-mono">${shellSummaryStr}</span>
+        </div>
+        <span class="valence-chip">최외각: <strong>${valenceCount}개</strong></span>
+      </div>
+
+      <!-- 6. 9대 핵심 물리화학적 상세 스펙 테이블 -->
       <div class="card-specs-grid">
         <div class="spec-cell">
           <span class="spec-lbl">원자량</span>
@@ -400,9 +459,9 @@ function createFullCardHtml(el, isSingle = false) {
           <span class="spec-lbl">전기음성도</span>
           <span class="spec-val font-mono">${el.en || '-'}</span>
         </div>
-        <div class="spec-cell">
-          <span class="spec-lbl">발견</span>
-          <span class="spec-val">${el.year ? `${el.year}년` : '고대'} (${el.discoverer || '미상'})</span>
+        <div class="spec-cell full-width-cell">
+          <span class="spec-lbl">발견 연도 및 발견자</span>
+          <span class="spec-val">${el.year ? (el.year === '고대' ? '고대' : `${el.year}년`) : '고대'} (${el.discoverer || '미상'})</span>
         </div>
       </div>
     </article>
