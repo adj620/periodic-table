@@ -113,8 +113,12 @@ function triggerQuizHaptic(type) {
   } catch (e) {}
 }
 
+function getQuizContainer() {
+  return document.getElementById('gameSuiteContent') || document.getElementById('quizContainer');
+}
+
 function initQuiz() {
-  const container = document.getElementById('quizContainer');
+  const container = getQuizContainer();
   if (!container) return;
 
   renderQuizLobby();
@@ -125,7 +129,7 @@ function initQuiz() {
  */
 function renderQuizLobby() {
   stopQuestionTimer();
-  const container = document.getElementById('quizContainer');
+  const container = getQuizContainer();
   if (!container) return;
 
   const highScore = localStorage.getItem('periodic_quiz_high_score') || 0;
@@ -182,11 +186,13 @@ function renderQuizLobby() {
         <div class="llm-icon-title">
           <span>🤖 AI 심화 해설 모드 (선택 사항)</span>
         </div>
-        <p>기본 퀴즈는 내장된 118개 원소 데이터베이스로 완전하게 무한 출제됩니다. Gemini API 키를 등록하면 AI가 퀴즈 해설을 실시간으로 더 친절하게 설명해 줍니다.</p>
+        <p>기본 퀴즈는 내장된 118개 원소 데이터베이스로 완전하게 무한 출제됩니다. Gemini API 키를 등록하면 AI가 퀴즈 해설과 원소 암기 팁을 실시간으로 더 친절하게 설명해 줍니다.</p>
         <div class="llm-key-input-row">
-          <input type="password" id="geminiApiKeyInput" placeholder="Google Gemini API Key 입력 (선택)..." value="${localStorage.getItem('gemini_api_key') || ''}" />
-          <button id="saveApiKeyBtn" class="pill-btn">저장</button>
+          <input type="password" id="geminiApiKeyInput" placeholder="Google Gemini API Key (AIzaSy...) 입력..." value="${window.GeminiService ? window.GeminiService.getApiKey() : (localStorage.getItem('gemini_api_key') || '')}" />
+          <button id="testApiKeyBtn" class="pill-btn" style="background:#334155; border:1px solid #475569; color:#f1f5f9;">🔍 연결 테스트</button>
+          <button id="saveApiKeyBtn" class="pill-btn" style="background:#0284c7; color:#fff;">💾 저장</button>
         </div>
+        <div id="quizLlmTestResult" style="display:none; margin-top:0.6rem; font-size:0.85rem; padding:0.6rem; border-radius:6px; line-height:1.4;"></div>
       </div>
     </div>
   `;
@@ -220,15 +226,59 @@ function renderQuizLobby() {
   });
 
   const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
+  const testApiKeyBtn = document.getElementById('testApiKeyBtn');
   const apiKeyInput = document.getElementById('geminiApiKeyInput');
+  const quizTestResult = document.getElementById('quizLlmTestResult');
+
+  if (testApiKeyBtn && apiKeyInput && quizTestResult) {
+    testApiKeyBtn.addEventListener('click', async () => {
+      const key = apiKeyInput.value.trim();
+      if (!key) {
+        quizTestResult.style.display = 'block';
+        quizTestResult.style.background = 'rgba(239, 68, 68, 0.15)';
+        quizTestResult.style.border = '1px solid #ef4444';
+        quizTestResult.style.color = '#fca5a5';
+        quizTestResult.innerHTML = '⚠️ API 키를 먼저 입력해 주세요.';
+        return;
+      }
+
+      quizTestResult.style.display = 'block';
+      quizTestResult.style.background = 'rgba(14, 165, 233, 0.15)';
+      quizTestResult.style.border = '1px solid #0284c7';
+      quizTestResult.style.color = '#7dd3fc';
+      quizTestResult.innerHTML = '⏳ 구글 AI 서버와 연결 확인 중...';
+
+      if (window.GeminiService) {
+        const res = await window.GeminiService.testConnection(key);
+        if (res.ok) {
+          quizTestResult.style.background = 'rgba(34, 197, 94, 0.15)';
+          quizTestResult.style.border = '1px solid #22c55e';
+          quizTestResult.style.color = '#86efac';
+          quizTestResult.innerHTML = `<strong>✅ 연결 성공! (${res.modelName})</strong><br>AI 응답: "${res.text}"`;
+          window.GeminiService.setApiKey(key);
+        } else {
+          quizTestResult.style.background = 'rgba(239, 68, 68, 0.15)';
+          quizTestResult.style.border = '1px solid #ef4444';
+          quizTestResult.style.color = '#fca5a5';
+          const err = res.errorInfo;
+          quizTestResult.innerHTML = `<strong>❌ ${err.title}</strong><br>${err.desc}<br><small style="color:#fef08a;">💡 ${err.action}</small>`;
+        }
+      }
+    });
+  }
+
   if (saveApiKeyBtn && apiKeyInput) {
     saveApiKeyBtn.addEventListener('click', () => {
       const key = apiKeyInput.value.trim();
-      if (key) {
-        localStorage.setItem('gemini_api_key', key);
-        alert('API 키가 안전하게 로컬에 저장되었습니다!');
+      if (window.GeminiService) {
+        window.GeminiService.setApiKey(key);
       } else {
-        localStorage.removeItem('gemini_api_key');
+        if (key) localStorage.setItem('gemini_api_key', key);
+        else localStorage.removeItem('gemini_api_key');
+      }
+      if (key) {
+        alert('🔑 API 키가 안전하게 저장되었습니다!\n원소 상세창 [🤖 AI 꿀팁]이나 퀴즈에서 AI 해설을 이용하실 수 있습니다.');
+      } else {
         alert('API 키가 삭제되었습니다.');
       }
     });
@@ -285,7 +335,7 @@ function handleTimeOut() {
   if (quizState.isAnswered) return;
   quizState.isAnswered = true;
 
-  const container = document.getElementById('quizContainer');
+  const container = getQuizContainer();
   const choiceBtns = container ? container.querySelectorAll('.quiz-choice-btn') : [];
   const q = quizState.questions[quizState.currentIndex];
 
@@ -460,7 +510,7 @@ function buildQuestionByType(type, target, distractors) {
  * 4. 퀴즈 문제 진행 화면 렌더링
  */
 function renderQuizQuestionScreen() {
-  const container = document.getElementById('quizContainer');
+  const container = getQuizContainer();
   if (!container) return;
 
   const q = quizState.questions[quizState.currentIndex];
@@ -650,7 +700,7 @@ function renderQuizResultScreen() {
   stopQuestionTimer();
   playQuizSound('finish');
   triggerQuizHaptic('finish');
-  const container = document.getElementById('quizContainer');
+  const container = getQuizContainer();
   if (!container) return;
 
   const correctCount = quizState.totalQuestions - quizState.wrongAnswers.length;
@@ -784,22 +834,14 @@ function renderQuizResultScreen() {
  */
 async function fetchGeminiExplanation(element, targetEl, apiKey) {
   try {
-    const prompt = `당신은 재미있고 친절한 화학 선생님입니다. 원소 ${element.nameKo}(기호: ${element.symbol}, 원자번호: ${element.atomicNumber})에 대해 일상생활과 관련된 재미있는 상식이나 기억하기 쉬운 암기 팁을 한국어로 딱 2문장으로 짧게 요약해 주세요.`;
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
-      })
-    });
-    if (!res.ok) return;
-    const data = await res.json();
-    const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (aiText) {
-      const aiTipBox = document.createElement('div');
-      aiTipBox.className = 'ai-explanation-bubble';
-      aiTipBox.innerHTML = `<strong>💡 AI 선생님 팁:</strong> ${aiText}`;
-      targetEl.appendChild(aiTipBox);
+    if (window.GeminiService) {
+      const res = await window.GeminiService.getQuizExplanation(element);
+      if (res.ok && res.text) {
+        const aiTipBox = document.createElement('div');
+        aiTipBox.className = 'ai-explanation-bubble';
+        aiTipBox.innerHTML = `<strong>💡 AI 선생님 팁 (${res.modelName || 'Gemini'}):</strong> ${res.text}`;
+        targetEl.appendChild(aiTipBox);
+      }
     }
   } catch (err) {
     console.warn('AI 해설 조회 실패 (오프라인/네트워크):', err);

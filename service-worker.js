@@ -1,7 +1,7 @@
 // 원소 주기율표 PWA Service Worker
 // 네트워크 우선(Network-First) 전략: 배포 즉시 최신 버전이 자동 반영되며, 오프라인 시에만 로컬 캐시 사용
 
-const CACHE_NAME = 'periodic-table-v1.2.0-b3';
+const CACHE_NAME = 'periodic-table-v1.3.1-b9';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -10,7 +10,11 @@ const ASSETS_TO_CACHE = [
   './elements.js',
   './elements_extra.js',
   './elements_photos.js',
+  './elements_encyclopedia.js',
+  './in_app_browser.js',
+  './gemini_service.js',
   './quiz.js',
+  './game_suite.js',
   './card_explorer.js',
   './manifest.json',
   './icon.svg',

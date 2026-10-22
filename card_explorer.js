@@ -349,6 +349,7 @@ function createFullCardHtml(el, isSingle = false) {
     ? shells.map((cnt, idx) => `${shellNames[idx] || idx + 1}(${cnt})`).join(' · ')
     : el.electronConfig;
   const valenceCount = shells.length ? shells[shells.length - 1] : '-';
+  const ency = (typeof ELEMENTS_ENCYCLOPEDIA !== 'undefined' && ELEMENTS_ENCYCLOPEDIA[el.atomicNumber]) || null;
 
   return `
     <article class="element-full-card ${isSingle ? 'single-mode-card' : ''}" data-cat="${el.category}" style="--card-accent:${catObj.color};">
@@ -407,7 +408,7 @@ function createFullCardHtml(el, isSingle = false) {
         </div>
         <div class="realworld-look-chip">
           <span class="look-badge-icon">👁️</span>
-          <span class="look-text"><strong>실물 외형 특성:</strong> ${el.look || '외형 정보 준비 중'}</span>
+          <span class="look-text"><strong>실물 외형 특성:</strong> ${el.look || ((el.isSynthetic || el.atomicNumber >= 99) ? '🔬 인공 합성 원소 (반감기가 극히 짧아 실제 육안 표본 미존재)' : '외형 정보')}</span>
         </div>
       </div>
 
@@ -415,6 +416,13 @@ function createFullCardHtml(el, isSingle = false) {
       <div class="card-desc-box">
         <p class="card-desc-text">${el.description}</p>
       </div>
+
+      ${ency && ency.headline ? `
+        <div class="card-ency-headline-box">
+          <span class="ency-icon">💡</span>
+          <span class="ency-text">${ency.headline}</span>
+        </div>
+      ` : ''}
 
       <!-- 5. 보어 전자 껍질 & 최외각 전자 정보 바 -->
       <div class="card-shells-banner">

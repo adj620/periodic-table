@@ -60,6 +60,11 @@
       </div>
 
       <div class="header-right">
+        <!-- Google Gemini AI 키 설정 버튼 -->
+        <button id="geminiConfigBtn" class="action-btn" style="background: rgba(168, 85, 247, 0.2); border: 1px solid #a855f7; color: #d8b4fe; font-weight:700;" title="Google Gemini AI 키 설정 & 실시간 진단">
+          🤖 AI 키 설정
+        </button>
+
         <!-- PWA 원클릭 앱 설치 및 다운로드 안내 버튼 -->
         <button id="installAppBtn" class="action-btn install-btn" title="스마트폰/PC에 독립 앱으로 설치 및 다운로드 방법 보기">
           📲 앱 설치
@@ -128,7 +133,7 @@
         <button class="theme-tab-btn special-theme-btn" data-theme-id="7" title="7편: 실제 원소 표본 사진 및 외형 묘사 포스터판">📸 7편: 실제사진</button>
         <button class="theme-tab-btn all-pages-tab" data-theme-id="all" title="1~7편 전체를 연속으로 펼쳐보는 N장 뷰">📜 전체 N장 뷰</button>
         <button class="theme-tab-btn special-feature-btn" data-theme-id="cards" title="모바일 최적화! 글자 잘림 없이 큼직하게 보는 대형 카드 탐색기">📱 모바일 카드 탐색기</button>
-        <button class="theme-tab-btn special-feature-btn quiz-tab-btn" data-theme-id="quiz" title="기호, 이름, 번호, 용도, 실제 사진을 맞추는 대화형 원소 퀴즈 게임">🎯 원소 퀴즈</button>
+        <button class="theme-tab-btn special-feature-btn quiz-tab-btn" data-theme-id="quiz" title="4지선다 퀴즈, 카드 짝맞추기, 주기율표 퍼즐, 원소 연금술을 즐길 수 있는 원소 종합 게임존">🎮 원소 게임존</button>
       </div>
     </div>
   </header>
@@ -303,6 +308,9 @@
               <button id="modalSpeakEnBtn" class="modal-tts-btn" title="IUPAC 영문 공식 명칭 발음 듣기">
                 <span class="tts-icon">🗣️</span> English
               </button>
+              <button id="modalAiAskBtn" class="modal-tts-btn modal-ai-btn" title="Google Gemini AI 선생님의 실시간 팁 & 상식 보기">
+                <span class="tts-icon">🤖</span> AI 꿀팁
+              </button>
             </div>
           </div>
         </div>
@@ -314,6 +322,9 @@
 
       <!-- 2. 모달 스크롤 본문 (한 페이지 연속 뷰: 스펙 ➔ 실제 표본 사진 & 대표 물건 ➔ 보어 모형) -->
       <div class="modal-body" id="modalBody">
+        <!-- AI 실시간 팁 결과 박스 -->
+        <div id="modalAiResponseBox" class="modal-ai-box" style="display:none;"></div>
+
         <!-- 섹션 1: 핵심 물리화학적 특성 및 원자 스펙 -->
         <section class="modal-section modal-specs-section">
           <div class="section-badge-header">
@@ -381,6 +392,40 @@
             </div>
           </div>
         </section>
+
+        <!-- 섹션 4: 원소 완결형 심화 백과사전 이야기 (패밀리 링크 대응 인앱 완전 내장) -->
+        <section class="modal-section modal-encyclopedia-section">
+          <div class="section-badge-header">
+            <h3>📖 원소 완결형 백과사전 이야기 (비하인드 스토리 & 상식)</h3>
+            <span class="offline-ready-badge">🛡️ 브라우저 없이 100% 인앱 내장</span>
+          </div>
+          <div class="modal-encyclopedia-card">
+            <div class="encyclopedia-headline-box">
+              <span class="headline-quote">💡</span>
+              <p id="modalEncyHeadline" class="ency-headline-text"></p>
+            </div>
+            
+            <div class="encyclopedia-story-block">
+              <div class="block-title">📜 발견 역사 & 이름의 기원</div>
+              <p id="modalEncyOrigin" class="ency-body-text"></p>
+            </div>
+
+            <div class="encyclopedia-facts-block">
+              <div class="block-title">✨ 일상 속 놀라운 화학 상식 (Fun Facts)</div>
+              <ul id="modalEncyFacts" class="ency-facts-list"></ul>
+            </div>
+
+            <div class="encyclopedia-science-block">
+              <div class="block-title">🔬 과학 원리 및 미래 첨단 기술</div>
+              <p id="modalEncyScience" class="ency-body-text"></p>
+            </div>
+
+            <div class="encyclopedia-safety-block">
+              <div class="block-title">🛡️ 취급 안전 수칙 & 화학적 주의사항</div>
+              <p id="modalEncySafety" class="ency-body-text"></p>
+            </div>
+          </div>
+        </section>
       </div>
 
       <!-- 4. 모달 하단 고정 네비게이션 푸터 (스크롤해도 항상 노출) -->
@@ -411,8 +456,8 @@
       <span class="bottom-nav-label">카드</span>
     </button>
     <button class="bottom-nav-item" data-tab-id="quiz">
-      <span class="bottom-nav-icon">🎯</span>
-      <span class="bottom-nav-label">퀴즈</span>
+      <span class="bottom-nav-icon">🎮</span>
+      <span class="bottom-nav-label">게임</span>
     </button>
     <button class="bottom-nav-item" id="bottomNavSearchBtn">
       <span class="bottom-nav-icon">🔍</span>
@@ -529,8 +574,12 @@
   <script src="elements.js"></script>
   <script src="elements_extra.js"></script>
   <script src="elements_photos.js"></script>
+  <script src="elements_encyclopedia.js"></script>
+  <script src="in_app_browser.js"></script>
+  <script src="gemini_service.js"></script>
   <script src="card_explorer.js"></script>
   <script src="quiz.js"></script>
+  <script src="game_suite.js"></script>
   <script src="app.js"></script>
   <script>
     // PWA 서비스 워커 등록 및 실시간 자동 업데이트 감지 시스템
@@ -681,7 +730,7 @@
     const CURRENT_EMBEDDED_BUILD = 4; // 현재 APK 앱에 내장된 빌드 번호
     const REMOTE_VERSION_URL = 'https://periodic-table-adj.web.app/version.json';
 
-    let latestApkUrl = 'https://github.com/adj620/periodic-table/releases/download/v1.2.0/periodic-table.apk';
+    let latestApkUrl = 'https://github.com/adj620/periodic-table/releases/download/v1.3.0/periodic-table.apk';
 
     async function checkForNewAppVersion() {
       try {

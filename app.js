@@ -12,6 +12,15 @@ document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   initModal();
   initScreenZoomControls();
+
+  const geminiConfigBtn = document.getElementById('geminiConfigBtn');
+  if (geminiConfigBtn) {
+    geminiConfigBtn.addEventListener('click', () => {
+      if (window.GeminiService) {
+        window.GeminiService.showApiKeyModal();
+      }
+    });
+  }
 });
 
 // 118개 원소 매핑 객체 (기본 정보 + 상세 물리화학/역사 데이터 + 실제 표본 사진 병합)
@@ -234,7 +243,10 @@ function createElementCellByTheme(element, themeId) {
   } else if (themeId === 7) {
     // 제7편: 실제 원소 표본 사진 및 외형 판
     const photoUrl = element.photo || '';
-    const lookText = element.look || '';
+    const isSynthetic = element.isSynthetic || (element.atomicNumber >= 99);
+    const lookText = element.look || (isSynthetic ? '🔬 인공합성 (표본 미존재)' : element.symbol);
+    const fallbackIcon = element.icon || '⚛️';
+
     cell.innerHTML = `
       <div class="cell-top">
         <span class="atomic-number">${element.atomicNumber}</span>
@@ -242,12 +254,13 @@ function createElementCellByTheme(element, themeId) {
       </div>
       <div class="cell-photo-thumb-wrap">
         ${photoUrl ? `<img src="${photoUrl}" alt="${element.nameKo} 표본" class="cell-photo-thumb" loading="lazy" onerror="this.style.display='none';if(this.nextElementSibling)this.nextElementSibling.style.display='flex';"/>` : ''}
-        <div class="cell-photo-symbol-fallback" style="${photoUrl ? 'display:none;' : 'display:flex;'}">
+        <div class="cell-photo-symbol-fallback ${isSynthetic ? 'synthetic-fallback' : ''}" style="${photoUrl ? 'display:none;' : 'display:flex;'}">
+          <span class="fallback-icon">${fallbackIcon}</span>
           <span class="element-symbol">${element.symbol}</span>
         </div>
       </div>
       <div class="cell-names">
-        <span class="cell-photo-look" title="${lookText}">${lookText || element.symbol}</span>
+        <span class="cell-photo-look" title="${lookText}">${lookText}</span>
       </div>
     `;
   }
@@ -316,10 +329,14 @@ window.switchMainView = function(targetId) {
     }
     if (zoomFab) zoomFab.style.display = 'none';
   } else if (targetId === 'quiz') {
-    // 🎯 원소 퀴즈 뷰
+    // 🎮 원소 게임 스위트 (퀴즈, 카드 짝맞추기, 주기율표 퍼즐, 연금술)
     if (quizContainer) {
       quizContainer.style.display = 'block';
-      if (typeof initQuiz === 'function') initQuiz();
+      if (typeof initGameSuite === 'function') {
+        initGameSuite();
+      } else if (typeof initQuiz === 'function') {
+        initQuiz();
+      }
     }
     if (zoomFab) zoomFab.style.display = 'none';
   } else {
@@ -351,18 +368,28 @@ function initPrintHandlers() {
   const printCurrentBtn = document.getElementById('printCurrentBtn');
   const printAllBtn = document.getElementById('printAllBtn');
 
-  // 현재 선택된 편 인쇄 (A4 1장 전용)
+  // 현재 선택된 편 인쇄 (A4 1장 전용) - 패밀리링크 브라우저 차단 완벽 대응: 인앱 인쇄 호출
   if (printCurrentBtn) {
     printCurrentBtn.addEventListener('click', () => {
       const pageToPrint = (currentThemeId === 'all') ? 1 : currentThemeId;
-      window.open(`print-multi.html?page=${pageToPrint}&print=true`, '_blank');
+      const url = `print-multi.html?page=${pageToPrint}&print=true`;
+      if (typeof window.openInAppPrint === 'function') {
+        window.openInAppPrint(url, `표준 주기율표 제${pageToPrint}편 (A4 인쇄)`);
+      } else {
+        window.open(url, '_blank');
+      }
     });
   }
 
-  // 전체 N장 일괄 인쇄 (A4 5장 세트)
+  // 전체 N장 일괄 인쇄 (A4 5장 세트) - 인앱 인쇄 호출
   if (printAllBtn) {
     printAllBtn.addEventListener('click', () => {
-      window.open('print-multi.html?print=true', '_blank');
+      const url = 'print-multi.html?print=true';
+      if (typeof window.openInAppPrint === 'function') {
+        window.openInAppPrint(url, `표준 주기율표 전체 N장 일괄 인쇄`);
+      } else {
+        window.open(url, '_blank');
+      }
     });
   }
 }
@@ -848,6 +875,9 @@ function updateModalContent(atomicNum) {
   const savedScrollTop = modalBody ? modalBody.scrollTop : 0;
   const cat = CATEGORIES[element.category] || {};
 
+  const aiBox = document.getElementById('modalAiResponseBox');
+  if (aiBox) aiBox.style.display = 'none';
+
   document.getElementById('modalNum').textContent = element.atomicNumber;
   document.getElementById('modalSymbol').textContent = element.symbol;
   document.getElementById('modalSymbol').style.borderColor = cat.color || '#38bdf8';
@@ -887,6 +917,24 @@ function updateModalContent(atomicNum) {
   const lookTextEl = document.getElementById('modalLookText');
   const itemTextEl = document.getElementById('modalItemText');
 
+  const isSynthetic = element.isSynthetic || (element.atomicNumber >= 99);
+  const syntheticReason = element.syntheticReason || (isSynthetic 
+    ? '이 원소는 반감기가 극도로 짧아(수 밀리초~수 초) 원자 단위로만 찰나에 존재하므로 전 세계 과학계에 실제 육안 표본 사진이 존재하지 않는 원소입니다.' 
+    : '실제 표본 사진을 로컬 그래픽으로 대체 표시합니다.');
+
+  function renderPhotoFallbackContent() {
+    if (!photoFallback) return;
+    photoFallback.classList.remove('hidden');
+    photoFallback.innerHTML = `
+      <div class="synthetic-fallback-card">
+        <span class="synthetic-badge">${isSynthetic ? '🔬 인공 합성 초중원소' : '🎨 대표 상징 그래픽'}</span>
+        <div class="synthetic-big-icon">${element.icon || '⚛️'}</div>
+        <strong class="synthetic-symbol" style="color:${cat.color || '#38bdf8'};">${element.symbol}</strong>
+        <p class="synthetic-desc-note">${syntheticReason}</p>
+      </div>
+    `;
+  }
+
   if (photoImg && photoFallback) {
     if (element.photo) {
       photoImg.src = element.photo;
@@ -895,18 +943,22 @@ function updateModalContent(atomicNum) {
       photoFallback.classList.add('hidden');
       photoImg.onerror = () => {
         photoImg.style.display = 'none';
-        photoFallback.classList.remove('hidden');
-        photoFallback.textContent = `${element.symbol} 표본 이미지 준비 중`;
+        renderPhotoFallbackContent();
       };
     } else {
       photoImg.style.display = 'none';
-      photoFallback.classList.remove('hidden');
-      photoFallback.textContent = `표본 미제공 (${element.symbol})`;
+      renderPhotoFallbackContent();
     }
   }
 
   if (lookTextEl) {
-    lookTextEl.textContent = element.look || '실물 외형 특성 정보 준비 중';
+    if (element.look) {
+      lookTextEl.textContent = element.look;
+    } else if (isSynthetic) {
+      lookTextEl.textContent = '🔬 인공 합성 원소 (반감기가 극히 짧아 찰나에 붕괴하므로 육안 표본이 존재하지 않습니다)';
+    } else {
+      lookTextEl.textContent = '실물 외형 특성 정보 준비 중';
+    }
   }
   if (itemTextEl) {
     const icon = element.icon || '🧪';
@@ -917,6 +969,24 @@ function updateModalContent(atomicNum) {
 
   // 보어 원자 모형(전자 껍질 회전 애니메이션) 렌더링
   renderBohrModel(element.atomicNumber, element.symbol, cat.color || '#38bdf8');
+
+  // 118개 완결형 백과사전 이야기(패밀리 링크 브라우저 차단 대응 인앱 내장) 바인딩
+  const encyData = (typeof ELEMENTS_ENCYCLOPEDIA !== 'undefined' && ELEMENTS_ENCYCLOPEDIA[atomicNum]) ? ELEMENTS_ENCYCLOPEDIA[atomicNum] : null;
+  const headlineEl = document.getElementById('modalEncyHeadline');
+  const originEl = document.getElementById('modalEncyOrigin');
+  const factsListEl = document.getElementById('modalEncyFacts');
+  const scienceEl = document.getElementById('modalEncyScience');
+  const safetyEl = document.getElementById('modalEncySafety');
+
+  if (encyData) {
+    if (headlineEl) headlineEl.textContent = encyData.headline || '';
+    if (originEl) originEl.textContent = encyData.origin || '';
+    if (factsListEl) {
+      factsListEl.innerHTML = (encyData.funFacts || []).map(f => `<li>${f}</li>`).join('');
+    }
+    if (scienceEl) scienceEl.textContent = encyData.science || '';
+    if (safetyEl) safetyEl.textContent = encyData.safety || '';
+  }
 
   // 이전 음성 정지
   if ('speechSynthesis' in window) {
@@ -1036,6 +1106,90 @@ function initModal() {
     speakEnBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       speakElementName('en-US');
+    });
+  }
+
+  // 2-2. AI 실시간 팁 버튼
+  const aiAskBtn = document.getElementById('modalAiAskBtn');
+  const aiResponseBox = document.getElementById('modalAiResponseBox');
+  if (aiAskBtn) {
+    aiAskBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const el = elementsMap.get(currentModalAtomicNumber);
+      if (!el) return;
+
+      const apiKey = window.GeminiService ? window.GeminiService.getApiKey() : localStorage.getItem('gemini_api_key');
+
+      if (!apiKey) {
+        if (window.GeminiService) {
+          window.GeminiService.showApiKeyModal(() => {
+            if (aiAskBtn) aiAskBtn.click();
+          });
+        } else {
+          alert('🤖 Google Gemini API 키가 아직 저장되지 않았습니다!\n\n상단 [🤖 AI 키 설정] 버튼이나 퀴즈 탭에서 키를 입력해 주세요.');
+        }
+        return;
+      }
+
+      if (aiResponseBox) {
+        aiResponseBox.style.display = 'block';
+        aiResponseBox.innerHTML = `
+          <div class="ai-box-loading">
+            <span class="ai-spinner">✨</span>
+            <span>AI 선생님이 <strong>${el.nameKo}</strong>에 대한 재미있는 암기 팁과 상식을 생각하고 있어요...</span>
+          </div>
+        `;
+
+        try {
+          if (window.GeminiService) {
+            const res = await window.GeminiService.getElementTip(el);
+            if (res.ok) {
+              aiResponseBox.innerHTML = `
+                <div class="ai-box-content">
+                  <div class="ai-box-header">
+                    <span class="ai-badge">🤖 AI 화학 선생님의 꿀팁 (${res.modelName || 'Gemini'})</span>
+                    <button class="ai-close-mini-btn" onclick="document.getElementById('modalAiResponseBox').style.display='none'">✕</button>
+                  </div>
+                  <p class="ai-box-text">${res.text}</p>
+                </div>
+              `;
+            } else {
+              const err = res.errorInfo || {
+                title: 'AI 응답 실패',
+                desc: '구글 AI 서버 응답을 가져오지 못했습니다.',
+                action: 'API 키를 다시 확인해 주세요.'
+              };
+              aiResponseBox.innerHTML = `
+                <div class="ai-box-error">
+                  <div style="font-weight:800; margin-bottom:4px;">⚠️ ${err.title}</div>
+                  <div style="font-size:0.84rem; margin-bottom:4px; color:#fecaca;">${err.desc}</div>
+                  ${err.raw ? `<div style="font-size:0.75rem; font-family:monospace; background:rgba(0,0,0,0.3); padding:4px 6px; border-radius:4px; margin-bottom:6px; word-break:break-all;">${err.raw}</div>` : ''}
+                  <div style="font-size:0.8rem; color:#fef08a; margin-bottom:8px;">💡 ${err.action}</div>
+                  <div class="ai-box-actions">
+                    <button type="button" class="ai-box-btn-mini" id="modalFixAiKeyBtn">🔑 API 키 설정 및 진단 열기</button>
+                  </div>
+                </div>
+              `;
+              const fixBtn = document.getElementById('modalFixAiKeyBtn');
+              if (fixBtn) {
+                fixBtn.addEventListener('click', (ev) => {
+                  ev.stopPropagation();
+                  window.GeminiService.showApiKeyModal(() => {
+                    if (aiAskBtn) aiAskBtn.click();
+                  });
+                });
+              }
+            }
+          }
+        } catch (err) {
+          aiResponseBox.innerHTML = `
+            <div class="ai-box-error">
+              <div>⚠️ 네트워크 연결 오류 또는 오프라인 상태입니다.</div>
+              <div style="font-size:0.8rem; margin-top:4px;">(${err.message || '인터넷 연결 확인 필요'})</div>
+            </div>
+          `;
+        }
+      }
     });
   }
 

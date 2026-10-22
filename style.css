@@ -3991,3 +3991,1399 @@ body.light-theme.colorblind-mode .element-cell::after {
   line-height: 1;
 }
 
+/* =========================================================================
+ * 🛡️ 인앱 안전 뷰어 & 인앱 인쇄 브릿지 스타일 (In-App Browser & Print Modal)
+ * - 패밀리링크(Family Link) 브라우저 차단 환경 대응
+ * ========================================================================= */
+.inapp-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 1rem;
+}
+
+.inapp-modal-card {
+  width: 95vw;
+  max-width: 960px;
+  height: 92vh;
+  background: #0f172a;
+  border-radius: 16px;
+  border: 1px solid #334155;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+}
+
+.inapp-modal-header {
+  padding: 0.85rem 1.25rem;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.inapp-modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.inapp-header-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.inapp-header-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inapp-header-sub {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inapp-header-url {
+  color: #38bdf8;
+  font-size: 0.75rem;
+  font-family: monospace;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inapp-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.inapp-close-btn {
+  background: #334155;
+  border: none;
+  color: #f8fafc;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.inapp-close-btn:hover {
+  background: #ef4444;
+}
+
+.inapp-icon-btn {
+  background: #334155;
+  border: none;
+  color: #f8fafc;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.inapp-modal-body {
+  position: relative;
+  flex: 1;
+  background: #fff;
+  overflow: hidden;
+}
+
+.inapp-loading-indicator {
+  position: absolute;
+  inset: 0;
+  background: #0f172a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  z-index: 10;
+}
+
+.inapp-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #fff;
+}
+
+/* =========================================================================
+ * 📖 원소 완결형 백과사전 이야기 스타일 (Modal Encyclopedia Section)
+ * ========================================================================= */
+.modal-encyclopedia-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 1.25rem;
+}
+
+.offline-ready-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.modal-encyclopedia-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.encyclopedia-headline-box {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(129, 140, 248, 0.12));
+  border-left: 4px solid #38bdf8;
+  padding: 0.85rem 1rem;
+  border-radius: 0 10px 10px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.headline-quote {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.ency-headline-text {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #e0f2fe;
+  line-height: 1.45;
+}
+
+.encyclopedia-story-block,
+.encyclopedia-facts-block,
+.encyclopedia-science-block,
+.encyclopedia-safety-block {
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+}
+
+.block-title {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #38bdf8;
+  margin-bottom: 0.45rem;
+}
+
+.encyclopedia-facts-block .block-title {
+  color: #facc15;
+}
+
+.encyclopedia-safety-block .block-title {
+  color: #fb923c;
+}
+
+.ency-body-text {
+  margin: 0;
+  font-size: 0.86rem;
+  color: #cbd5e1;
+  line-height: 1.55;
+}
+
+.ency-facts-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ency-facts-list li {
+  font-size: 0.85rem;
+  color: #e2e8f0;
+  line-height: 1.45;
+}
+
+/* =========================================================================
+ * 🎮 원소 종합 게임 스위트 UI (Game Suite Navigation & Sub-Games)
+ * ========================================================================= */
+.game-suite-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1rem 0;
+}
+
+.game-suite-nav {
+  display: flex;
+  gap: 0.5rem;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 14px;
+  padding: 0.4rem;
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.game-suite-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.game-nav-tab {
+  flex: 1;
+  min-width: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.game-nav-tab:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.game-nav-tab.active {
+  background: #0284c7;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
+}
+
+.game-tab-icon {
+  font-size: 1.15rem;
+}
+
+/* 로비 공통 스타일 */
+.game-lobby-box {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 1.75rem;
+  text-align: center;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+}
+
+.game-lobby-hero {
+  margin-bottom: 1.5rem;
+}
+
+.game-hero-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.game-lobby-hero h2 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #f8fafc;
+  margin: 0 0 0.5rem;
+}
+
+.game-lobby-hero p {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  max-width: 500px;
+  margin: 0 auto 1rem;
+  line-height: 1.45;
+}
+
+.game-record-tag {
+  display: inline-block;
+  background: rgba(250, 204, 21, 0.15);
+  color: #facc15;
+  border: 1px solid rgba(250, 204, 21, 0.3);
+  padding: 4px 14px;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.game-settings-card {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 1.25rem;
+  text-align: left;
+}
+
+.game-settings-card h3 {
+  margin: 0 0 0.85rem;
+  font-size: 0.95rem;
+  color: #e2e8f0;
+}
+
+.difficulty-select-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
+}
+
+.diff-btn {
+  background: #1e293b;
+  border: 2px solid #334155;
+  border-radius: 10px;
+  padding: 0.85rem 0.5rem;
+  color: #94a3b8;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.diff-btn.active {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  color: #f8fafc;
+}
+
+.diff-title {
+  font-weight: 800;
+  font-size: 0.92rem;
+}
+
+.diff-btn small {
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.diff-btn.active small {
+  color: #38bdf8;
+}
+
+/* 2. 카드 짝맞추기 게임 보드 (Memory Match) */
+.memory-board-wrapper {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 1.25rem;
+}
+
+.memory-board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.memory-stats-bar {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.stat-pill {
+  background: #0f172a;
+  border: 1px solid #334155;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  color: #cbd5e1;
+}
+
+.stat-pill strong {
+  color: #38bdf8;
+}
+
+.memory-cards-grid {
+  display: grid;
+  gap: 0.65rem;
+  perspective: 1000px;
+}
+
+.memory-cards-grid.grid-easy {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.memory-cards-grid.grid-medium {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.memory-cards-grid.grid-hard {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.memory-card-item {
+  aspect-ratio: 3 / 3.8;
+  cursor: pointer;
+  perspective: 1000px;
+}
+
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.memory-card-item.flipped .card-inner,
+.memory-card-item.matched .card-inner {
+  transform: rotateY(180deg);
+}
+
+.card-front,
+.card-back {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem;
+  text-align: center;
+}
+
+.card-back {
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  border: 2px solid #334155;
+  color: #38bdf8;
+}
+
+.card-atom-logo {
+  font-size: 1.6rem;
+}
+
+.card-front {
+  background: #0f172a;
+  border: 2px solid #38bdf8;
+  transform: rotateY(180deg);
+}
+
+.card-top-num {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  margin-bottom: 0.2rem;
+  font-weight: 600;
+}
+
+.card-main-symbol {
+  font-size: 1.15rem;
+  font-weight: 900;
+  line-height: 1.1;
+  word-break: keep-all;
+}
+
+.memory-card-item.matched .card-front {
+  border-color: #facc15 !important;
+  box-shadow: 0 0 14px rgba(250, 204, 21, 0.35);
+}
+
+/* 3. 주기율표 퍼즐 (Puzzle) */
+.puzzle-play-wrapper {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 1.25rem;
+}
+
+.puzzle-play-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.puzzle-stages-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.6rem;
+}
+
+.puzzle-stage-btn {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  color: #e2e8f0;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.15s;
+}
+
+.puzzle-stage-btn.active {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+}
+
+.stage-btn-title {
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.puzzle-target-banner {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.target-symbol-box {
+  width: 70px;
+  height: 70px;
+  border: 3px solid #38bdf8;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(56, 189, 248, 0.08);
+  flex-shrink: 0;
+}
+
+.target-num {
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.target-symbol {
+  font-size: 1.6rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.target-info-wrap h3 {
+  margin: 0 0 0.3rem;
+  font-size: 1.1rem;
+  color: #f8fafc;
+}
+
+.target-info-wrap p {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.target-hint-pill {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: #cbd5e1;
+}
+
+.puzzle-slots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.puzzle-slot-card {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 0.85rem;
+  color: #f8fafc;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  transition: all 0.15s;
+}
+
+.puzzle-slot-card:hover {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.05);
+}
+
+.slot-pos-badge {
+  background: #0284c7;
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  align-self: flex-start;
+}
+
+.slot-pos-desc strong {
+  display: block;
+  font-size: 0.9rem;
+}
+
+.slot-pick-icon {
+  font-size: 0.78rem;
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.puzzle-feedback-msg {
+  margin-top: 1rem;
+  padding: 0.85rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.puzzle-feedback-msg.success {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid #10b981;
+  color: #34d399;
+}
+
+.puzzle-feedback-msg.wrong {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid #ef4444;
+  color: #f87171;
+}
+
+/* 4. 원소 연금술 (Alchemy Lab) */
+.alchemy-lab-wrapper {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 1.25rem;
+}
+
+.alchemy-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.alchemy-progress-group {
+  flex: 1;
+  min-width: 220px;
+}
+
+.alchemy-progress-group span {
+  font-size: 0.85rem;
+  color: #cbd5e1;
+}
+
+.alchemy-progress-track {
+  height: 8px;
+  background: #0f172a;
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-top: 0.35rem;
+}
+
+.alchemy-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8, #facc15);
+  transition: width 0.3s;
+}
+
+.alchemy-beaker-stage {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 14px;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+.beaker-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.beaker-glass {
+  width: 200px;
+  height: 160px;
+  border: 4px solid #94a3b8;
+  border-top: none;
+  border-radius: 0 0 24px 24px;
+  position: relative;
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  align-items: flex-end;
+  padding: 8px;
+  box-shadow: inset 0 0 20px rgba(56, 189, 248, 0.1);
+}
+
+.beaker-fluid {
+  width: 100%;
+  min-height: 90px;
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.35), rgba(14, 165, 233, 0.7));
+  border-radius: 0 0 18px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  transition: background 0.3s;
+}
+
+.beaker-fluid.reacting {
+  background: linear-gradient(180deg, rgba(250, 204, 21, 0.7), rgba(249, 115, 22, 0.9)) !important;
+  animation: beakerBubble 0.2s infinite alternate;
+}
+
+@keyframes beakerBubble {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-4px); }
+}
+
+.beaker-items-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+}
+
+.empty-tip {
+  font-size: 0.78rem;
+  color: #bae6fd;
+}
+
+.beaker-atom-pill {
+  background: #0f172a;
+  border: 1px solid #38bdf8;
+  color: #38bdf8;
+  font-weight: 800;
+  font-size: 0.8rem;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+.beaker-action-row {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.alchemy-shelf-section h3 {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  color: #e2e8f0;
+}
+
+.alchemy-atoms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 0.5rem;
+}
+
+.shelf-atom-btn {
+  background: #0f172a;
+  border: 2px solid #334155;
+  border-radius: 8px;
+  padding: 0.5rem 0.25rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  transition: transform 0.1s;
+}
+
+.shelf-atom-btn:active {
+  transform: scale(0.92);
+}
+
+.shelf-atom-btn strong {
+  font-size: 1.1rem;
+}
+
+.shelf-atom-btn small {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+/* 도감 그리드 */
+.recipe-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.75rem;
+  max-height: 65vh;
+  overflow-y: auto;
+  padding: 0.25rem;
+}
+
+.recipe-item-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 0.85rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.recipe-item-card.locked {
+  opacity: 0.55;
+  background: #0f172a;
+}
+
+.recipe-icon {
+  font-size: 1.75rem;
+  flex-shrink: 0;
+}
+
+.recipe-text strong {
+  display: block;
+  font-size: 0.95rem;
+  color: #f8fafc;
+}
+
+.recipe-formula {
+  display: inline-block;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin: 0.25rem 0;
+}
+
+.recipe-text small {
+  display: block;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  line-height: 1.35;
+}
+
+.alchemy-success-card {
+  text-align: center;
+  max-width: 420px;
+  padding: 2rem 1.5rem;
+}
+
+.success-sparkles {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.success-icon-large {
+  font-size: 4rem;
+  margin-bottom: 0.5rem;
+}
+
+.success-compound-name {
+  font-size: 1.4rem;
+  color: #f8fafc;
+  margin: 0 0 0.35rem;
+}
+
+.success-formula-badge {
+  display: inline-block;
+  background: #0284c7;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 800;
+  padding: 3px 12px;
+  border-radius: 9999px;
+  margin-bottom: 0.75rem;
+}
+
+.success-desc {
+  font-size: 0.88rem;
+  color: #cbd5e1;
+  line-height: 1.45;
+  margin: 0 0 0.85rem;
+}
+
+.success-recipe-tag {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #facc15;
+}
+
+.card-ency-headline-box {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(129, 140, 248, 0.12));
+  border-left: 3px solid #38bdf8;
+  padding: 0.45rem 0.65rem;
+  border-radius: 0 6px 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-ency-headline-box .ency-icon {
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.card-ency-headline-box .ency-text {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #e0f2fe;
+  line-height: 1.35;
+}
+
+/* 인공 합성 초중원소 및 사진 미제공 원소 전용 고급 비주얼 카드 */
+.synthetic-fallback-card {
+  width: 100%;
+  height: 100%;
+  min-height: 160px;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: inset 0 0 20px rgba(56, 189, 248, 0.08);
+}
+
+.synthetic-badge {
+  display: inline-block;
+  background: rgba(250, 204, 21, 0.15);
+  color: #facc15;
+  border: 1px solid rgba(250, 204, 21, 0.35);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  margin-bottom: 0.5rem;
+}
+
+.synthetic-big-icon {
+  font-size: 2.2rem;
+  margin-bottom: 0.25rem;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
+}
+
+.synthetic-symbol {
+  font-size: 1.5rem;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 0.4rem;
+}
+
+.synthetic-desc-note {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.4;
+  max-width: 260px;
+}
+
+/* 7편 주기율표 셀 내 인공원소 fallback 개선 */
+.cell-photo-symbol-fallback.synthetic-fallback {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+  border: 1px dashed rgba(250, 204, 21, 0.4);
+}
+
+.cell-photo-symbol-fallback .fallback-icon {
+  font-size: 0.85rem;
+  margin-bottom: 2px;
+}
+
+/* 모달 내 AI 실시간 팁 박스 */
+.modal-ai-box {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(168, 85, 247, 0.15));
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  animation: fadeIn 0.25s ease-out;
+}
+
+.ai-box-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #bae6fd;
+  font-size: 0.88rem;
+}
+
+.ai-spinner {
+  font-size: 1.3rem;
+  animation: spin 1.5s infinite linear;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.ai-box-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.ai-badge {
+  background: #0284c7;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.ai-close-mini-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.ai-box-text {
+  margin: 0;
+  font-size: 0.92rem;
+  color: #f8fafc;
+  line-height: 1.55;
+  word-break: keep-all;
+}
+
+.ai-box-error {
+  color: #f87171;
+  font-size: 0.85rem;
+}
+
+.modal-ai-btn {
+  background: linear-gradient(135deg, #0284c7, #8b5cf6) !important;
+  color: #fff !important;
+  border-color: #a855f7 !important;
+}
+
+/* Gemini API 설정 및 진단 전역 모달 */
+.gemini-config-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.gemini-config-card {
+  background: #1e293b;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.2);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.gemini-config-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.1rem 1.4rem;
+  background: rgba(15, 23, 42, 0.6);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.gemini-config-header .title-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.gemini-logo-icon {
+  font-size: 1.5rem;
+}
+
+.gemini-config-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.gemini-modal-close {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.gemini-modal-close:hover {
+  color: #f1f5f9;
+}
+
+.gemini-config-body {
+  padding: 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.gemini-desc {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+.gemini-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.gemini-input-group label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.gemini-input-wrapper {
+  display: flex;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.gemini-input-wrapper:focus-within {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+.gemini-input-wrapper input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 0.75rem 0.9rem;
+  color: #f8fafc;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.gemini-toggle-vis-btn {
+  background: transparent;
+  border: none;
+  padding: 0 0.8rem;
+  cursor: pointer;
+  font-size: 1.1rem;
+  color: #94a3b8;
+}
+
+.gemini-actions-row {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.gemini-btn {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.gemini-btn.test-btn {
+  background: #334155;
+  color: #f1f5f9;
+  border: 1px solid #475569;
+}
+
+.gemini-btn.test-btn:hover {
+  background: #475569;
+}
+
+.gemini-btn.save-btn {
+  background: linear-gradient(135deg, #0284c7, #2563eb);
+  color: #fff;
+}
+
+.gemini-btn.save-btn:hover {
+  opacity: 0.9;
+}
+
+.gemini-test-result-box {
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.gemini-test-result-box.result-loading {
+  background: rgba(14, 165, 233, 0.15);
+  border: 1px solid #0284c7;
+  color: #7dd3fc;
+}
+
+.gemini-test-result-box.result-success {
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid #22c55e;
+  color: #86efac;
+}
+
+.gemini-test-result-box.result-success .result-title {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #4ade80;
+  margin-bottom: 0.3rem;
+}
+
+.gemini-test-result-box.result-success .result-quote {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 6px;
+  color: #f0fdf4;
+  font-style: italic;
+}
+
+.gemini-test-result-box.result-error {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid #ef4444;
+  color: #fca5a5;
+}
+
+.gemini-test-result-box.result-error .result-title {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #f87171;
+  margin-bottom: 0.3rem;
+}
+
+.gemini-test-result-box.result-error .result-raw {
+  margin-top: 0.4rem;
+  padding: 0.4rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: #fecaca;
+  word-break: break-all;
+}
+
+.gemini-test-result-box.result-error .result-action {
+  margin-top: 0.5rem;
+  color: #fef08a;
+  font-weight: 600;
+}
+
+.gemini-guide-box {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px dashed #475569;
+  border-radius: 8px;
+  padding: 0.9rem;
+  font-size: 0.84rem;
+}
+
+.gemini-guide-box .guide-title {
+  font-weight: 700;
+  color: #94a3b8;
+  margin-bottom: 0.4rem;
+}
+
+.gemini-guide-box .guide-steps {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.gemini-guide-box .guide-note {
+  margin-top: 0.5rem;
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.ai-box-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+
+.ai-box-btn-mini {
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+}
+
+.ai-box-btn-mini:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+
+
+
+
+
