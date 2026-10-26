@@ -1,0 +1,592 @@
+{
+  "1": {
+    "nameKo": "수소",
+    "nameEn": "Hydrogen",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/83/Hydrogen_discharge_tube.jpg/330px-Hydrogen_discharge_tube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "2": {
+    "nameKo": "헬륨",
+    "nameEn": "Helium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/82/Helium_discharge_tube.jpg/330px-Helium_discharge_tube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "3": {
+    "nameKo": "리튬",
+    "nameEn": "Lithium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8a/Purified_lithium_in_an_ampoule_under_argon%2C_dark_background.png/330px-Purified_lithium_in_an_ampoule_under_argon%2C_dark_background.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "4": {
+    "nameKo": "베릴륨",
+    "nameEn": "Beryllium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0c/Be-140g.jpg/330px-Be-140g.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "5": {
+    "nameKo": "붕소",
+    "nameEn": "Boron",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/19/Boron_R105.jpg/330px-Boron_R105.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "6": {
+    "nameKo": "탄소",
+    "nameEn": "Carbon",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f0/Graphite-and-diamond-with-scale.jpg/330px-Graphite-and-diamond-with-scale.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "7": {
+    "nameKo": "질소",
+    "nameEn": "Nitrogen",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f5/Fluessiger_Stickstoff.jpg/330px-Fluessiger_Stickstoff.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "8": {
+    "nameKo": "산소",
+    "nameEn": "Oxygen",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a0/Liquid_oxygen_in_a_beaker_%28cropped_and_retouched%29.jpg/330px-Liquid_oxygen_in_a_beaker_%28cropped_and_retouched%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "9": {
+    "nameKo": "플루오린",
+    "nameEn": "Fluorine",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2c/Fluoro_liquido_a_-196%C2%B0C_1.jpg/330px-Fluoro_liquido_a_-196%C2%B0C_1.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "10": {
+    "nameKo": "네온",
+    "nameEn": "Neon",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/46/Neon_discharge_tube.jpg/330px-Neon_discharge_tube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "11": {
+    "nameKo": "소듐",
+    "nameEn": "Sodium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/27/Na_%28Sodium%29.jpg/330px-Na_%28Sodium%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "12": {
+    "nameKo": "마그네슘",
+    "nameEn": "Magnesium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5c/CSIRO_ScienceImage_2893_Crystalised_magnesium.jpg/330px-CSIRO_ScienceImage_2893_Crystalised_magnesium.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "13": {
+    "nameKo": "알루미늄",
+    "nameEn": "Aluminium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5d/Aluminium-4.jpg/330px-Aluminium-4.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "14": {
+    "nameKo": "규소",
+    "nameEn": "Silicon",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c9/A_piece_of_zone_refined_silicon.JPG/330px-A_piece_of_zone_refined_silicon.JPG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "15": {
+    "nameKo": "인",
+    "nameEn": "Phosphorus",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cd/Phosphor_rot.jpg/330px-Phosphor_rot.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "16": {
+    "nameKo": "황",
+    "nameEn": "Sulfur",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/88/Sulfur_-_El_Desierto_mine%2C_San_Pablo_de_Napa%2C_Daniel_Campos_Province%2C_Potos%C3%AD%2C_Bolivia.jpg/330px-Sulfur_-_El_Desierto_mine%2C_San_Pablo_de_Napa%2C_Daniel_Campos_Province%2C_Potos%C3%AD%2C_Bolivia.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "17": {
+    "nameKo": "염소",
+    "nameEn": "Chlorine",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/49/Chlorine_in_bottle.jpg/330px-Chlorine_in_bottle.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "18": {
+    "nameKo": "아르곤",
+    "nameEn": "Argon",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/87/Argon_discharge_tube.jpg/330px-Argon_discharge_tube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "19": {
+    "nameKo": "포타슘",
+    "nameEn": "Potassium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a4/Potassium-2.jpg/330px-Potassium-2.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "20": {
+    "nameKo": "칼슘",
+    "nameEn": "Calcium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/17/Calcium_crystals_in_ampoule_cropped.jpg/330px-Calcium_crystals_in_ampoule_cropped.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "21": {
+    "nameKo": "스칸듐",
+    "nameEn": "Scandium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e6/Scandium_sublimed_dendritic_and_1cm3_cube.jpg/330px-Scandium_sublimed_dendritic_and_1cm3_cube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "22": {
+    "nameKo": "타이타늄",
+    "nameEn": "Titanium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/db/Titan-crystal_bar.JPG/330px-Titan-crystal_bar.JPG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "23": {
+    "nameKo": "바나듐",
+    "nameEn": "Vanadium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f1/Vanadium_crystal_bar_and_1cm3_cube.jpg/330px-Vanadium_crystal_bar_and_1cm3_cube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "24": {
+    "nameKo": "크로뮴",
+    "nameEn": "Chromium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/08/Chromium_crystals_and_1cm3_cube.jpg/330px-Chromium_crystals_and_1cm3_cube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "25": {
+    "nameKo": "망가니즈",
+    "nameEn": "Manganese",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1d/Manganese_electrolytic_and_1cm3_cube.jpg/330px-Manganese_electrolytic_and_1cm3_cube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "26": {
+    "nameKo": "철",
+    "nameEn": "Iron",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Iron_electrolytic_and_1cm3_cube.jpg/330px-Iron_electrolytic_and_1cm3_cube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "27": {
+    "nameKo": "코발트",
+    "nameEn": "Cobalt",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a8/Kobalt_electrolytic_and_1cm3_cube.jpg/330px-Kobalt_electrolytic_and_1cm3_cube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "28": {
+    "nameKo": "니켈",
+    "nameEn": "Nickel",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6a/Nickel_electrolytic_and_1cm3_cube.jpg/330px-Nickel_electrolytic_and_1cm3_cube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "29": {
+    "nameKo": "구리",
+    "nameEn": "Copper",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f0/NatCopper.jpg/330px-NatCopper.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "30": {
+    "nameKo": "아연",
+    "nameEn": "Zinc",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f9/Zinc_fragment_sublimed_and_1cm3_cube.jpg/330px-Zinc_fragment_sublimed_and_1cm3_cube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "31": {
+    "nameKo": "갈륨",
+    "nameEn": "Gallium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b8/Gallium_bar_cracked_open_to_show_crystal_structure_with_scale_1.png/330px-Gallium_bar_cracked_open_to_show_crystal_structure_with_scale_1.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "32": {
+    "nameKo": "저마늄",
+    "nameEn": "Germanium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/08/Polycrystalline-germanium.jpg/330px-Polycrystalline-germanium.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "33": {
+    "nameKo": "비소",
+    "nameEn": "Arsenic",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7b/Arsen_1a.jpg/330px-Arsen_1a.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "34": {
+    "nameKo": "셀레늄",
+    "nameEn": "Selenium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/47/SeBlackRed.jpg/330px-SeBlackRed.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "35": {
+    "nameKo": "브로민",
+    "nameEn": "Bromine",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/35/Bromine_vial_in_acrylic_cube.jpg/330px-Bromine_vial_in_acrylic_cube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "36": {
+    "nameKo": "크립톤",
+    "nameEn": "Krypton",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/50/Krypton_discharge_tube.jpg/330px-Krypton_discharge_tube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "37": {
+    "nameKo": "루비듐",
+    "nameEn": "Rubidium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c9/Rb5.JPG/330px-Rb5.JPG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "38": {
+    "nameKo": "스트론튬",
+    "nameEn": "Strontium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/41/Strontium_destilled_crystals.jpg/330px-Strontium_destilled_crystals.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "39": {
+    "nameKo": "이트륨",
+    "nameEn": "Yttrium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/19/Yttrium_sublimed_dendritic_and_1cm3_cube.jpg/330px-Yttrium_sublimed_dendritic_and_1cm3_cube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "40": {
+    "nameKo": "지르코늄",
+    "nameEn": "Zirconium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/92/Zirconium_crystal_bar_and_1cm3_cube.jpg/330px-Zirconium_crystal_bar_and_1cm3_cube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "41": {
+    "nameKo": "나이오븀",
+    "nameEn": "Niobium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f2/Niobium_crystals_and_1cm3_cube.jpg/330px-Niobium_crystals_and_1cm3_cube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "42": {
+    "nameKo": "몰리브데넘",
+    "nameEn": "Molybdenum",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/32/Molybdenum_crystaline_fragment_and_1cm3_cube.jpg/330px-Molybdenum_crystaline_fragment_and_1cm3_cube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "43": {
+    "nameKo": "테크네튬",
+    "nameEn": "Technetium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ab/Technetium-sample-cropped.jpg/330px-Technetium-sample-cropped.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "44": {
+    "nameKo": "루테늄",
+    "nameEn": "Ruthenium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2c/Ruthenium_a_half_bar.jpg/330px-Ruthenium_a_half_bar.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "45": {
+    "nameKo": "로듐",
+    "nameEn": "Rhodium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/98/Rhodium_powder_pressed_melted.jpg/330px-Rhodium_powder_pressed_melted.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "46": {
+    "nameKo": "팔라듐",
+    "nameEn": "Palladium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d7/Palladium_%2846_Pd%29.jpg/330px-Palladium_%2846_Pd%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "47": {
+    "nameKo": "은",
+    "nameEn": "Silver",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/55/Silver_crystal.jpg/330px-Silver_crystal.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "48": {
+    "nameKo": "카드뮴",
+    "nameEn": "Cadmium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b5/Cadmium-crystal_bar.jpg/330px-Cadmium-crystal_bar.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "49": {
+    "nameKo": "인듐",
+    "nameEn": "Indium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b8/Indium.jpg/330px-Indium.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "50": {
+    "nameKo": "주석",
+    "nameEn": "Tin",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2b/Sn-Alpha-Beta.jpg/330px-Sn-Alpha-Beta.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "51": {
+    "nameKo": "안티모니",
+    "nameEn": "Antimony",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5c/Antimony-4.jpg/330px-Antimony-4.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "52": {
+    "nameKo": "텔루륨",
+    "nameEn": "Tellurium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c1/Tellurium2.jpg/330px-Tellurium2.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "53": {
+    "nameKo": "아이오딘",
+    "nameEn": "Iodine",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0a/Sample_of_iodine.jpg/330px-Sample_of_iodine.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "54": {
+    "nameKo": "제논",
+    "nameEn": "Xenon",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d7/Xenon_discharge_tube.jpg/330px-Xenon_discharge_tube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "55": {
+    "nameKo": "세슘",
+    "nameEn": "Caesium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3d/Cesium.jpg/330px-Cesium.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "56": {
+    "nameKo": "바륨",
+    "nameEn": "Barium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/16/Barium_unter_Argon_Schutzgas_Atmosph%C3%A4re.jpg/330px-Barium_unter_Argon_Schutzgas_Atmosph%C3%A4re.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "57": {
+    "nameKo": "란타넘",
+    "nameEn": "Lanthanum",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8c/Lanthanum-2.jpg/330px-Lanthanum-2.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "58": {
+    "nameKo": "세륨",
+    "nameEn": "Cerium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0d/Cerium2.jpg/330px-Cerium2.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "59": {
+    "nameKo": "프라세오디뮴",
+    "nameEn": "Praseodymium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c7/Praseodymium.jpg/330px-Praseodymium.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "60": {
+    "nameKo": "네오디뮴",
+    "nameEn": "Neodymium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7a/Ultrapure_neodymium_under_argon%2C_5_grams.jpg/330px-Ultrapure_neodymium_under_argon%2C_5_grams.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "61": {
+    "nameKo": "프로메튬",
+    "nameEn": "Promethium",
+    "thumb": null
+  },
+  "62": {
+    "nameKo": "사마륨",
+    "nameEn": "Samarium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/88/Samarium-2.jpg/330px-Samarium-2.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "63": {
+    "nameKo": "유로퓸",
+    "nameEn": "Europium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6a/Europium.jpg/330px-Europium.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "64": {
+    "nameKo": "가돌리늄",
+    "nameEn": "Gadolinium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d1/Gadolinium-4.jpg/330px-Gadolinium-4.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "65": {
+    "nameKo": "터븀",
+    "nameEn": "Terbium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9a/Terbium-2.jpg/330px-Terbium-2.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "66": {
+    "nameKo": "디스프로슘",
+    "nameEn": "Dysprosium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a8/Dy_chips.jpg/330px-Dy_chips.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "67": {
+    "nameKo": "홀뮴",
+    "nameEn": "Holmium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0a/Holmium2.jpg/330px-Holmium2.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "68": {
+    "nameKo": "어븀",
+    "nameEn": "Erbium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/88/Erbium_%2868_Er%29.jpg/330px-Erbium_%2868_Er%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "69": {
+    "nameKo": "툴륨",
+    "nameEn": "Thulium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1e/Thulium_sublimed_dendritic_and_1cm3_cube.jpg/330px-Thulium_sublimed_dendritic_and_1cm3_cube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "70": {
+    "nameKo": "이터븀",
+    "nameEn": "Ytterbium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/ce/Ytterbium-3.jpg/330px-Ytterbium-3.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "71": {
+    "nameKo": "루테튬",
+    "nameEn": "Lutetium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/74/Lutetium_sublimed_dendritic_and_1cm3_cube.jpg/330px-Lutetium_sublimed_dendritic_and_1cm3_cube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "72": {
+    "nameKo": "하프늄",
+    "nameEn": "Hafnium",
+    "thumb": null
+  },
+  "73": {
+    "nameKo": "탄탈럼",
+    "nameEn": "Tantalum",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/83/Tantalum_single_crystal_and_1cm3_cube.jpg/330px-Tantalum_single_crystal_and_1cm3_cube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "74": {
+    "nameKo": "텅스텐",
+    "nameEn": "Tungsten",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1a/Wolfram_evaporated_crystals_and_1cm3_cube.jpg/330px-Wolfram_evaporated_crystals_and_1cm3_cube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "75": {
+    "nameKo": "레늄",
+    "nameEn": "Rhenium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/71/Rhenium_single_crystal_bar_and_1cm3_cube.jpg/330px-Rhenium_single_crystal_bar_and_1cm3_cube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "76": {
+    "nameKo": "오스뮴",
+    "nameEn": "Osmium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0c/Osmium_crystals.jpg/330px-Osmium_crystals.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "77": {
+    "nameKo": "이리듐",
+    "nameEn": "Iridium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/54/Iridium_%2877_Ir%29_%28cropped%29.jpg/330px-Iridium_%2877_Ir%29_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "78": {
+    "nameKo": "백금",
+    "nameEn": "Platinum",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/68/Platinum_crystals.jpg/330px-Platinum_crystals.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "79": {
+    "nameKo": "금",
+    "nameEn": "Gold",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d7/Gold-crystals.jpg/330px-Gold-crystals.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "80": {
+    "nameKo": "수은",
+    "nameEn": "Mercury",
+    "thumb": null
+  },
+  "81": {
+    "nameKo": "탈륨",
+    "nameEn": "Thallium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bb/Thallium_pieces_in_ampoule.jpg/330px-Thallium_pieces_in_ampoule.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "82": {
+    "nameKo": "납",
+    "nameEn": "Lead",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e6/Lead_electrolytic_and_1cm3_cube.jpg/330px-Lead_electrolytic_and_1cm3_cube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "83": {
+    "nameKo": "비스무트",
+    "nameEn": "Bismuth",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ef/Bismuth_crystals_and_1cm3_cube.jpg/330px-Bismuth_crystals_and_1cm3_cube.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "84": {
+    "nameKo": "폴로늄",
+    "nameEn": "Polonium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/07/Polonium_on_brass_sheet.jpg/330px-Polonium_on_brass_sheet.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "85": {
+    "nameKo": "아스타틴",
+    "nameEn": "Astatine",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/52/Glow_from_a_sample_of_astatine_%28cropped%29.jpg/330px-Glow_from_a_sample_of_astatine_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "86": {
+    "nameKo": "라돈",
+    "nameEn": "Radon",
+    "thumb": null
+  },
+  "87": {
+    "nameKo": "프랑슘",
+    "nameEn": "Francium",
+    "thumb": null
+  },
+  "88": {
+    "nameKo": "라듐",
+    "nameEn": "Radium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bb/Radium226.jpg/330px-Radium226.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "89": {
+    "nameKo": "악티늄",
+    "nameEn": "Actinium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/27/Actinium_sample_%2831481701837%29.png/330px-Actinium_sample_%2831481701837%29.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "90": {
+    "nameKo": "토륨",
+    "nameEn": "Thorium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/13/Thorium_sample_0.1g.jpg/330px-Thorium_sample_0.1g.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "91": {
+    "nameKo": "프로트악티늄",
+    "nameEn": "Protactinium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ea/Protactinium_%28Element_-_91%29_2.jpg/330px-Protactinium_%28Element_-_91%29_2.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "92": {
+    "nameKo": "우라늄",
+    "nameEn": "Uranium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d8/HEUraniumC.jpg/330px-HEUraniumC.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "93": {
+    "nameKo": "넵투늄",
+    "nameEn": "Neptunium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d3/Neptunium_%28Element_-_93%29_3.jpg/330px-Neptunium_%28Element_-_93%29_3.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "94": {
+    "nameKo": "플루토늄",
+    "nameEn": "Plutonium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0f/Plutonium_ring.jpg/330px-Plutonium_ring.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "95": {
+    "nameKo": "아메리슘",
+    "nameEn": "Americium",
+    "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ee/Americium_microscope.jpg/330px-Americium_microscope.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "96": {
+    "nameKo": "퀴륨",
+    "nameEn": "Curium",
+    "thumb": null
+  },
+  "97": {
+    "nameKo": "버클륨",
+    "nameEn": "Berkelium",
+    "thumb": "https://upload.wikimedia.org/wikipedia/commons/b/b6/Berkelium_metal.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+  },
+  "98": {
+    "nameKo": "캘리포늄",
+    "nameEn": "Californium",
+    "thumb": "https://upload.wikimedia.org/wikipedia/commons/9/93/Californium.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+  },
+  "99": {
+    "nameKo": "아인슈타이늄",
+    "nameEn": "Einsteinium",
+    "thumb": "https://upload.wikimedia.org/wikipedia/commons/5/55/Einsteinium.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+  },
+  "100": {
+    "nameKo": "페르뮴",
+    "nameEn": "Fermium",
+    "thumb": null
+  },
+  "101": {
+    "nameKo": "멘델레븀",
+    "nameEn": "Mendelevium",
+    "thumb": null
+  },
+  "102": {
+    "nameKo": "노벨륨",
+    "nameEn": "Nobelium",
+    "thumb": null
+  },
+  "103": {
+    "nameKo": "로렌슘",
+    "nameEn": "Lawrencium",
+    "thumb": null
+  },
+  "104": {
+    "nameKo": "러더포듐",
+    "nameEn": "Rutherfordium",
+    "thumb": null
+  },
+  "105": {
+    "nameKo": "더브늄",
+    "nameEn": "Dubnium",
+    "thumb": null
+  },
+  "106": {
+    "nameKo": "시보귬",
+    "nameEn": "Seaborgium",
+    "thumb": null
+  },
+  "107": {
+    "nameKo": "보륨",
+    "nameEn": "Bohrium",
+    "thumb": null
+  },
+  "108": {
+    "nameKo": "하슘",
+    "nameEn": "Hassium",
+    "thumb": null
+  },
+  "109": {
+    "nameKo": "마이트너륨",
+    "nameEn": "Meitnerium",
+    "thumb": null
+  },
+  "110": {
+    "nameKo": "다름슈타튬",
+    "nameEn": "Darmstadtium",
+    "thumb": null
+  },
+  "111": {
+    "nameKo": "뢴트게늄",
+    "nameEn": "Roentgenium",
+    "thumb": null
+  },
+  "112": {
+    "nameKo": "코페르니슘",
+    "nameEn": "Copernicium",
+    "thumb": null
+  },
+  "113": {
+    "nameKo": "니호늄",
+    "nameEn": "Nihonium",
+    "thumb": null
+  },
+  "114": {
+    "nameKo": "플레로븀",
+    "nameEn": "Flerovium",
+    "thumb": null
+  },
+  "115": {
+    "nameKo": "모스코븀",
+    "nameEn": "Moscovium",
+    "thumb": null
+  },
+  "116": {
+    "nameKo": "리버모륨",
+    "nameEn": "Livermorium",
+    "thumb": null
+  },
+  "117": {
+    "nameKo": "테네신",
+    "nameEn": "Tennessine",
+    "thumb": null
+  },
+  "118": {
+    "nameKo": "오가네손",
+    "nameEn": "Oganesson",
+    "thumb": null
+  }
+}

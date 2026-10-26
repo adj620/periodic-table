@@ -1,15 +1,25 @@
 /**
- * Google Gemini API 클라이언트 & 진단 서비스 (gemini_service.js)
- * - Gemini 1.5 Flash / 2.0 Flash 자동 폴백
+ * Google Gemini API 클라이언트 & 스마트 진단 서비스 (gemini_service.js)
+ * - 구글 API 키 지원 모델 자동 동적 탐색 (ListModels)
+ * - 404 방지 다중 엔드포인트 & 버전(v1 / v1beta) 자동 폴백 엔진
  * - API 키 자동 정제 (공백/따옴표/줄바꿈 전처리)
  * - 실시간 구글 서버 상세 에러 진단 및 친절한 한글 안내
- * - 전역 API 키 설정 모달 및 연결 테스트 엔진
+ * - 전역 API 키 설정 모달 및 1초 연결 테스트
  */
 
 const GeminiService = (function() {
   const STORAGE_KEY = 'gemini_api_key';
-  const PRIMARY_MODEL = 'gemini-1.5-flash';
-  const FALLBACK_MODEL = 'gemini-2.0-flash';
+  const CACHED_MODEL_KEY = 'gemini_working_model';
+
+  // 우선 시도할 엔드포인트 후보군 (v1beta 및 v1 크로스 매핑)
+  const CANDIDATE_ENDPOINTS = [
+    { ver: 'v1beta', model: 'gemini-1.5-flash' },
+    { ver: 'v1',     model: 'gemini-1.5-flash' },
+    { ver: 'v1beta', model: 'gemini-2.0-flash' },
+    { ver: 'v1beta', model: 'gemini-1.5-flash-latest' },
+    { ver: 'v1beta', model: 'gemini-2.5-flash' },
+    { ver: 'v1',     model: 'gemini-pro' }
+  ];
 
   /**
    * 저장된 API 키 조회 (앞뒤 공백, 따옴표 완벽 정제)
@@ -32,6 +42,7 @@ const GeminiService = (function() {
       localStorage.setItem(STORAGE_KEY, cleaned);
     } else {
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(CACHED_MODEL_KEY);
     }
     return cleaned;
   }
@@ -64,9 +75,9 @@ const GeminiService = (function() {
     if (status === 404 || msg.includes('not found')) {
       return {
         title: '모델 엔드포인트 미지원 (404 Not Found)',
-        desc: '지정한 Gemini 모델 엔드포인트를 찾을 수 없습니다.',
+        desc: '구글 서버에서 요청한 모델명을 찾을 수 없습니다.',
         raw: msg,
-        action: '최신 모델로 자동 전환을 시도합니다.'
+        action: '지원되는 다른 최신 모델 엔드포인트로 자동 전환을 시도합니다.'
       };
     }
 
@@ -88,15 +99,38 @@ const GeminiService = (function() {
   }
 
   /**
-   * Gemini API 단일 호출 (모델명 지정)
+   * 1. 구글 서버에서 현재 API 키로 사용 가능한 모델 동적 탐색 (ListModels)
    */
-  async function callGemini(modelName, prompt, apiKey) {
-    const key = apiKey || getApiKey();
-    if (!key) {
-      throw new Error('NO_API_KEY');
+  async function fetchAvailableModels(key) {
+    const versions = ['v1beta', 'v1'];
+    for (const ver of versions) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/${ver}/models?key=${encodeURIComponent(key)}`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          const list = data?.models || [];
+          // generateContent 지원 모델 필터링
+          const usable = list.filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'));
+          if (usable.length > 0) {
+            // flash 모델 우선 탐색
+            const flashModel = usable.find(m => m.name.includes('flash')) || usable[0];
+            const cleanModelName = flashModel.name.replace(/^models\//, '');
+            return { ver, model: cleanModelName };
+          }
+        }
+      } catch (e) {
+        // 무시하고 다음 버전 시도
+      }
     }
+    return null;
+  }
 
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${encodeURIComponent(key)}`;
+  /**
+   * 2. Gemini API 단일 호출
+   */
+  async function callEndpoint(ver, modelName, prompt, key) {
+    const endpoint = `https://generativelanguage.googleapis.com/${ver}/models/${modelName}:generateContent?key=${encodeURIComponent(key)}`;
     const payload = {
       contents: [{ parts: [{ text: prompt }] }],
       generationConfig: {
@@ -136,6 +170,7 @@ const GeminiService = (function() {
       return {
         ok: false,
         status: res.status,
+        ver,
         modelName,
         errorInfo: parseGoogleError(res.status, errJson)
       };
@@ -146,13 +181,14 @@ const GeminiService = (function() {
     return {
       ok: true,
       status: 200,
+      ver,
       modelName,
       text: text.trim()
     };
   }
 
   /**
-   * 모델 자동 폴백을 포함한 스마트 호출
+   * 3. 404 완벽 방지: 캐시된 모델 -> 동적 탐색 -> 후보군 순차 폴백
    */
   async function generateTextSmart(prompt, apiKey) {
     const key = apiKey || getApiKey();
@@ -162,26 +198,69 @@ const GeminiService = (function() {
         errorInfo: {
           title: 'API 키 필요',
           desc: 'Google Gemini API 키가 아직 등록되지 않았습니다.',
-          action: '퀴즈 탭 또는 설정에서 API 키를 등록해 주세요.'
+          action: '상단 [🤖 AI 키 설정] 또는 퀴즈 탭에서 API 키를 등록해 주세요.'
         }
       };
     }
 
-    // 1차: gemini-1.5-flash 시도
-    let result = await callGemini(PRIMARY_MODEL, prompt, key);
-    if (result.ok) return result;
+    // A. 이전에 성공해서 캐시된 작동 모델이 있으면 먼저 시도
+    let cached = null;
+    try {
+      cached = JSON.parse(localStorage.getItem(CACHED_MODEL_KEY) || 'null');
+    } catch (e) {}
 
-    // 만약 404 모델 에러이거나 일시적 오류라면 2차 폴백: gemini-2.0-flash 시도
-    if (result.status === 404 || result.status === 500 || result.status === 503) {
-      const fallbackResult = await callGemini(FALLBACK_MODEL, prompt, key);
-      if (fallbackResult.ok) return fallbackResult;
+    if (cached && cached.ver && cached.model) {
+      const res = await callEndpoint(cached.ver, cached.model, prompt, key);
+      if (res.ok) return res;
+      // 실패 시 캐시 삭제 후 폴백 진행
+      localStorage.removeItem(CACHED_MODEL_KEY);
     }
 
-    return result;
+    // B. 후보군 순차 시도 (404가 나면 즉시 다음 후보 모델로 자동 전환)
+    let lastError = null;
+    for (const cand of CANDIDATE_ENDPOINTS) {
+      const res = await callEndpoint(cand.ver, cand.model, prompt, key);
+      if (res.ok) {
+        // 성공한 엔드포인트 저장
+        try {
+          localStorage.setItem(CACHED_MODEL_KEY, JSON.stringify({ ver: cand.ver, model: cand.model }));
+        } catch (e) {}
+        return res;
+      }
+
+      lastError = res;
+
+      // 400(잘못된 키) 또는 403(권한 거부)이면 모델 문제가 아니므로 즉시 반환
+      if (res.status === 400 || res.status === 403 || res.isNetworkError) {
+        return res;
+      }
+    }
+
+    // C. 후보군 모두 404인 경우: 구글 서버에서 실제 사용 가능한 모델 목록 직접 조회 시도
+    const discovered = await fetchAvailableModels(key);
+    if (discovered) {
+      const res = await callEndpoint(discovered.ver, discovered.model, prompt, key);
+      if (res.ok) {
+        try {
+          localStorage.setItem(CACHED_MODEL_KEY, JSON.stringify(discovered));
+        } catch (e) {}
+        return res;
+      }
+    }
+
+    return lastError || {
+      ok: false,
+      status: 404,
+      errorInfo: {
+        title: '지원되는 Gemini 모델을 찾을 수 없습니다 (404)',
+        desc: '구글 AI Studio 계정의 사용 가능 모델을 탐색하지 못했습니다.',
+        action: 'Google AI Studio(aistudio.google.com)에서 새로운 API 키를 발급받아 등록해 주세요.'
+      }
+    };
   }
 
   /**
-   * API 키 연결 상태 즉시 테스트
+   * 4. API 키 연결 상태 즉시 테스트
    */
   async function testConnection(testKey) {
     const key = (testKey || getApiKey() || '').trim();
@@ -196,12 +275,12 @@ const GeminiService = (function() {
       };
     }
 
-    const testPrompt = '화학 주기율표 앱 연결 테스트입니다. "정상 연결되었습니다!"라고 한 문장으로 답변해 주세요.';
+    const testPrompt = '원소 주기율표 앱 연결 테스트입니다. "정상 연결되었습니다!"라고 한 문장으로 짧게 인사해 주세요.';
     return await generateTextSmart(testPrompt, key);
   }
 
   /**
-   * 원소 상세 꿀팁 생성
+   * 5. 원소 상세 꿀팁 생성
    */
   async function getElementTip(element) {
     const prompt = `당신은 재미있고 친절한 화학 선생님입니다. 원소 ${element.nameKo}(기호: ${element.symbol}, 원자번호: ${element.atomicNumber}번)에 대해 학생들의 기억에 쏙 남는 기발한 암기 비법이나 실생활과 관련된 흥미진진한 상식을 한국어로 딱 2~3문장으로 짧고 친근하게 요약해 주세요. 이모지도 1~2개 섞어주세요.`;
@@ -209,7 +288,7 @@ const GeminiService = (function() {
   }
 
   /**
-   * 퀴즈 오답/정답 해설 생성
+   * 6. 퀴즈 오답/정답 해설 생성
    */
   async function getQuizExplanation(element) {
     const prompt = `당신은 재미있고 친절한 화학 선생님입니다. 원소 ${element.nameKo}(기호: ${element.symbol}, 원자번호: ${element.atomicNumber}번)에 대해 일상생활과 관련된 재미있는 상식이나 기억하기 쉬운 암기 팁을 한국어로 딱 2문장으로 짧게 요약해 주세요.`;
@@ -217,7 +296,7 @@ const GeminiService = (function() {
   }
 
   /**
-   * 전역 API 키 설정 모달 렌더링
+   * 7. 전역 API 키 설정 모달 렌더링
    */
   function showApiKeyModal(onSuccessCallback) {
     let modalOverlay = document.getElementById('geminiConfigModal');
@@ -230,7 +309,7 @@ const GeminiService = (function() {
           <div class="gemini-config-header">
             <div class="title-with-icon">
               <span class="gemini-logo-icon">🤖</span>
-              <h3>Google Gemini AI 키 설정 & 진단</h3>
+              <h3>Google Gemini AI 키 설정 & 실시간 진단</h3>
             </div>
             <button class="gemini-modal-close" id="geminiModalCloseBtn">&times;</button>
           </div>
@@ -256,13 +335,13 @@ const GeminiService = (function() {
             <div id="geminiTestResultBox" class="gemini-test-result-box" style="display:none;"></div>
 
             <div class="gemini-guide-box">
-              <div class="guide-title">📌 API 키는 어디서 무료로 받나요?</div>
+              <div class="guide-title">📌 무료 API 키 발급 방법 (10초 소요)</div>
               <ol class="guide-steps">
                 <li>구글 계정으로 <strong>aistudio.google.com</strong> 접속</li>
                 <li><strong>[Get API key]</strong> 버튼 클릭 ➔ 새 키 생성</li>
                 <li>생성된 키를 복사하여 위 칸에 붙여넣고 [저장]</li>
               </ol>
-              <div class="guide-note">※ 발급 후 약 30초~1분 동안은 구글 서버 전파 지연으로 일시 오류가 날 수 있습니다.</div>
+              <div class="guide-note">※ 신규 키 생성 후 약 30초~1분 동안은 구글 글로벌 서버 전파 지연이 발생할 수 있습니다.</div>
             </div>
           </div>
         </div>
@@ -305,14 +384,14 @@ const GeminiService = (function() {
 
         resultBox.style.display = 'block';
         resultBox.className = 'gemini-test-result-box result-loading';
-        resultBox.innerHTML = `⏳ 구글 AI 서버와 연결 확인 중... (약 1~2초 소요)`;
+        resultBox.innerHTML = `⏳ 구글 AI 서버 모델 탐색 및 연결 확인 중... (약 1~2초 소요)`;
 
         const res = await testConnection(inputKey);
         if (res.ok) {
           resultBox.className = 'gemini-test-result-box result-success';
           resultBox.innerHTML = `
             <div class="result-title">✅ 구글 AI 서버 연결 완벽 성공!</div>
-            <div class="result-detail">사용 모델: <code>${res.modelName}</code></div>
+            <div class="result-detail">연결된 모델: <code>${res.ver}/${res.modelName}</code></div>
             <div class="result-quote">" ${res.text} "</div>
           `;
           // 자동으로 저장

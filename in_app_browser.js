@@ -209,6 +209,12 @@
       return { closed: false, close: () => {} };
     }
 
+    // 파일 다운로드 URL(.apk, .zip, /apk, /app)은 브라우저 모달 대신 직접 다운로드 실행
+    if (url.endsWith('.apk') || url.endsWith('.zip') || url.endsWith('/apk') || url.endsWith('/app')) {
+      window.location.href = url;
+      return null;
+    }
+
     // 그 외 일반 링크인 경우 인앱 브라우저로 표시
     window.openInAppBrowser(url, '웹 안내');
     return { closed: false, close: () => {} };
@@ -232,9 +238,8 @@
       return;
     }
 
-    // APK 다운로드 링크의 경우: 패밀리링크에서 외부 브라우저 튕김 방지 안내
-    if (href.endsWith('.apk')) {
-      // APK 직링크는 그대로 다운로드 트리거 허용하되 새 창 방지
+    // APK/ZIP 다운로드 링크의 경우: 인앱 뷰어로 열지 않고 다운로드 그대로 트리거
+    if (href.endsWith('.apk') || href.endsWith('.zip') || href.endsWith('/apk') || href.endsWith('/app') || anchor.hasAttribute('download')) {
       anchor.removeAttribute('target');
       return;
     }

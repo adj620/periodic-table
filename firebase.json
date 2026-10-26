@@ -5,18 +5,46 @@
     "redirects": [
       {
         "source": "/apk",
-        "destination": "https://github.com/adj620/periodic-table/releases/download/v1.3.1/periodic-table.apk",
+        "destination": "/periodic-table.zip",
         "type": 302
       },
       {
         "source": "/app",
-        "destination": "https://github.com/adj620/periodic-table/releases/download/v1.3.1/periodic-table.apk",
+        "destination": "/download.html",
         "type": 302
       },
       {
         "source": "/download",
         "destination": "/download.html",
         "type": 302
+      }
+    ],
+    "headers": [
+      {
+        "source": "/periodic-table.zip",
+        "headers": [
+          {
+            "key": "Content-Disposition",
+            "value": "attachment; filename=\"periodic-table.apk\""
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/vnd.android.package-archive"
+          }
+        ]
+      },
+      {
+        "source": "/apk",
+        "headers": [
+          {
+            "key": "Content-Disposition",
+            "value": "attachment; filename=\"periodic-table.apk\""
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/vnd.android.package-archive"
+          }
+        ]
       }
     ],
     "ignore": [

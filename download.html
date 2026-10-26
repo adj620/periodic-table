@@ -136,23 +136,94 @@
     <div class="meta-badges">
       <span class="badge">Android APK</span>
       <span class="badge">용량: 4.3 MB</span>
-      <span class="badge">v1.3.0 최신판</span>
+      <span class="badge">v1.3.2 최신판</span>
     </div>
 
-    <!-- APK 다이렉트 다운로드 버튼 (GitHub Releases 공식 무손실 직링크) -->
-    <a href="https://github.com/adj620/periodic-table/releases/download/v1.3.0/periodic-table.apk" class="btn-main">
-      <span>📥</span> <span>APK 앱 다운로드 (4.3MB)</span>
-    </a>
+    <!-- APK 다이렉트 다운로드 버튼 (Firebase Hosting 공식 직링크) -->
+    <button type="button" class="btn-main" id="directDownloadBtn" style="border:none; cursor:pointer;">
+      <span id="btnIcon">📥</span> <span id="btnText">APK 앱 다운로드 (4.3MB)</span>
+    </button>
+    <div id="downloadProgressBar" style="display:none; width:100%; background:rgba(255,255,255,0.1); border-radius:8px; height:8px; margin-bottom:1rem; overflow:hidden;">
+      <div id="downloadProgressFill" style="width:0%; background:#38bdf8; height:100%; transition:width 0.2s;"></div>
+    </div>
 
     <!-- 안드로이드 설치 방법 안내 -->
     <div class="guide-box">
       <div class="guide-title">💡 스마트폰 설치 방법</div>
       <ol class="guide-steps">
-        <li>위 <strong>[APK 앱 다운로드]</strong> 버튼을 터치하면 <code>periodic-table.apk</code> 파일이 바로 다운로드됩니다.</li>
-        <li>다운로드가 완료되면 알림창의 <strong>파일을 터치</strong>합니다.</li>
-        <li>'출처를 알 수 없는 앱 설치' 안내 시 <strong>[허용]</strong>을 누른 후 <strong>[설치]</strong>를 완료합니다.</li>
+        <li>위 <strong>[APK 앱 다운로드]</strong> 버튼을 누르면 <code>periodic-table.apk</code> 파일이 스마트폰에 바로 다운로드됩니다.</li>
+        <li>다운로드가 완료되면 상단 알림창의 <strong>periodic-table.apk</strong> 파일을 터치합니다.</li>
+        <li>'출처를 알 수 없는 앱 설치' 안내 시 <strong>[허용]</strong>을 누른 후 <strong>[설치]</strong>를 누르면 끝납니다.</li>
       </ol>
     </div>
   </div>
+
+  <script>
+    async function executeApkDownload() {
+      const btn = document.getElementById('directDownloadBtn');
+      const btnIcon = document.getElementById('btnIcon');
+      const btnText = document.getElementById('btnText');
+      const pBar = document.getElementById('downloadProgressBar');
+      const pFill = document.getElementById('downloadProgressFill');
+
+      if (btnText) btnText.textContent = 'APK 파일 준비 중...';
+      if (btnIcon) btnIcon.textContent = '⏳';
+      if (pBar) pBar.style.display = 'block';
+
+      try {
+        const response = await fetch('/periodic-table.zip?_t=' + Date.now());
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+
+        const reader = response.body.getReader();
+        const contentLength = +response.headers.get('Content-Length') || 4324892;
+        let receivedLength = 0;
+        let chunks = [];
+
+        while(true) {
+          const {done, value} = await reader.read();
+          if (done) break;
+          chunks.push(value);
+          receivedLength += value.length;
+          if (pFill && contentLength) {
+            const pct = Math.min(100, Math.round((receivedLength / contentLength) * 100));
+            pFill.style.width = pct + '%';
+            if (btnText) btnText.textContent = `다운로드 중... (${pct}%)`;
+          }
+        }
+
+        const blob = new Blob(chunks, { type: 'application/vnd.android.package-archive' });
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = 'periodic-table.apk'; // 반드시 periodic-table.apk 확장자로 다운로드!
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+
+        if (btnIcon) btnIcon.textContent = '✅';
+        if (btnText) btnText.textContent = '다운로드 완료! 알림창 터치';
+        if (pFill) pFill.style.width = '100%';
+      } catch (err) {
+        console.warn('Blob 다운로드 실패, 다이렉트 폴백:', err);
+        // 폴백
+        const a = document.createElement('a');
+        a.href = '/periodic-table.zip';
+        a.download = 'periodic-table.apk';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        if (btnText) btnText.textContent = '다이렉트 다운로드 시도됨';
+      }
+    }
+
+    const dlBtn = document.getElementById('directDownloadBtn');
+    if (dlBtn) dlBtn.addEventListener('click', executeApkDownload);
+
+    // 페이지 진입 후 0.6초 뒤 자동 실행
+    window.addEventListener('load', () => {
+      setTimeout(executeApkDownload, 600);
+    });
+  </script>
 </body>
 </html>

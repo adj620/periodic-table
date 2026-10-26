@@ -10,3 +10,4 @@ android/.gradle/
 *.zip
 www/
 
+*.bin
