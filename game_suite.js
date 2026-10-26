@@ -10,13 +10,30 @@
 // 전역 게임 상태 관리자
 let activeGameTab = 'quiz'; // 'quiz' | 'memory' | 'puzzle' | 'alchemy'
 
-// Web Audio API 사운드 합성기
+// Web Audio API 사운드 합성기 싱글톤 관리
+let gameAudioCtx = null;
+
+function getGameAudioContext() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return null;
+    if (!gameAudioCtx) {
+      gameAudioCtx = new AudioCtx();
+    }
+    if (gameAudioCtx.state === 'suspended') {
+      gameAudioCtx.resume().catch(() => {});
+    }
+    return gameAudioCtx;
+  } catch (e) {
+    return null;
+  }
+}
+
 function playSoundEffect(type) {
   if (typeof quizState !== 'undefined' && !quizState.isSoundEnabled) return;
   try {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
+    const ctx = getGameAudioContext();
+    if (!ctx) return;
     const now = ctx.currentTime;
 
     if (type === 'flip') {
@@ -145,7 +162,17 @@ window.initGameSuite = function() {
   renderActiveGame();
 };
 
+function stopAllGameTimers() {
+  stopMemoryTimer();
+  stopPuzzleTimer();
+  if (typeof window.stopQuestionTimer === 'function') {
+    window.stopQuestionTimer();
+  }
+}
+window.stopAllGameTimers = stopAllGameTimers;
+
 function switchGameTab(gameKey) {
+  stopAllGameTimers();
   activeGameTab = gameKey;
   const container = document.getElementById('quizContainer');
   if (container) {
@@ -480,10 +507,19 @@ let puzzleState = {
   currentIndex: 0,
   score: 0,
   mistakes: 0,
-  isAnswered: false
+  isAnswered: false,
+  timerId: null
 };
 
+function stopPuzzleTimer() {
+  if (puzzleState.timerId) {
+    clearTimeout(puzzleState.timerId);
+    puzzleState.timerId = null;
+  }
+}
+
 function renderPuzzleGameLobby(container) {
+  stopPuzzleTimer();
   container.innerHTML = `
     <div class="game-lobby-box">
       <div class="game-lobby-hero">
@@ -525,6 +561,7 @@ function renderPuzzleGameLobby(container) {
 }
 
 function startPuzzleGameRound(container) {
+  stopPuzzleTimer();
   const stage = PUZZLE_STAGES[puzzleState.currentStage];
   let pool = [];
 
@@ -550,15 +587,28 @@ function startPuzzleGameRound(container) {
 }
 
 function renderPuzzlePlayScreen(container) {
+  stopPuzzleTimer();
+  puzzleState.isAnswered = false;
   const targetEl = puzzleState.questions[puzzleState.currentIndex];
   const cat = CATEGORIES[targetEl.category] || {};
 
   // 문제의 후보 칸 4개 생성 (정답 1개 + 오답 3개)
+  // 오답 보기는 targetEl과 period 및 group이 겹치지 않고 오답들끼리도 서로 period-group이 겹치지 않도록 추출
   const allEl = Array.from(elementsMap.values());
-  const distractors = allEl
+  const usedPositions = new Set([`${targetEl.period}-${targetEl.group}`]);
+  const shuffledEl = allEl
     .filter(e => e.atomicNumber !== targetEl.atomicNumber)
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 3);
+    .sort(() => Math.random() - 0.5);
+
+  const distractors = [];
+  for (const el of shuffledEl) {
+    const posKey = `${el.period}-${el.group}`;
+    if (!usedPositions.has(posKey)) {
+      usedPositions.add(posKey);
+      distractors.push(el);
+      if (distractors.length >= 3) break;
+    }
+  }
   
   const candidateSlots = [targetEl, ...distractors].sort(() => Math.random() - 0.5);
 
@@ -590,7 +640,7 @@ function renderPuzzlePlayScreen(container) {
             <span class="slot-pos-badge">${slot.period}주기 ${slot.group}족</span>
             <div class="slot-pos-desc">
               <strong>${slot.period}행 · ${slot.group}열 위치</strong>
-              <small>${slot.atomicNumber === targetEl.atomicNumber ? '정답 슬롯' : '후보 자리'}</small>
+              <small>후보 자리 ${idx + 1}</small>
             </div>
             <span class="slot-pick-icon">👉 장착하기</span>
           </button>
@@ -602,6 +652,7 @@ function renderPuzzlePlayScreen(container) {
   `;
 
   document.getElementById('exitPuzzleBtn')?.addEventListener('click', () => {
+    stopPuzzleTimer();
     renderPuzzleGameLobby(container);
   });
 
@@ -615,6 +666,10 @@ function renderPuzzlePlayScreen(container) {
 }
 
 function handlePuzzleSlotSelect(selectedNum, targetEl, slotBtns, container) {
+  if (puzzleState.isAnswered) return;
+  puzzleState.isAnswered = true;
+  stopPuzzleTimer();
+
   slotBtns.forEach(b => b.disabled = true);
   const feedback = document.getElementById('puzzleFeedback');
 
@@ -640,7 +695,8 @@ function handlePuzzleSlotSelect(selectedNum, targetEl, slotBtns, container) {
     }
   }
 
-  setTimeout(() => {
+  puzzleState.timerId = setTimeout(() => {
+    puzzleState.timerId = null;
     if (puzzleState.currentIndex < puzzleState.questions.length - 1) {
       puzzleState.currentIndex++;
       renderPuzzlePlayScreen(container);
@@ -651,6 +707,7 @@ function handlePuzzleSlotSelect(selectedNum, targetEl, slotBtns, container) {
 }
 
 function renderPuzzleResultScreen(container) {
+  stopPuzzleTimer();
   playSoundEffect('alchemy_success');
   triggerHaptic('success');
 
@@ -911,24 +968,42 @@ function renderAlchemyGameLobby(container) {
   // 보관함 원소 투입 바인딩
   bindShelfAtomButtons(container);
 
-  // 보관함 카테고리 탭 클릭
+  // 보관함 카테고리 탭 클릭 (전체 리렌더링 없이 그리드만 최적 갱신하여 이벤트 누적 방지)
   const catPills = container.querySelectorAll('.shelf-cat-tabs .cat-pill');
   catPills.forEach(pill => {
     pill.addEventListener('click', () => {
       alchemyState.currentShelfCat = pill.dataset.cat;
-      renderAlchemyGameLobby(container);
+      catPills.forEach(p => p.classList.toggle('active', p.dataset.cat === alchemyState.currentShelfCat));
+      const atomsGrid = container.querySelector('#alchemyAtomsGrid');
+      if (atomsGrid) {
+        const filtered = alchemyState.currentShelfCat === 'all'
+          ? ALCHEMY_SHELF_ELEMENTS
+          : ALCHEMY_SHELF_ELEMENTS.filter(e => e.cat === alchemyState.currentShelfCat);
+        atomsGrid.innerHTML = filtered.map(el => `
+          <button class="shelf-atom-btn" data-symbol="${el.symbol}" style="border-color:${el.color};">
+            <strong style="color:${el.color};">${el.symbol}</strong>
+            <small>${el.name}</small>
+          </button>
+        `).join('');
+        bindShelfAtomButtons(container);
+      }
     });
   });
 
-  // 비커 원소 개별 제거 바인딩
-  container.addEventListener('click', (e) => {
-    const pill = e.target.closest('.beaker-atom-pill');
-    if (pill) {
-      const idx = parseInt(pill.dataset.beakerIdx, 10);
-      alchemyState.beakerElements.splice(idx, 1);
-      updateBeakerDisplay(container);
-    }
-  });
+  // 비커 원소 개별 제거 바인딩 (beakerGlassEl에 위임하여 컨테이너 중복 리스너 원천 차단)
+  const beakerGlass = container.querySelector('#beakerGlassEl');
+  if (beakerGlass) {
+    beakerGlass.addEventListener('click', (e) => {
+      const pill = e.target.closest('.beaker-atom-pill');
+      if (pill) {
+        const idx = parseInt(pill.dataset.beakerIdx, 10);
+        if (!isNaN(idx) && idx >= 0 && idx < alchemyState.beakerElements.length) {
+          alchemyState.beakerElements.splice(idx, 1);
+          updateBeakerDisplay(container);
+        }
+      }
+    });
+  }
 
   // 비커 비우기
   document.getElementById('clearBeakerBtn')?.addEventListener('click', () => {
@@ -1086,11 +1161,12 @@ function handleCombineReaction(container) {
     // 비커에 들어있는 원소들의 구성(정렬된 형태)
     const currentSorted = [...alchemyState.beakerElements].sort().join(',');
 
-    // 일치하는 레시피 탐색
-    const matched = ALCHEMY_RECIPES.find(r => {
+    // 일치하는 레시피 탐색 (미해금 레시피 우선 매칭하여 포도당/에탄올/식초 등 동일 구성 레시피 모두 해금 가능)
+    const matchingRecipes = ALCHEMY_RECIPES.filter(r => {
       const recipeSorted = [...r.elements].sort().join(',');
       return recipeSorted === currentSorted;
     });
+    const matched = matchingRecipes.find(r => !alchemyState.unlockedRecipes.includes(r.id)) || matchingRecipes[0];
 
     if (matched) {
       // 합성 성공!

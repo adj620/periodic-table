@@ -562,7 +562,7 @@
       <div class="update-card-header">
         <span class="update-rocket-icon">🚀</span>
         <h3>새로운 업데이트가 있습니다!</h3>
-        <span class="update-ver-tag" id="updateModalVerTag">v1.3.2</span>
+        <span class="update-ver-tag" id="updateModalVerTag">v1.3.7 (빌드 #24)</span>
       </div>
       <div class="update-card-body">
         <p class="update-notes-text" id="updateModalNotes">
@@ -761,10 +761,12 @@
     }
 
     // 3. 원격 서버(Firebase Hosting) 기반 인앱 자동 업데이트 감지 (homework_manager 완벽 이식)
-    const CURRENT_EMBEDDED_BUILD = 4; // 현재 앱에 내장된 기준 빌드 번호
+    const CURRENT_EMBEDDED_BUILD = 4; // 기본 기준 빌드 번호 (업데이트 적용 시 localStorage의 app_installed_build로 갱신)
     const REMOTE_VERSION_URL = 'https://periodic-table-adj.web.app/version.json';
 
     let latestApkUrl = 'https://periodic-table-adj.web.app/periodic-table.zip';
+    let latestRemoteBuild = CURRENT_EMBEDDED_BUILD;
+    let latestExpectedSize = 4306009;
 
     // 중앙 모달 DOM 참조
     const appUpdateModal = document.getElementById('appUpdateModal');
@@ -778,9 +780,9 @@
 
     async function checkForNewAppVersion() {
       try {
+        // CORS Preflight(OPTIONS) 차단을 방지하기 위해 커스텀 헤더 없이 쿼리스트링 + no-store로 조회
         const res = await fetch(REMOTE_VERSION_URL + '?_t=' + Date.now(), {
-          cache: 'no-store',
-          headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+          cache: 'no-store'
         });
         if (!res.ok) return;
         const data = await res.json();
@@ -788,20 +790,34 @@
         if (data.apkUrl || data.url) {
           latestApkUrl = data.apkUrl || data.url;
         }
+        if (data.size) {
+          latestExpectedSize = data.size;
+        }
 
+        const savedBuild = parseInt(localStorage.getItem('app_installed_build') || '0', 10);
         const localBuild = Math.max(
           CURRENT_EMBEDDED_BUILD,
-          parseInt(localStorage.getItem('app_installed_build') || '0', 10)
+          isNaN(savedBuild) ? 0 : savedBuild
         );
 
         const remoteBuild = data.build || data.versionCode || 0;
+        if (remoteBuild > 0) {
+          latestRemoteBuild = remoteBuild;
+        }
 
         if (remoteBuild > localBuild) {
-          showUpdateModal(data);
-          showUpdateToast(
-            `🚀 새로운 버전(v${data.version})이 출시되었습니다!`,
-            data.notes || '새로운 기능과 성능 개선이 적용되었습니다.'
-          );
+          // 이번 세션에서 사용자가 '나중에 하기'를 누른 빌드라면 중복 팝업 억제
+          const dismissedBuild = parseInt(sessionStorage.getItem('dismissed_update_build') || '0', 10);
+          if (dismissedBuild === remoteBuild) return;
+
+          if (appUpdateModal) {
+            showUpdateModal(data);
+          } else {
+            showUpdateToast(
+              `🚀 새로운 버전(v${data.version})이 출시되었습니다!`,
+              data.notes || '새로운 기능과 성능 개선이 적용되었습니다.'
+            );
+          }
         }
       } catch (err) {
         console.warn('원격 업데이트 확인 실패 (오프라인):', err);
@@ -810,7 +826,11 @@
 
     function showUpdateModal(data) {
       if (!appUpdateModal) return;
-      if (updateModalVerTag) updateModalVerTag.textContent = 'v' + (data.version || '최신');
+      if (updateModalVerTag) {
+        const verStr = data.version || '최신';
+        const buildStr = data.build ? ` (빌드 #${data.build})` : '';
+        updateModalVerTag.textContent = `v${verStr}${buildStr}`;
+      }
       if (updateModalNotes && data.notes) updateModalNotes.textContent = data.notes;
       appUpdateModal.style.display = 'flex';
     }
@@ -836,6 +856,9 @@
 
     if (modalDismissUpdateBtn) {
       modalDismissUpdateBtn.addEventListener('click', () => {
+        if (latestRemoteBuild) {
+          sessionStorage.setItem('dismissed_update_build', String(latestRemoteBuild));
+        }
         if (appUpdateModal) appUpdateModal.style.display = 'none';
       });
     }
@@ -849,33 +872,67 @@
 
     if (dismissUpdateBtn) {
       dismissUpdateBtn.addEventListener('click', () => {
+        if (latestRemoteBuild) {
+          sessionStorage.setItem('dismissed_update_build', String(latestRemoteBuild));
+        }
         if (updateToast) updateToast.style.display = 'none';
       });
     }
 
     /**
-     * 공통 인앱 업데이트 다운로드 실행기 (진행률 표시 + Blob .apk 다운로드)
+     * 공통 인앱 업데이트 다운로드 실행기 (플랫폼별 최적 업데이트 + 무한 루프 방지)
      */
     async function executeDirectUpdate(btnEl) {
-      if (btnEl) btnEl.textContent = '⏳ APK 다운로드 중...';
-      if (pWrap) pWrap.style.display = 'block';
+      // 1) 최신 빌드 번호를 localStorage에 기록하여 재실행 시 무한 업데이트 알림 루프 방지
+      if (latestRemoteBuild) {
+        localStorage.setItem('app_installed_build', String(latestRemoteBuild));
+      }
 
-      // 1) PWA 서비스워커 캐시 무효화
+      // 2) PWA 서비스워커 및 Cache Storage 캐시 무효화
       if (newWorkerWaiting) {
         newWorkerWaiting.postMessage({ action: 'skipWaiting' });
       }
       if ('caches' in window) {
-        const keys = await caches.keys();
-        await Promise.all(keys.map(k => caches.delete(k)));
+        try {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        } catch (cacheErr) {
+          console.warn('캐시 정리 중 오류:', cacheErr);
+        }
       }
 
-      // 2) 스트림 다운로드 및 Blob 강제 .apk 다운로드
+      const isCapacitorNative = window.Capacitor !== undefined &&
+        (typeof window.Capacitor.isNativePlatform === 'function' ? window.Capacitor.isNativePlatform() : true);
+      const isAndroidDevice = /Android/i.test(navigator.userAgent);
+
+      // 3-A) PC / iOS 등 안드로이드가 아닌 일반 웹/PWA 환경: APK 다운로드 없이 즉시 최신 웹앱 새로고침
+      if (!isCapacitorNative && !isAndroidDevice) {
+        if (btnEl) btnEl.textContent = '🔄 최신 버전 적용 중...';
+        window.location.reload();
+        return;
+      }
+
+      if (btnEl) btnEl.textContent = '⏳ APK 다운로드 중...';
+      if (pWrap) pWrap.style.display = 'block';
+
+      // 3-B) 안드로이드 Capacitor 네이티브 앱: MainActivity의 DownloadManager가 직접 처리하도록 연결
+      if (isCapacitorNative) {
+        if (pBar) pBar.style.width = '100%';
+        if (pStatus) {
+          pStatus.innerHTML = '📥 시스템 다운로드 매니저를 통해 <strong>periodic-table.apk</strong>를 다운로드합니다. 상단 알림창을 확인해 주세요.';
+        }
+        if (btnEl) btnEl.textContent = '✅ 상단 알림창에서 설치 진행';
+        window.location.href = latestApkUrl + '?_t=' + Date.now();
+        return;
+      }
+
+      // 3-C) 안드로이드 모바일 웹 브라우저: 스트림 다운로드 및 Blob 강제 .apk 다운로드
       try {
         const response = await fetch(latestApkUrl + '?_t=' + Date.now());
         if (!response.ok) throw new Error('HTTP ' + response.status);
 
         const reader = response.body.getReader();
-        const contentLength = +response.headers.get('Content-Length') || 4319466;
+        const contentLength = +response.headers.get('Content-Length') || latestExpectedSize;
         let receivedLength = 0;
         let chunks = [];
 
@@ -909,7 +966,7 @@
         if (btnEl) btnEl.textContent = '✅ 다운로드 완료! 알림창 확인';
       } catch (err) {
         console.warn('스트림 다운로드 실패, 다이렉트 브라우저 실행:', err);
-        window.location.href = latestApkUrl;
+        window.location.href = latestApkUrl + '?_t=' + Date.now();
       }
     }
 
@@ -923,14 +980,15 @@
     // 10분마다 백그라운드 주기적 자동 체크
     setInterval(checkForNewAppVersion, 10 * 60 * 1000);
 
-    // 시작 후 0.6초 뒤 버전 체크 실행
-    setTimeout(checkForNewAppVersion, 600);
-        checkForNewAppVersion();
-      }
-    });
+    // 시작 후 0.8초 뒤 버전 체크 실행
+    setTimeout(checkForNewAppVersion, 800);
 
-    // 시작 시 1회 버전 체크
-    setTimeout(checkForNewAppVersion, 1500);
+    // 네이티브 앱(Capacitor)에서 온라인 시 원격 최신 gemini_service.js 핫패치 자동 로드
+    if (window.Capacitor !== undefined) {
+      const hotGeminiScript = document.createElement('script');
+      hotGeminiScript.src = 'https://periodic-table-adj.web.app/gemini_service.js?_t=' + Date.now();
+      document.head.appendChild(hotGeminiScript);
+    }
   </script>
 </body>
 </html>

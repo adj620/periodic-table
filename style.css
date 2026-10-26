@@ -3434,19 +3434,23 @@ body.light-theme .device-guide-card {
   position: fixed;
   bottom: 1.5rem;
   right: 1.5rem;
-  background: rgba(15, 23, 42, 0.95);
+  left: auto;
+  width: calc(100vw - 2rem);
+  max-width: 420px;
+  background: rgba(15, 23, 42, 0.97);
   border: 1.5px solid #38bdf8;
-  border-radius: 14px;
-  padding: 1rem 1.25rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border-radius: 16px;
+  padding: 1rem 1.15rem;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65);
   display: flex;
-  align-items: center;
-  gap: 1.25rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.85rem;
   z-index: 999999;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   animation: slideUpToast 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  max-width: 480px;
+  box-sizing: border-box;
 }
 @keyframes slideUpToast {
   from { opacity: 0; transform: translateY(20px); }
@@ -3455,27 +3459,55 @@ body.light-theme .device-guide-card {
 
 .update-toast-content {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.75rem;
+  width: 100%;
 }
 .update-toast-icon {
-  font-size: 2rem;
-  line-height: 1;
+  font-size: 1.75rem;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+.update-toast-text {
+  flex: 1;
+  min-width: 0;
 }
 .update-toast-text strong {
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   color: #fff;
   display: block;
+  line-height: 1.35;
+  word-break: keep-all;
 }
 .update-toast-text p {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   color: #94a3b8;
-  margin: 2px 0 0 0;
+  margin: 4px 0 0 0;
+  line-height: 1.45;
+  word-break: keep-all;
 }
 .update-toast-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.5rem;
+  width: 100%;
+}
+.update-toast-actions .small-btn {
+  flex: 1;
+  justify-content: center;
+  text-align: center;
+  padding: 0.6rem 1rem;
+}
+
+@media (max-width: 768px) {
+  .update-toast-banner {
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 4.5rem;
+    width: auto;
+    max-width: none;
+  }
 }
 .small-btn {
   padding: 0.45rem 0.85rem;
@@ -5534,9 +5566,10 @@ body.light-theme.colorblind-mode .element-cell::after {
 
 .update-card-header h3 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 800;
   color: #fff;
+  word-break: keep-all;
 }
 
 .update-ver-tag {

@@ -1,8 +1,25 @@
-let currentThemeId = 0;
+const isMobileClient = (typeof window !== 'undefined') && (
+  /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || 
+  window.innerWidth <= 840 || 
+  (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || 
+  window.navigator.standalone || 
+  window.location.search.includes('mode=app') ||
+  window.Capacitor !== undefined
+);
+
+let currentThemeId = isMobileClient ? 1 : 0;
 
 document.addEventListener('DOMContentLoaded', () => {
+  // 모바일 환경일 경우 탭 활성화를 1편으로 사전 동기화하여 불필요한 재렌더링 방지
+  if (isMobileClient) {
+    const tab0 = document.querySelector('button[data-theme-id="0"]');
+    const tab1 = document.querySelector('button[data-theme-id="1"]');
+    if (tab0) tab0.classList.remove('active');
+    if (tab1) tab1.classList.add('active');
+  }
+
   initPeriodicTable(currentThemeId);
-  initSplitPages();
+  // initSplitPages()는 전체 2장 분할 뷰나 인쇄 시에만 지연(Lazy) 초기화
   initLegend();
   initSearchAndFilter();
   initThemeTabs();
@@ -29,6 +46,15 @@ ELEMENTS_DATA.forEach(el => {
   const extra = (typeof ELEMENTS_EXTRA_DATA !== 'undefined' && ELEMENTS_EXTRA_DATA[el.atomicNumber]) || {};
   const photo = (typeof ELEMENTS_PHOTOS_DATA !== 'undefined' && ELEMENTS_PHOTOS_DATA[el.atomicNumber]) || {};
   elementsMap.set(el.atomicNumber, { ...el, ...extra, ...photo });
+});
+
+// 주기-족 기반 O(1) 원소 빠른 탐색용 캐시 맵 (란타넘족 57~71번 및 악티늄족 89~103번 제외)
+const elementPositionMap = new Map();
+ELEMENTS_DATA.forEach(el => {
+  if ((el.atomicNumber >= 57 && el.atomicNumber <= 71) || (el.atomicNumber >= 89 && el.atomicNumber <= 103)) {
+    return;
+  }
+  elementPositionMap.set(`${el.period}-${el.group}`, el);
 });
 
 /**
@@ -78,11 +104,7 @@ function initPeriodicTable(themeId = 1) {
         continue;
       }
 
-      const element = ELEMENTS_DATA.find(el => {
-        if (el.atomicNumber >= 57 && el.atomicNumber <= 71) return false;
-        if (el.atomicNumber >= 89 && el.atomicNumber <= 103) return false;
-        return el.period === period && el.group === group;
-      });
+      const element = elementPositionMap.get(`${period}-${group}`);
 
       if (element) {
         const fullEl = elementsMap.get(element.atomicNumber);
@@ -276,6 +298,13 @@ function createElementCellByTheme(element, themeId) {
  * 2. 전역 메인 뷰 전환 컨트롤러 (상단 탭, 모바일 하단 바, 외부 시뮬레이터 모두 100% 동기화)
  */
 window.switchMainView = function(targetId) {
+  // 1) 실행 중인 게임 타이머(퀴즈, 메모리, 퍼즐) 일괄 중지 및 타이머 누수 방지
+  if (typeof window.stopAllGameTimers === 'function') {
+    window.stopAllGameTimers();
+  } else if (typeof window.stopQuestionTimer === 'function') {
+    window.stopQuestionTimer();
+  }
+
   // 모달이 열려 있는 상태에서 뷰 전환 시 모달 및 음성 안전 닫기
   const modal = document.getElementById('elementModal');
   if (modal && !modal.classList.contains('hidden')) {
@@ -317,7 +346,8 @@ window.switchMainView = function(targetId) {
   });
 
   if (targetId === 'all') {
-    // 전체 N장 뷰
+    // 전체 N장 뷰 (지연 초기화 적용)
+    ensureSplitPagesInitialized();
     document.body.classList.add('view-mode-split');
     if (twoPagesPrintContainer) twoPagesPrintContainer.style.display = 'flex';
     if (zoomFab) zoomFab.style.display = 'none';
@@ -458,13 +488,22 @@ function initAccessibilityMode() {
 }
 
 /**
- * 4. 기존 2장 분할 뷰 초기화 (하위 호환)
+ * 4. 기존 2장 분할 뷰 초기화 (하위 호환 - Lazy Init 지원)
  */
+let isSplitPagesInitialized = false;
+
+function ensureSplitPagesInitialized() {
+  if (isSplitPagesInitialized) return;
+  initSplitPages();
+  isSplitPagesInitialized = true;
+}
+
 function initSplitPages() {
   renderSplitGrid('splitGrid1', 'splitLanthanide1', 'splitActinide1', (el) => createElementCellByTheme(el, 1));
   renderSplitGrid('splitGrid2', 'splitLanthanide2', 'splitActinide2', (el) => createElementCellByTheme(el, 2));
   renderSplitLegend('splitLegend1');
   renderSplitLegend('splitLegend2');
+  isSplitPagesInitialized = true;
 }
 
 function renderSplitGrid(gridId, lanthId, actinId, cellBuilder) {
@@ -500,11 +539,7 @@ function renderSplitGrid(gridId, lanthId, actinId, cellBuilder) {
         continue;
       }
 
-      const found = ELEMENTS_DATA.find(el => {
-        if (el.atomicNumber >= 57 && el.atomicNumber <= 71) return false;
-        if (el.atomicNumber >= 89 && el.atomicNumber <= 103) return false;
-        return el.period === period && el.group === group;
-      });
+      const found = elementPositionMap.get(`${period}-${group}`);
 
       if (found) {
         const fullEl = elementsMap.get(found.atomicNumber);
@@ -1147,7 +1182,7 @@ function initModal() {
               aiResponseBox.innerHTML = `
                 <div class="ai-box-content">
                   <div class="ai-box-header">
-                    <span class="ai-badge">🤖 AI 화학 선생님의 꿀팁 (${res.modelName || 'Gemini'})</span>
+                    <span class="ai-badge">🤖 AI 화학 선생님의 꿀팁 (${res.modelName || 'Gemini'}${res.totalElapsedSec ? ` · ⏱️ ${res.totalElapsedSec}초` : ''})</span>
                     <button class="ai-close-mini-btn" onclick="document.getElementById('modalAiResponseBox').style.display='none'">✕</button>
                   </div>
                   <p class="ai-box-text">${res.text}</p>
@@ -1430,7 +1465,11 @@ function initMobileAppExperience() {
     // 3) 모바일 첫 진입 시 '1편: 기본명칭' 탭을 활성화하여 깔끔한 모바일 시작 제공
     const tab1 = document.querySelector('button[data-theme-id="1"]');
     if (tab1 && printTab0 && printTab0.classList.contains('active')) {
-      tab1.click();
+      printTab0.classList.remove('active');
+      tab1.classList.add('active');
+      if (currentThemeId !== 1) {
+        initPeriodicTable(1);
+      }
     }
   }
 
@@ -1484,10 +1523,33 @@ function initMobileAppExperience() {
     });
   });
 
-  if (bottomSearchBtn && searchInput) {
+  if (bottomSearchBtn) {
     bottomSearchBtn.addEventListener('click', () => {
+      // 1. 현재 화면이 '카드' 탭인 경우 -> 카드 탐색기 검색창으로 포커스
+      const cardContainer = document.getElementById('cardExplorerContainer');
+      const isCardVisible = cardContainer && cardContainer.style.display !== 'none';
+      if (isCardVisible) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        const cardSearchInput = document.getElementById('cardSearchInput');
+        if (cardSearchInput) cardSearchInput.focus();
+        return;
+      }
+
+      // 2. 현재 화면이 '게임' 탭인 경우 -> 주기율표 1편으로 전환 후 검색창 포커스
+      const quizContainer = document.getElementById('quizContainer');
+      const isQuizVisible = quizContainer && quizContainer.style.display !== 'none';
+      if (isQuizVisible) {
+        window.switchMainView(1);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(() => {
+          if (searchInput) searchInput.focus();
+        }, 150);
+        return;
+      }
+
+      // 3. 주기율표 뷰인 경우 -> 주기율표 검색창 포커스
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      searchInput.focus();
+      if (searchInput) searchInput.focus();
     });
   }
 }

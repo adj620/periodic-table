@@ -35,19 +35,24 @@ if (-not $fb) {
   }
 }
 
-# 2) version.json 읽기 및 빌드 번호 +1 증가
+# 2) version.json 읽기 및 버전(패치) + 빌드 번호 자동 +1 증가
 if (Test-Path $versionJsonPath) {
   $rawJson = [System.IO.File]::ReadAllText($versionJsonPath, [System.Text.Encoding]::UTF8)
   $vObj = $rawJson | ConvertFrom-Json
   $oldVersion = $vObj.version
+  $verParts = $oldVersion.Split('.')
+  $verParts[2] = ([int]$verParts[2] + 1).ToString()
+  $newVersion = $verParts -join '.'
+  $vObj.version = $newVersion
   $newBuild = [int]$vObj.build + 1
 } else {
   $oldVersion = '1.0.0'
+  $newVersion = '1.0.1'
   $newBuild = 1
-  $vObj = [PSCustomObject]@{ version = $oldVersion; build = $newBuild; notes = '' }
+  $vObj = [PSCustomObject]@{ version = $newVersion; build = $newBuild; notes = '' }
 }
 
-Write-Host "현재 버전: $oldVersion (빌드: $($vObj.build)) ➔ 새 빌드: $newBuild" -ForegroundColor Green
+Write-Host "현재 버전: $oldVersion (빌드: $($vObj.build)) ➔ 새 버전: $newVersion (빌드: $newBuild)" -ForegroundColor Green
 
 # 3) 업데이트 메모 입력 (엔터 시 기본 문구)
 if ([string]::IsNullOrWhiteSpace($notes)) {
@@ -57,8 +62,18 @@ if ([string]::IsNullOrWhiteSpace($notes)) {
   $notes = '모바일 앱 다운로드 배너 추가 및 상단 UI 최적화'
 }
 
-# 4) version.json 저장 (UTF-8)
+# 4) APK -> ZIP 복사 및 version.json 저장 (UTF-8)
+$apkPath = Join-Path $proj 'periodic-table.apk'
+$zipPath = Join-Path $proj 'periodic-table.zip'
+if (Test-Path $apkPath) {
+  Copy-Item -Path $apkPath -Destination $zipPath -Force
+  $apkSize = (Get-Item $apkPath).Length
+  $vObj | Add-Member -NotePropertyName 'size' -NotePropertyValue $apkSize -Force
+  Write-Host "📦 periodic-table.apk -> periodic-table.zip 복사 완료 ($apkSize 바이트)" -ForegroundColor Cyan
+}
+
 $vObj.build = $newBuild
+$vObj | Add-Member -NotePropertyName 'versionCode' -NotePropertyValue $newBuild -Force
 $vObj.updatedAt = (Get-Date).ToString("yyyy-MM-ddTHH:mm:sszzz")
 $vObj.notes = $notes
 
@@ -66,13 +81,36 @@ $newJsonText = $vObj | ConvertTo-Json -Depth 5
 [System.IO.File]::WriteAllText($versionJsonPath, $newJsonText, (New-Object System.Text.UTF8Encoding($false)))
 Write-Host "📝 version.json 갱신 완료 (빌드 #$newBuild)" -ForegroundColor Cyan
 
-# 5) service-worker.js 내 CACHE_NAME 자동 교체 (사용자 기기 즉시 갱신 유도)
+# 5) service-worker.js 내 CACHE_NAME 및 index.html 내 CURRENT_EMBEDDED_BUILD 자동 교체
 if (Test-Path $swPath) {
   $swContent = [System.IO.File]::ReadAllText($swPath, [System.Text.Encoding]::UTF8)
   $newCacheName = "periodic-table-v$($vObj.version)-b$newBuild"
   $swContent = [regex]::Replace($swContent, "const CACHE_NAME = '.*?';", "const CACHE_NAME = '$newCacheName';")
   [System.IO.File]::WriteAllText($swPath, $swContent, (New-Object System.Text.UTF8Encoding($false)))
   Write-Host "🔄 Service Worker 캐시 키 동기화: $newCacheName" -ForegroundColor Cyan
+}
+
+$indexPath = Join-Path $proj 'index.html'
+if (Test-Path $indexPath) {
+  $idxContent = [System.IO.File]::ReadAllText($indexPath, [System.Text.Encoding]::UTF8)
+  $idxContent = [regex]::Replace($idxContent, "const CURRENT_EMBEDDED_BUILD = \d+;", "const CURRENT_EMBEDDED_BUILD = 4;")
+  [System.IO.File]::WriteAllText($indexPath, $idxContent, (New-Object System.Text.UTF8Encoding($false)))
+  Write-Host "🔄 index.html CURRENT_EMBEDDED_BUILD = 4 확인 완료" -ForegroundColor Cyan
+}
+
+# 5-1) www/ 및 android assets 폴더 동기화
+$syncFiles = @('index.html','style.css','app.js','elements.js','elements_extra.js','elements_photos.js','elements_encyclopedia.js','in_app_browser.js','gemini_service.js','quiz.js','game_suite.js','card_explorer.js','manifest.json','icon.svg','version.json','service-worker.js','download.html','firebase.json')
+foreach ($targetRel in @('www', 'android\app\src\main\assets\public')) {
+  $targetDir = Join-Path $proj $targetRel
+  if (Test-Path $targetDir) {
+    foreach ($f in $syncFiles) {
+      $srcFile = Join-Path $proj $f
+      if (Test-Path $srcFile) {
+        Copy-Item -Path $srcFile -Destination (Join-Path $targetDir $f) -Force
+      }
+    }
+    Write-Host "📂 $targetRel 동기화 완료" -ForegroundColor Cyan
+  }
 }
 
 # 6) Firebase Hosting 배포 실행

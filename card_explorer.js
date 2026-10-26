@@ -6,16 +6,19 @@
 let cardExplorerCurrentIndex = 0;
 let cardExplorerFilteredList = [];
 let cardExplorerViewMode = 'grid'; // 'grid' | 'single'
+let isCardExplorerInitialized = false;
 
-function initCardExplorer() {
+function initCardExplorer(force = false) {
   const container = document.getElementById('cardExplorerContainer');
   if (!container) return;
+  if (isCardExplorerInitialized && !force) return;
 
   // 전체 118개 원소 목록 생성 (기본 atomicNumber 순)
   cardExplorerFilteredList = Array.from(elementsMap.values()).sort((a, b) => a.atomicNumber - b.atomicNumber);
   
   renderCardExplorerControls();
   renderCardExplorerView();
+  isCardExplorerInitialized = true;
 }
 
 /**

@@ -209,8 +209,9 @@
       return { closed: false, close: () => {} };
     }
 
-    // 파일 다운로드 URL(.apk, .zip, /apk, /app)은 브라우저 모달 대신 직접 다운로드 실행
-    if (url.endsWith('.apk') || url.endsWith('.zip') || url.endsWith('/apk') || url.endsWith('/app')) {
+    // 파일 다운로드 URL(.apk, .zip, /apk, /app, /download)은 브라우저 모달 대신 직접 다운로드 실행
+    const cleanUrl = url.split('?')[0].split('#')[0];
+    if (cleanUrl.endsWith('.apk') || cleanUrl.endsWith('.zip') || cleanUrl.endsWith('/apk') || cleanUrl.endsWith('/app') || cleanUrl.endsWith('/download')) {
       window.location.href = url;
       return null;
     }
@@ -239,7 +240,8 @@
     }
 
     // APK/ZIP 다운로드 링크의 경우: 인앱 뷰어로 열지 않고 다운로드 그대로 트리거
-    if (href.endsWith('.apk') || href.endsWith('.zip') || href.endsWith('/apk') || href.endsWith('/app') || anchor.hasAttribute('download')) {
+    const cleanHref = href.split('?')[0].split('#')[0];
+    if (cleanHref.endsWith('.apk') || cleanHref.endsWith('.zip') || cleanHref.endsWith('/apk') || cleanHref.endsWith('/app') || cleanHref.endsWith('/download') || anchor.hasAttribute('download')) {
       anchor.removeAttribute('target');
       return;
     }

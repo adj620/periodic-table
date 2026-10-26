@@ -254,7 +254,10 @@ function renderQuizLobby() {
           quizTestResult.style.background = 'rgba(34, 197, 94, 0.15)';
           quizTestResult.style.border = '1px solid #22c55e';
           quizTestResult.style.color = '#86efac';
-          quizTestResult.innerHTML = `<strong>✅ 연결 성공! (${res.modelName})</strong><br>AI 응답: "${res.text}"`;
+          const traceStr = Array.isArray(res.attemptLogs) && res.attemptLogs.length > 0
+            ? `<br><small style="opacity:0.8; font-family:monospace;">📋 로그: ${res.attemptLogs.join(' ➔ ')}</small>`
+            : '';
+          quizTestResult.innerHTML = `<strong>✅ 연결 성공! (${res.modelName} · ⏱️ ${res.totalElapsedSec || '0.0'}초)</strong><br>AI 응답: "${res.text}"${traceStr}`;
           window.GeminiService.setApiKey(key);
         } else {
           quizTestResult.style.background = 'rgba(239, 68, 68, 0.15)';
@@ -312,6 +315,7 @@ function stopQuestionTimer() {
     quizState.timerInterval = null;
   }
 }
+window.stopQuestionTimer = stopQuestionTimer;
 
 function updateTimerUI() {
   const timerSecText = document.getElementById('timerSecText');
@@ -433,6 +437,8 @@ function buildQuestionByType(type, target, distractors) {
   const choices = [target, ...distractors].sort(() => Math.random() - 0.5);
 
   if (type === 'symbol_to_name') {
+    const categoryName = (typeof CATEGORIES !== 'undefined' && CATEGORIES[target.category]?.nameKo) || target.category || '';
+    const catText = categoryName ? `(${categoryName}) ` : '';
     return {
       type,
       target,
@@ -442,7 +448,7 @@ function buildQuestionByType(type, target, distractors) {
         label: `${c.nameKo} ${c.altNameKo ? `(${c.altNameKo.split('/')[0].trim()})` : ''}`,
         isCorrect: c.atomicNumber === target.atomicNumber
       })),
-      explanation: `정답은 [${target.nameKo}]입니다! 기호는 ${target.symbol}, 원자번호는 ${target.atomicNumber}번이며 ${target.category ? `(${target.category})` : ''} 계열입니다.`
+      explanation: `정답은 [${target.nameKo}]입니다! 기호는 ${target.symbol}, 원자번호는 ${target.atomicNumber}번이며 ${catText}계열입니다.`
     };
   }
 
