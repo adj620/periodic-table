@@ -13,7 +13,7 @@ vData.version = verParts.join('.');
 vData.build = oldBuild + 1;
 vData.versionCode = vData.build;
 vData.updatedAt = new Date().toISOString();
-vData.notes = 'Gemini AI 최신 모델(2.5 Flash 등) 실시간 동적 탐색 엔진 적용 및 자동 업데이트 개선';
+vData.notes = '원소 연금술 대개편: 118원소·양이온·음이온 대백과(한글 명칭), 사칙연산·계수·다전하 수식 전광판 및 도감 인벤토리 드래그 앤 드롭 지원';
 
 // homework_manager 방식: 무료 Firebase Hosting은 .apk 업로드를 금지하므로 .zip으로 복사하여 배포
 if (fs.existsSync('periodic-table.apk')) {
