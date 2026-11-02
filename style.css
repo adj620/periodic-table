@@ -6166,78 +6166,373 @@ body.light-theme .formula-ko-sub {
 }
 
 /* =========================================================================
-   🔒 연금술 터치 드래그 시 화면 스크롤 동시 발생 완벽 차단 & 상단 플로팅 드롭존
+   📌 연금술 2단 고정 분할 레이아웃: [고정 비커 실험대] + [독립 스크롤 원소·인벤토리 덱]
+   - 비커는 상단(또는 좌측)에 100% 고정되어 절대 스크롤 밖으로 사라지지 않음!
+   - 오직 원소·이온·인벤토리 목록(#alchemyScrollDeck)만 독립적으로 스크롤됨!
    ========================================================================= */
-.shelf-atom-btn,
-.inventory-item-slot,
-.alchemy-op-btn {
+.quiz-container:has(#alchemyLabRoot) {
+  max-width: 1320px !important;
+  padding-top: 0.4rem !important;
+  padding-bottom: 0.4rem !important;
+}
+
+.game-suite-wrapper:has(#alchemyLabRoot) {
+  max-width: 1300px !important;
+}
+
+#alchemyLabRoot.alchemy-lab-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - 115px);
+  min-height: 540px;
+  max-height: 920px;
+  padding: 0.65rem 0.75rem;
+  overflow: hidden;
+  gap: 0.5rem;
+}
+
+#alchemyLabRoot .alchemy-header-bar.compact-header {
+  margin-bottom: 0;
+  padding-bottom: 0.45rem;
+  flex-shrink: 0;
+  gap: 0.5rem;
+}
+
+#alchemyLabRoot .alchemy-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+#alchemyLabRoot .alchemy-count-text {
+  font-size: 0.8rem;
+  color: #cbd5e1;
+}
+
+#alchemyLabRoot .alchemy-top-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+/* 2단 분할 컨테이너 */
+.alchemy-split-workbench {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 0.65rem;
+  overflow: hidden;
+}
+
+/* [모드 A] 상단 비커 고정 + 하단 원소 스크롤 (모바일 세로 기본) */
+#alchemyLabRoot.split-mode-top .alchemy-split-workbench {
+  flex-direction: column;
+}
+
+#alchemyLabRoot.split-mode-top .alchemy-pinned-beaker-col {
+  flex-shrink: 0;
+}
+
+/* [모드 B] 좌측 비커 고정 + 우측 원소 스크롤 (태블릿/PC 기본 & 모바일 좌측고정 전환 시) */
+#alchemyLabRoot.split-mode-side .alchemy-split-workbench {
+  flex-direction: row;
+}
+
+#alchemyLabRoot.split-mode-side .alchemy-pinned-beaker-col {
+  width: clamp(190px, 38%, 400px);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+/* 고정된 비커 스테이지 컴팩트 스타일 */
+#alchemyLabRoot .alchemy-beaker-stage.pinned-stage {
+  margin: 0;
+  padding: 0.55rem 0.65rem;
+  background: rgba(15, 23, 42, 0.92);
+  border: 2px solid rgba(56, 189, 248, 0.4);
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+#alchemyLabRoot .alchemy-formula-board {
+  margin-bottom: 0.45rem;
+  padding: 0.45rem 0.65rem;
+}
+
+#alchemyLabRoot .formula-board-top {
+  margin-bottom: 0.25rem;
+}
+
+#alchemyLabRoot .formula-preview-text {
+  min-height: 36px;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.95rem;
+}
+
+#alchemyLabRoot .pinned-beaker-main-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.55rem;
+  margin-bottom: 0.45rem;
+}
+
+#alchemyLabRoot .beaker-container {
+  flex: 1;
+  margin: 0;
+}
+
+#alchemyLabRoot .beaker-glass {
+  width: 100%;
+  max-width: none;
+  min-height: 92px;
+  height: 100%;
+  border-width: 3px;
+}
+
+#alchemyLabRoot .beaker-fluid {
+  min-height: 76px;
+  padding: 0.45rem;
+}
+
+#alchemyLabRoot .pinned-beaker-side-actions {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.35rem;
+  width: clamp(112px, 28%, 148px);
+  flex-shrink: 0;
+}
+
+#alchemyLabRoot .combine-main-btn {
+  flex: 1;
+  padding: 0.45rem 0.5rem !important;
+  font-size: 0.82rem !important;
+  line-height: 1.25;
+  border-radius: 10px !important;
+  white-space: normal;
+  word-break: keep-all;
+}
+
+#alchemyLabRoot .pinned-sub-btns {
+  display: flex;
+  gap: 0.25rem;
+}
+
+#alchemyLabRoot .pinned-sub-btns .op-back-btn {
+  flex: 1;
+  padding: 4px 4px;
+  font-size: 0.7rem;
+  text-align: center;
+}
+
+#alchemyLabRoot .pinned-sub-btns .clear-btn:hover {
+  background: #dc2626;
+}
+
+/* 사칙연산 & 전하 패드 가로 스크롤/컴팩트 바 */
+#alchemyLabRoot .alchemy-operator-bar.compact-op-bar {
+  margin-bottom: 0;
+  padding: 0.35rem 0.45rem;
+}
+
+#alchemyLabRoot.split-mode-top .operator-btns-grid {
+  display: flex;
+  overflow-x: auto;
+  gap: 0.32rem;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+
+#alchemyLabRoot.split-mode-top .alchemy-op-btn {
+  min-width: 52px;
+  flex-shrink: 0;
+  padding: 0.22rem 0.15rem;
+}
+
+/* [2] 독립 스크롤 원소·이온·인벤토리 덱 컬럼 */
+.alchemy-scroll-deck-col {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1.5px solid #334155;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.deck-sticky-controls {
+  flex-shrink: 0;
+  padding: 0.4rem 0.6rem;
+  background: rgba(30, 41, 59, 0.95);
+  border-bottom: 1px solid #334155;
+}
+
+.deck-view-tabs {
+  display: flex;
+  gap: 0.35rem;
+  overflow-x: auto;
+}
+
+.deck-tab-btn {
+  flex: 1;
+  background: #0f172a;
+  border: 1px solid #475569;
+  color: #cbd5e1;
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 5px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.deck-tab-btn.active {
+  background: #0284c7;
+  border-color: #38bdf8;
+  color: #fff;
+}
+
+.deck-scroll-body-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+/* 오직 이 영역(#alchemyScrollDeck)만 독립적으로 위아래 스크롤됨! */
+.alchemy-scroll-deck {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.55rem 0.6rem 1.5rem;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+#alchemyLabRoot .alchemy-inventory-section {
+  margin-bottom: 0.85rem;
+  padding: 0.65rem;
+}
+
+#alchemyLabRoot .alchemy-inventory-grid {
+  max-height: none;
+  overflow-y: visible;
+}
+
+/* 우측 전용 원소 목록 스크롤 레일 (드래그 모드에서도 언제든 원소 목록만 고속 스크롤!) */
+.alchemy-scroll-rail {
+  width: 38px;
+  flex-shrink: 0;
+  background: rgba(30, 41, 59, 0.9);
+  border-left: 1px solid #334155;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 2px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.rail-step-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  background: #0f172a;
+  border: 1px solid #475569;
+  color: #38bdf8;
+  font-size: 0.8rem;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rail-step-btn:active {
+  background: #0284c7;
+  color: #fff;
+}
+
+.rail-touch-track {
+  flex: 1;
+  width: 100%;
+  margin: 4px 0;
+  border-radius: 8px;
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px dashed rgba(56, 189, 248, 0.35);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #7dd3fc;
+  font-size: 0.95rem;
+  touch-action: none;
+  cursor: ns-resize;
+}
+
+.rail-touch-track small {
+  font-size: 0.58rem;
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: center;
+  color: #94a3b8;
+}
+
+.rail-touch-track.rail-active {
+  background: rgba(56, 189, 248, 0.25);
+  border-color: #38bdf8;
+}
+
+/* 터치 드래그 모드별 touch-action 제어 */
+#alchemyLabRoot.touch-mode-drag .shelf-atom-btn,
+#alchemyLabRoot.touch-mode-drag .inventory-item-slot,
+#alchemyLabRoot.touch-mode-drag .alchemy-op-btn {
   touch-action: none !important;
   user-select: none !important;
   -webkit-user-select: none !important;
   -webkit-touch-callout: none !important;
-  -webkit-user-drag: element;
+}
+
+#alchemyLabRoot.touch-mode-scroll .shelf-atom-btn,
+#alchemyLabRoot.touch-mode-scroll .inventory-item-slot {
+  touch-action: pan-y !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
 }
 
 body.alchemy-dragging-active,
-body.alchemy-dragging-active .quiz-container,
-body.alchemy-dragging-active .game-suite-wrapper,
-body.alchemy-dragging-active .alchemy-inventory-grid,
-body.alchemy-dragging-active .alchemy-atoms-grid {
+body.alchemy-dragging-active .alchemy-scroll-deck {
   overflow: hidden !important;
   touch-action: none !important;
-  overscroll-behavior: none !important;
 }
 
-.floating-beaker-dropzone {
-  position: fixed;
-  top: 12px;
-  left: 50%;
-  transform: translate(-50%, -140%);
-  width: min(92vw, 460px);
-  background: rgba(15, 23, 42, 0.96);
-  border: 2.5px dashed #38bdf8;
-  border-radius: 16px;
-  padding: 0.75rem 1.1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  z-index: 999990;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.65);
-  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), background 0.15s, border-color 0.15s;
-  pointer-events: none;
+@media (max-width: 600px) {
+  #alchemyLabRoot.alchemy-lab-wrapper {
+    height: calc(100dvh - 96px);
+    padding: 0.45rem;
+  }
+  #alchemyLabRoot .formula-drag-tip {
+    display: none;
+  }
+  #alchemyLabRoot.split-mode-side .pinned-beaker-main-row {
+    flex-direction: column;
+  }
+  #alchemyLabRoot.split-mode-side .pinned-beaker-side-actions {
+    width: 100%;
+    flex-direction: row;
+  }
 }
 
-.floating-beaker-dropzone.visible {
-  transform: translate(-50%, 0);
-}
-
-.floating-beaker-dropzone.drag-over {
-  background: rgba(2, 132, 199, 0.95);
-  border-style: solid;
-  border-color: #fde047;
-  transform: translate(-50%, 2px) scale(1.03);
-}
-
-.floating-drop-icon {
-  font-size: 1.7rem;
-}
-
-.floating-drop-text {
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-}
-
-.floating-drop-text strong {
-  color: #f8fafc;
-  font-size: 0.92rem;
-}
-
-.floating-drop-text small {
-  color: #7dd3fc;
-  font-size: 0.76rem;
-  font-family: 'JetBrains Mono', monospace;
-}
 
 

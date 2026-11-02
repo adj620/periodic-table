@@ -753,7 +753,7 @@
   (function applyOneStopUpdateAndHotfix() {
     if (typeof window === 'undefined') return;
     const REMOTE_BASE = 'https://periodic-table-adj.web.app';
-    const LATEST_BUILD_NUM = 27; // 배포 스크립트가 최신 빌드 번호로 자동 갱신
+    const LATEST_BUILD_NUM = 28; // 배포 스크립트가 최신 빌드 번호로 자동 갱신
 
     try {
       // 1) 이미 최신(1.3.8 #25 이상) APK를 설치한 경우: CURRENT_EMBEDDED_BUILD=4 버그 즉시 보정

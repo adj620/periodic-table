@@ -1114,7 +1114,10 @@ let alchemyState = {
   shelfSearch: '',
   currentBookCat: 'all',
   inventoryFilter: 'unlocked', // 'unlocked' (해금+기본시약) | 'all' (전체 75종 도감 인벤토리 실험모드)
-  inventorySearch: ''
+  inventorySearch: '',
+  splitMode: window.innerWidth >= 820 ? 'side' : 'top', // 'top' (상단 비커 고정) | 'side' (좌측 비커 고정)
+  deckView: 'all', // 'all' (원소+인벤토리) | 'shelf' (원소·이온만) | 'inv' (도감 인벤토리만)
+  touchDragMode: 'drag' // 'drag' (카드 터치 시 즉시 비커로 드래그) | 'scroll' (목록 스크롤 우선, 길게 눌러 드래그)
 };
 
 /**
@@ -1344,121 +1347,167 @@ function renderAlchemyGameLobby(container) {
 
   const currentExpr = formatBeakerExpression(alchemyState.beakerElements);
   const currentKoNames = formatBeakerKoreanNames(alchemyState.beakerElements);
+  const isSideMode = alchemyState.splitMode === 'side';
+  const isDragPriority = alchemyState.touchDragMode !== 'scroll';
 
   container.innerHTML = `
-    <div class="alchemy-lab-wrapper">
-      <!-- 상단 도감 진행률 및 연금술사 칭호 바 -->
-      <div class="alchemy-header-bar">
+    <div class="alchemy-lab-wrapper split-mode-${alchemyState.splitMode} touch-mode-${alchemyState.touchDragMode}" id="alchemyLabRoot">
+      <!-- 상단 컴팩트 진행률 & 레이아웃 고정 컨트롤 바 -->
+      <div class="alchemy-header-bar compact-header">
         <div class="alchemy-progress-group">
-          <div class="alchemy-title-badge" style="color: ${titleInfo.color}; font-weight:800; font-size:0.95rem; margin-bottom:3px;">
-            ${titleInfo.title}
+          <div class="alchemy-title-row">
+            <span class="alchemy-title-badge" style="color: ${titleInfo.color}; font-weight:800; font-size:0.88rem;">
+              ${titleInfo.title}
+            </span>
+            <span class="alchemy-count-text">⚗️ <strong>${unlockedCount}/${totalCount}</strong> (${progressPct}%)</span>
           </div>
-          <span>⚗️ 연금술 도감: <strong>${unlockedCount} / ${totalCount}</strong>종 해금 (${progressPct}%)</span>
           <div class="alchemy-progress-track">
             <div class="alchemy-progress-fill" style="width: ${progressPct}%;"></div>
           </div>
         </div>
-        <button id="toggleRecipeBookBtn" class="pill-btn primary">📖 ${totalCount}종 전체 도감 보기</button>
+        <div class="alchemy-top-controls">
+          <button id="toggleSplitModeBtn" class="pill-btn secondary small-btn" title="비커 고정 위치 전환 (상단 고정 / 좌측 고정)">
+            ${isSideMode ? '◫ 좌측비커 고정중' : '⊟ 상단비커 고정중'}
+          </button>
+          <button id="toggleTouchModeBtn" class="pill-btn ${isDragPriority ? 'primary' : 'secondary'} small-btn" title="원소 카드 터치 시 드래그 우선 / 스크롤 우선 전환">
+            ${isDragPriority ? '✋ 카드드래그 고정' : '↕️ 목록스크롤 우선'}
+          </button>
+          <button id="toggleRecipeBookBtn" class="pill-btn primary small-btn">📖 도감(${totalCount})</button>
+        </div>
       </div>
 
-      <!-- 중앙 반응 비커 실험대 + 실시간 수식 전광판 -->
-      <div class="alchemy-beaker-stage">
-        <!-- 실시간 화학식/이온식/수식 전광판 -->
-        <div class="alchemy-formula-board">
-          <div class="formula-board-top">
-            <span class="formula-badge-label">📟 실시간 화학·이온 수식 & 한글 명칭 전광판</span>
-            <span class="formula-drag-tip">💡 도감 인벤토리·이온·원소를 비커로 끌어넣거나(드래그) 터치하세요!</span>
-          </div>
-          <div class="formula-display-row">
-            <div id="beakerFormulaPreview" class="formula-preview-text">
-              ${currentExpr
-                ? `<div class="formula-expr-main"><strong>${currentExpr}</strong></div><div class="formula-ko-sub">🇰🇷 ${currentKoNames}</div>`
-                : '<span class="formula-placeholder">예: Na⁺(나트륨 양이온) + Cl⁻(염화 음이온), 2NaOH⁻, Ba²⁺ + SO₄²⁻</span>'}
-            </div>
-            <div class="formula-direct-input-wrap">
-              <input type="text" id="directFormulaInput" class="direct-formula-input" placeholder="직접 수식 입력 (예: 2NaOH-, NaCl-)" value="${currentExpr}" autocomplete="off" spellcheck="false" />
-              <button id="applyDirectFormulaBtn" class="pill-btn secondary small-btn" title="입력한 수식을 비커에 적용">적용</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="beaker-container">
-          <div class="beaker-glass" id="beakerGlassEl" title="여기로 원소·이온·도감 아이템을 끌어넣으세요!">
-            <div class="beaker-drop-overlay" id="beakerDropOverlay">📥 여기에 놓아 비커에 투입!</div>
-            <div id="beakerFluid" class="beaker-fluid">
-              <div id="beakerItems" class="beaker-items-cloud">
-                ${renderBeakerPillsHtml()}
+      <!-- 📌 2단 분할 워크벤치: [1] 고정된 비커 실험대 + [2] 독립 스크롤 원소·이온·인벤토리 덱 -->
+      <div class="alchemy-split-workbench">
+        <!-- [1] 고정된 비커 실험대 (스크롤해도 절대 사라지지 않음!) -->
+        <div class="alchemy-pinned-beaker-col">
+          <div class="alchemy-beaker-stage pinned-stage">
+            <!-- 실시간 화학식/이온식/수식 전광판 -->
+            <div class="alchemy-formula-board">
+              <div class="formula-board-top">
+                <span class="formula-badge-label">📌 고정 비커 & 실시간 수식 전광판</span>
+                <span class="formula-drag-tip">원소·이온을 여기 비커로 끌어놓으세요!</span>
+              </div>
+              <div class="formula-display-row">
+                <div id="beakerFormulaPreview" class="formula-preview-text">
+                  ${currentExpr
+                    ? `<div class="formula-expr-main"><strong>${currentExpr}</strong></div><div class="formula-ko-sub">🇰🇷 ${currentKoNames}</div>`
+                    : '<span class="formula-placeholder">예: Na⁺ + Cl⁻, 2NaOH⁻, Ba²⁺ + SO₄²⁻</span>'}
+                </div>
+                <div class="formula-direct-input-wrap">
+                  <input type="text" id="directFormulaInput" class="direct-formula-input" placeholder="수식 직접입력 (예: 2NaOH-)" value="${currentExpr}" autocomplete="off" spellcheck="false" />
+                  <button id="applyDirectFormulaBtn" class="pill-btn secondary small-btn" title="입력한 수식을 비커에 적용">적용</button>
+                </div>
               </div>
             </div>
+
+            <!-- 비커 드롭 영역 + 액션 버튼 가로 배치 (공간 절약 & 넓은 드롭 타깃) -->
+            <div class="pinned-beaker-main-row">
+              <div class="beaker-container">
+                <div class="beaker-glass" id="beakerGlassEl" title="여기로 원소·이온·도감 아이템을 끌어넣으세요!">
+                  <div class="beaker-drop-overlay" id="beakerDropOverlay">📥 여기에 놓아 비커에 투입!</div>
+                  <div id="beakerFluid" class="beaker-fluid">
+                    <div id="beakerItems" class="beaker-items-cloud">
+                      ${renderBeakerPillsHtml()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="pinned-beaker-side-actions">
+                <button id="combineElementsBtn" class="action-btn primary combine-main-btn">⚗️ 화학 반응 시작!</button>
+                <div class="pinned-sub-btns">
+                  <button id="backspaceBeakerBtn" class="op-back-btn" title="마지막에 넣은 기호 지우기">⌫ 지우기</button>
+                  <button id="clearBeakerBtn" class="op-back-btn clear-btn" title="비커 전체 비우기">🗑️ 비우기</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 🧮 사칙연산 & 계수 & 괄호 & 전하 기호 가로 스크롤/컴팩트 패드 -->
+            <div class="alchemy-operator-bar compact-op-bar">
+              <div class="operator-btns-grid" id="alchemyOperatorGrid">
+                ${ALCHEMY_OPERATORS.map(op => `
+                  <button class="alchemy-op-btn op-type-${op.type}" data-op="${op.symbol}" draggable="true" title="${op.desc}">
+                    <strong>${op.symbol}</strong>
+                    <small>${op.label.replace(/^[^\s]+\s/, '')}</small>
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- 힌트 알림 박스 (실패 시 똑똑한 안내) -->
+            <div id="alchemyHintBox" class="alchemy-hint-box" style="display:none;"></div>
           </div>
         </div>
 
-        <!-- 🧮 사칙연산 & 계수 & 괄호 & 전하 기호 툴바 -->
-        <div class="alchemy-operator-bar">
-          <div class="operator-bar-header">
-            <span>🧮 사칙연산 · 계수(2~6) · 괄호 · 다전하(⁺~⁴⁻) 패드</span>
-            <button id="backspaceBeakerBtn" class="op-back-btn" title="마지막에 넣은 기호 지우기">⌫ 한 칸 지우기</button>
-          </div>
-          <div class="operator-btns-grid" id="alchemyOperatorGrid">
-            ${ALCHEMY_OPERATORS.map(op => `
-              <button class="alchemy-op-btn op-type-${op.type}" data-op="${op.symbol}" draggable="true" title="${op.desc}">
-                <strong>${op.symbol}</strong>
-                <small>${op.label.replace(/^[^\s]+\s/, '')}</small>
-              </button>
-            `).join('')}
-          </div>
-        </div>
-
-        <!-- 힌트 알림 박스 (실패 시 똑똑한 안내) -->
-        <div id="alchemyHintBox" class="alchemy-hint-box" style="display:none;"></div>
-
-        <div class="beaker-action-row">
-          <button id="clearBeakerBtn" class="action-btn secondary small-btn">비커 비우기 🗑️</button>
-          <button id="combineElementsBtn" class="action-btn primary large-btn">⚗️ 화학 반응 & 수식 분석 시작!</button>
-        </div>
-      </div>
-
-      <!-- 🎒 도감 인벤토리 (도감 목록을 인벤토리처럼 보고 비커로 드래그/터치 투입!) -->
-      <div class="alchemy-inventory-section">
-        <div class="inventory-header-row">
-          <div class="inventory-title-group">
-            <h3>🎒 내 도감 인벤토리 <small>(비커로 끌어넣기 / 터치 투입)</small></h3>
-          </div>
-          <div class="inventory-controls-row">
-            <input type="text" id="inventorySearchInput" class="inventory-search-input" placeholder="🔍 도감 물질·화학식 검색 (예: NaOH, 소금)" value="${alchemyState.inventorySearch}" />
-            <div class="inventory-mode-tabs">
-              <button class="cat-pill ${alchemyState.inventoryFilter === 'unlocked' ? 'active' : ''}" data-inv-mode="unlocked">내 보유 시약 (${getInventoryRecipes('unlocked').length})</button>
-              <button class="cat-pill ${alchemyState.inventoryFilter === 'all' ? 'active' : ''}" data-inv-mode="all">🔓 전체 도감 시약 (${ALCHEMY_RECIPES.length})</button>
+        <!-- [2] 독립 스크롤 원소·이온·인벤토리 덱 (이 영역만 위아래로 스크롤됨!) -->
+        <div class="alchemy-scroll-deck-col">
+          <!-- 상단 고정 서브탭 & 검색 바 -->
+          <div class="deck-sticky-controls">
+            <div class="deck-view-tabs">
+              <button class="deck-tab-btn ${alchemyState.deckView === 'all' ? 'active' : ''}" data-deck-view="all">✨ 전체 보기</button>
+              <button class="deck-tab-btn ${alchemyState.deckView === 'shelf' ? 'active' : ''}" data-deck-view="shelf">🧪 원소·양이온·음이온(${fullList.length})</button>
+              <button class="deck-tab-btn ${alchemyState.deckView === 'inv' ? 'active' : ''}" data-deck-view="inv">🎒 도감 인벤토리(${ALCHEMY_RECIPES.length})</button>
             </div>
           </div>
-        </div>
 
-        <div class="alchemy-inventory-grid" id="alchemyInventoryGrid">
-          ${renderInventoryItemsHtml()}
-        </div>
-      </div>
+          <!-- 내부 스크롤 본문 + 우측 전용 터치 스크롤 레일 -->
+          <div class="deck-scroll-body-wrap">
+            <div class="alchemy-scroll-deck" id="alchemyScrollDeck">
+              <!-- 🎒 도감 인벤토리 섹션 -->
+              <div class="alchemy-inventory-section" id="alchemyInventorySection" style="${alchemyState.deckView === 'shelf' ? 'display:none;' : ''}">
+                <div class="inventory-header-row">
+                  <div class="inventory-title-group">
+                    <h3>🎒 내 도감 인벤토리 <small>(고정된 비커로 끌어넣기 / 터치)</small></h3>
+                  </div>
+                  <div class="inventory-controls-row">
+                    <input type="text" id="inventorySearchInput" class="inventory-search-input" placeholder="🔍 도감 물질·화학식 검색 (예: NaOH, 소금)" value="${alchemyState.inventorySearch}" />
+                    <div class="inventory-mode-tabs">
+                      <button class="cat-pill ${alchemyState.inventoryFilter === 'unlocked' ? 'active' : ''}" data-inv-mode="unlocked">보유 시약(${getInventoryRecipes('unlocked').length})</button>
+                      <button class="cat-pill ${alchemyState.inventoryFilter === 'all' ? 'active' : ''}" data-inv-mode="all">🔓 전체 시약(${ALCHEMY_RECIPES.length})</button>
+                    </div>
+                  </div>
+                </div>
 
-      <!-- 하단 원소 & 양이온 & 음이온 대백과 보관함 선반 (118원소 전 산화수 확장 + 검색 지원) -->
-      <div class="alchemy-shelf-section">
-        <div class="shelf-header-row">
-          <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
-            <h3 style="margin:0;">🧪 원소 & 양이온 · 음이온 대백과 보관함</h3>
-            <input type="text" id="shelfSearchInput" class="inventory-search-input" placeholder="🔍 원소·이온 검색 (예: Ba²⁺, 황산, 철, MnO₄⁻)" value="${alchemyState.shelfSearch}" />
+                <div class="alchemy-inventory-grid" id="alchemyInventoryGrid">
+                  ${renderInventoryItemsHtml()}
+                </div>
+              </div>
+
+              <!-- 🧪 원소 & 양이온 & 음이온 대백과 보관함 섹션 -->
+              <div class="alchemy-shelf-section" id="alchemyShelfSection" style="${alchemyState.deckView === 'inv' ? 'display:none;' : ''}">
+                <div class="shelf-header-row">
+                  <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; width:100%; justify-content:space-between;">
+                    <h3 style="margin:0;">🧪 원소 & 양이온 · 음이온 보관함</h3>
+                    <input type="text" id="shelfSearchInput" class="inventory-search-input" placeholder="🔍 원소·이온 한글/기호 검색 (예: 황산, Ba²⁺, 철)" value="${alchemyState.shelfSearch}" />
+                  </div>
+                  <div class="shelf-cat-tabs">
+                    <button class="cat-pill ${alchemyState.currentShelfCat === 'all' ? 'active' : ''}" data-cat="all">핵심 추천(${ALCHEMY_SHELF_ELEMENTS.length})</button>
+                    <button class="cat-pill ion-cat-pill ${alchemyState.currentShelfCat === 'cation' ? 'active' : ''}" data-cat="cation">⚡ 양이온(${totalCations})</button>
+                    <button class="cat-pill ion-cat-pill ${alchemyState.currentShelfCat === 'anion' ? 'active' : ''}" data-cat="anion">💧 음이온(${totalAnions})</button>
+                    <button class="cat-pill ion-cat-pill ${alchemyState.currentShelfCat === 'poly_ion' ? 'active' : ''}" data-cat="poly_ion">🧩 다원자(${totalPolyIons})</button>
+                    <button class="cat-pill ${alchemyState.currentShelfCat === 'nonmetal' ? 'active' : ''}" data-cat="nonmetal">비금속</button>
+                    <button class="cat-pill ${alchemyState.currentShelfCat === 'metal' ? 'active' : ''}" data-cat="metal">주요금속</button>
+                    <button class="cat-pill ${alchemyState.currentShelfCat === 'precious' ? 'active' : ''}" data-cat="precious">귀금속</button>
+                    <button class="cat-pill ${alchemyState.currentShelfCat === 'full118' ? 'active' : ''}" data-cat="full118">🌌 118전체(${fullList.length})</button>
+                  </div>
+                </div>
+
+                <div class="alchemy-atoms-grid" id="alchemyAtomsGrid">
+                  ${renderShelfButtonsHtml(filteredElements)}
+                </div>
+              </div>
+            </div>
+
+            <!-- ↕️ 우측 전용 원소 목록 스크롤 레일 (드래그 모드에서도 언제든 원소 목록만 부드럽게 위아래 스크롤!) -->
+            <div class="alchemy-scroll-rail" id="alchemyScrollRail" title="위아래로 밀어 원소 목록만 스크롤">
+              <button type="button" class="rail-step-btn" id="scrollDeckUpBtn" title="위로 스크롤">▲</button>
+              <div class="rail-touch-track" id="railTouchTrack">
+                <span>↕️</span>
+                <small>목록<br>스크롤</small>
+              </div>
+              <button type="button" class="rail-step-btn" id="scrollDeckDownBtn" title="아래로 스크롤">▼</button>
+            </div>
           </div>
-          <div class="shelf-cat-tabs">
-            <button class="cat-pill ${alchemyState.currentShelfCat === 'all' ? 'active' : ''}" data-cat="all">핵심 추천(${ALCHEMY_SHELF_ELEMENTS.length})</button>
-            <button class="cat-pill ion-cat-pill ${alchemyState.currentShelfCat === 'cation' ? 'active' : ''}" data-cat="cation">⚡ 양이온 전체(${totalCations})</button>
-            <button class="cat-pill ion-cat-pill ${alchemyState.currentShelfCat === 'anion' ? 'active' : ''}" data-cat="anion">💧 음이온 전체(${totalAnions})</button>
-            <button class="cat-pill ion-cat-pill ${alchemyState.currentShelfCat === 'poly_ion' ? 'active' : ''}" data-cat="poly_ion">🧩 다원자·착이온(${totalPolyIons})</button>
-            <button class="cat-pill ${alchemyState.currentShelfCat === 'nonmetal' ? 'active' : ''}" data-cat="nonmetal">비금속/할로젠</button>
-            <button class="cat-pill ${alchemyState.currentShelfCat === 'metal' ? 'active' : ''}" data-cat="metal">주요금속</button>
-            <button class="cat-pill ${alchemyState.currentShelfCat === 'precious' ? 'active' : ''}" data-cat="precious">귀금속/특수</button>
-            <button class="cat-pill ${alchemyState.currentShelfCat === 'full118' ? 'active' : ''}" data-cat="full118">🌌 118원소+전산화수(${fullList.length})</button>
-          </div>
-        </div>
-
-        <div class="alchemy-atoms-grid" id="alchemyAtomsGrid">
-          ${renderShelfButtonsHtml(filteredElements)}
         </div>
       </div>
 
@@ -1498,6 +1547,34 @@ function renderAlchemyGameLobby(container) {
   bindOperatorButtons(container);
   bindInventoryEvents(container);
   bindBeakerDragAndDrop(container);
+  bindDeckScrollControls(container);
+
+  // 상단 고정 / 좌측 고정 레이아웃 전환 버튼
+  document.getElementById('toggleSplitModeBtn')?.addEventListener('click', () => {
+    alchemyState.splitMode = alchemyState.splitMode === 'side' ? 'top' : 'side';
+    renderAlchemyGameLobby(container);
+  });
+
+  // 카드 드래그 우선 / 목록 스크롤 우선 전환 버튼
+  document.getElementById('toggleTouchModeBtn')?.addEventListener('click', () => {
+    alchemyState.touchDragMode = alchemyState.touchDragMode === 'scroll' ? 'drag' : 'scroll';
+    renderAlchemyGameLobby(container);
+  });
+
+  // 덱 서브탭 (전체 / 원소·이온만 / 도감 인벤토리만) 전환
+  const deckTabBtns = container.querySelectorAll('[data-deck-view]');
+  deckTabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      alchemyState.deckView = btn.dataset.deckView;
+      deckTabBtns.forEach(b => b.classList.toggle('active', b.dataset.deckView === alchemyState.deckView));
+      const invSec = document.getElementById('alchemyInventorySection');
+      const shelfSec = document.getElementById('alchemyShelfSection');
+      if (invSec) invSec.style.display = alchemyState.deckView === 'shelf' ? 'none' : '';
+      if (shelfSec) shelfSec.style.display = alchemyState.deckView === 'inv' ? 'none' : '';
+      const scrollDeck = document.getElementById('alchemyScrollDeck');
+      if (scrollDeck) scrollDeck.scrollTop = 0;
+    });
+  });
 
   // 보관함 검색창 연동
   const shelfSearchInput = document.getElementById('shelfSearchInput');
@@ -1548,6 +1625,8 @@ function renderAlchemyGameLobby(container) {
         atomsGrid.innerHTML = renderShelfButtonsHtml(getFilteredShelfElements());
         bindShelfAtomButtons(container);
       }
+      const scrollDeck = document.getElementById('alchemyScrollDeck');
+      if (scrollDeck) scrollDeck.scrollTop = 0;
     });
   });
 
@@ -1804,131 +1883,195 @@ function bindRecipeBookCardActions(container) {
 }
 
 /**
+ * 우측 전용 스크롤 레일(▲/▼ 버튼 및 터치 슬라이드 트랙) 바인딩
+ */
+function bindDeckScrollControls(container) {
+  const scrollDeck = container.querySelector('#alchemyScrollDeck');
+  const upBtn = container.querySelector('#scrollDeckUpBtn');
+  const downBtn = container.querySelector('#scrollDeckDownBtn');
+  const railTrack = container.querySelector('#railTouchTrack');
+  if (!scrollDeck) return;
+
+  upBtn?.addEventListener('click', () => {
+    scrollDeck.scrollBy({ top: -240, behavior: 'smooth' });
+  });
+
+  downBtn?.addEventListener('click', () => {
+    scrollDeck.scrollBy({ top: 240, behavior: 'smooth' });
+  });
+
+  if (railTrack) {
+    let lastRailY = 0;
+    railTrack.addEventListener('touchstart', (e) => {
+      if (e.touches.length !== 1) return;
+      lastRailY = e.touches[0].clientY;
+      railTrack.classList.add('rail-active');
+    }, { passive: true });
+
+    railTrack.addEventListener('touchmove', (e) => {
+      if (e.touches.length !== 1) return;
+      if (e.cancelable) e.preventDefault();
+      e.stopPropagation();
+      const curY = e.touches[0].clientY;
+      const deltaY = curY - lastRailY;
+      lastRailY = curY;
+      // 손가락 이동량의 2.5배 속도로 원소 목록을 시원하게 스크롤
+      scrollDeck.scrollTop += deltaY * 2.5;
+    }, { passive: false });
+
+    const endRail = () => railTrack.classList.remove('rail-active');
+    railTrack.addEventListener('touchend', endRail);
+    railTrack.addEventListener('touchcancel', endRail);
+  }
+}
+
+/**
  * 비커 드롭존 (마우스 Drag & Drop + 터치 드롭) 바인딩
  */
 function bindBeakerDragAndDrop(container) {
   const beakerGlass = container.querySelector('#beakerGlassEl');
-  if (!beakerGlass) return;
+  const pinnedCol = container.querySelector('.alchemy-pinned-beaker-col');
+  const dropTargets = [beakerGlass, pinnedCol].filter(Boolean);
 
-  beakerGlass.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    beakerGlass.classList.add('drag-over');
-  });
+  dropTargets.forEach(target => {
+    target.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      beakerGlass?.classList.add('drag-over');
+    });
 
-  beakerGlass.addEventListener('dragleave', () => {
-    beakerGlass.classList.remove('drag-over');
-  });
+    target.addEventListener('dragleave', () => {
+      beakerGlass?.classList.remove('drag-over');
+    });
 
-  beakerGlass.addEventListener('drop', (e) => {
-    e.preventDefault();
-    beakerGlass.classList.remove('drag-over');
-    const token = e.dataTransfer?.getData('text/plain');
-    if (token) {
-      addTokenToBeaker(token, container);
-    }
+    target.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      beakerGlass?.classList.remove('drag-over');
+      const token = e.dataTransfer?.getData('text/plain');
+      if (token) {
+        addTokenToBeaker(token, container);
+      }
+    });
   });
 }
 
 /**
- * 화면이 아래로 스크롤된 상태에서 드래그할 때 상단에 나타나는 플로팅 비커 드롭존 생성/반환
- */
-function ensureFloatingBeakerDropZone() {
-  let zone = document.getElementById('floatingBeakerDropZone');
-  if (!zone) {
-    zone = document.createElement('div');
-    zone.id = 'floatingBeakerDropZone';
-    zone.className = 'floating-beaker-dropzone';
-    zone.innerHTML = `
-      <span class="floating-drop-icon">🧪</span>
-      <div class="floating-drop-text">
-        <strong>여기에 놓아 비커에 바로 투입!</strong>
-        <small id="floatingDropFormulaSub">비커 드롭 영역</small>
-      </div>
-    `;
-    document.body.appendChild(zone);
-  }
-  const sub = zone.querySelector('#floatingDropFormulaSub');
-  if (sub) {
-    const curExpr = formatBeakerExpression(alchemyState.beakerElements);
-    sub.textContent = curExpr ? `현재 비커: ${curExpr}` : '비커가 비어 있습니다';
-  }
-  return zone;
-}
-
-/**
- * 모바일 터치 드래그 앤 드롭 지원 (화면 스크롤 완전 고정 + 아이템만 부드럽게 이동!)
+ * 모바일 터치 드래그 앤 드롭 지원
+ * - 비커는 상단/좌측에 항상 고정되어 있으므로 화면 밖으로 사라지지 않음!
+ * - 'drag' 모드(기본): 카드를 끌면 원소 목록 스크롤 없이 즉시 고정된 비커로 드래그 앤 드롭!
+ * - 'scroll' 모드: 카드를 위아래로 밀면 원소 목록 스크롤, 0.16초 누르면 비커로 드래그!
  */
 function bindTouchDragToBeaker(el, getTokenFn, container) {
   let ghostEl = null;
-  let floatingZone = null;
   let startX = 0;
   let startY = 0;
   let isDragging = false;
+  let isScrollingList = false;
+  let holdTimer = null;
+
+  const startDragGhost = (clientX, clientY) => {
+    if (isDragging) return;
+    isDragging = true;
+    el.classList.add('dragging');
+    document.body.classList.add('alchemy-dragging-active');
+    triggerHaptic('short');
+
+    const token = getTokenFn();
+    const koName = getTokenKoreanName(token);
+    ghostEl = document.createElement('div');
+    ghostEl.className = 'alchemy-touch-ghost';
+    ghostEl.textContent = (koName && koName !== token) ? `${token} (${koName})` : token;
+    ghostEl.style.left = `${clientX}px`;
+    ghostEl.style.top = `${clientY}px`;
+    document.body.appendChild(ghostEl);
+  };
+
+  const isTouchOverPinnedBeaker = (clientX, clientY) => {
+    const beakerGlass = document.getElementById('beakerGlassEl');
+    const pinnedStage = container.querySelector('.alchemy-pinned-beaker-col');
+    if (beakerGlass) {
+      const r = beakerGlass.getBoundingClientRect();
+      if (clientX >= r.left - 20 && clientX <= r.right + 20 &&
+          clientY >= r.top - 20 && clientY <= r.bottom + 20) {
+        return true;
+      }
+    }
+    if (pinnedStage) {
+      const pr = pinnedStage.getBoundingClientRect();
+      if (clientX >= pr.left && clientX <= pr.right &&
+          clientY >= pr.top && clientY <= pr.bottom) {
+        return true;
+      }
+    }
+    return false;
+  };
 
   el.addEventListener('touchstart', (e) => {
     if (e.touches.length !== 1) return;
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
+    const touch = e.touches[0];
+    startX = touch.clientX;
+    startY = touch.clientY;
     isDragging = false;
+    isScrollingList = false;
+
+    if (holdTimer) clearTimeout(holdTimer);
+    if (alchemyState.touchDragMode === 'scroll') {
+      // 스크롤 우선 모드에서는 160ms 홀드 시 드래그 활성화
+      holdTimer = setTimeout(() => {
+        if (!isScrollingList) {
+          startDragGhost(startX, startY);
+        }
+      }, 160);
+    }
   }, { passive: true });
 
   el.addEventListener('touchmove', (e) => {
     if (e.touches.length !== 1) return;
-    // 첫 이동부터 기본 브라우저 스크롤(Viewport Pan) 및 내부 그리드 스크롤을 즉시 차단!
-    if (e.cancelable) {
-      e.preventDefault();
-    }
-    e.stopPropagation();
-
     const touch = e.touches[0];
     const dx = Math.abs(touch.clientX - startX);
     const dy = Math.abs(touch.clientY - startY);
 
-    if (!isDragging && (dx > 5 || dy > 5)) {
-      isDragging = true;
-      el.classList.add('dragging');
-      document.body.classList.add('alchemy-dragging-active');
-
-      const token = getTokenFn();
-      const koName = getTokenKoreanName(token);
-      ghostEl = document.createElement('div');
-      ghostEl.className = 'alchemy-touch-ghost';
-      ghostEl.textContent = (koName && koName !== token) ? `${token} (${koName})` : token;
-      document.body.appendChild(ghostEl);
-
-      // 만약 비커가 화면 위쪽으로 스크롤되어 가려져 있다면 상단 플로팅 드롭존 표시
-      const beakerGlass = document.getElementById('beakerGlassEl');
-      if (beakerGlass) {
-        const bRect = beakerGlass.getBoundingClientRect();
-        if (bRect.top < 40) {
-          floatingZone = ensureFloatingBeakerDropZone();
-          floatingZone.classList.add('visible');
+    if (alchemyState.touchDragMode === 'scroll') {
+      if (!isDragging) {
+        if (dx > 8 || dy > 8) {
+          isScrollingList = true;
+          if (holdTimer) {
+            clearTimeout(holdTimer);
+            holdTimer = null;
+          }
         }
+        return; // 브라우저가 #alchemyScrollDeck 내부만 자연스럽게 스크롤하도록 허용
+      }
+    } else {
+      // 기본 'drag' 모드: 원소 카드를 끌 때 화면/목록 스크롤을 100% 차단하고 즉시 비커로 드래그!
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+      e.stopPropagation();
+
+      if (!isDragging && (dx > 4 || dy > 4)) {
+        startDragGhost(touch.clientX, touch.clientY);
       }
     }
 
     if (isDragging && ghostEl) {
+      if (e.cancelable) e.preventDefault();
+      e.stopPropagation();
       ghostEl.style.left = `${touch.clientX}px`;
       ghostEl.style.top = `${touch.clientY}px`;
 
       const beakerGlass = document.getElementById('beakerGlassEl');
       if (beakerGlass) {
-        const rect = beakerGlass.getBoundingClientRect();
-        const overBeaker = touch.clientX >= rect.left - 15 && touch.clientX <= rect.right + 15 &&
-                           touch.clientY >= rect.top - 15 && touch.clientY <= rect.bottom + 15;
-        beakerGlass.classList.toggle('drag-over', overBeaker);
-      }
-
-      if (floatingZone && floatingZone.classList.contains('visible')) {
-        const fRect = floatingZone.getBoundingClientRect();
-        const overFloat = touch.clientX >= fRect.left && touch.clientX <= fRect.right &&
-                          touch.clientY >= fRect.top && touch.clientY <= fRect.bottom + 25;
-        floatingZone.classList.toggle('drag-over', overFloat);
+        beakerGlass.classList.toggle('drag-over', isTouchOverPinnedBeaker(touch.clientX, touch.clientY));
       }
     }
   }, { passive: false });
 
   const endTouch = (e) => {
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
     document.body.classList.remove('alchemy-dragging-active');
     el.classList.remove('dragging');
 
@@ -1942,31 +2085,13 @@ function bindTouchDragToBeaker(el, getTokenFn, container) {
       ghostEl = null;
     }
 
-    const touch = e.changedTouches?.[0];
-    let dropped = false;
-
     const beakerGlass = document.getElementById('beakerGlassEl');
     if (beakerGlass) {
       beakerGlass.classList.remove('drag-over');
-      if (touch) {
-        const rect = beakerGlass.getBoundingClientRect();
-        const overBeaker = touch.clientX >= rect.left - 15 && touch.clientX <= rect.right + 15 &&
-                           touch.clientY >= rect.top - 15 && touch.clientY <= rect.bottom + 15;
-        if (overBeaker) dropped = true;
-      }
     }
 
-    if (floatingZone) {
-      if (touch && floatingZone.classList.contains('visible')) {
-        const fRect = floatingZone.getBoundingClientRect();
-        const overFloat = touch.clientX >= fRect.left && touch.clientX <= fRect.right &&
-                          touch.clientY >= fRect.top && touch.clientY <= fRect.bottom + 25;
-        if (overFloat) dropped = true;
-      }
-      floatingZone.classList.remove('visible', 'drag-over');
-    }
-
-    if (dropped) {
+    const touch = e.changedTouches?.[0];
+    if (touch && isTouchOverPinnedBeaker(touch.clientX, touch.clientY)) {
       addTokenToBeaker(getTokenFn(), container);
     }
   };
@@ -2302,4 +2427,13 @@ function showAlchemySuccessModal(recipe, container, exprString, bonusNote) {
     renderAlchemyGameLobby(container);
   });
 }
+
+// OTA 핫패치로 스크립트가 동적 로드되었을 때 현재 연금술 탭이 열려 있다면 새 고정 비커 레이아웃으로 즉시 갱신
+(function autoRefreshAlchemyViewIfOpen() {
+  const contentEl = document.getElementById('gameSuiteContent');
+  if (contentEl && contentEl.querySelector('.alchemy-lab-wrapper')) {
+    renderAlchemyGameLobby(contentEl);
+  }
+})();
+
 
