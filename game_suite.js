@@ -1701,7 +1701,11 @@ function addTokenToBeaker(sym, container) {
 function bindShelfAtomButtons(container) {
   const shelfBtns = container.querySelectorAll('.shelf-atom-btn');
   shelfBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      if (btn._justDragged) {
+        e.preventDefault();
+        return;
+      }
       addTokenToBeaker(btn.dataset.symbol, container);
     });
     btn.addEventListener('dragstart', (e) => {
@@ -1718,7 +1722,11 @@ function bindShelfAtomButtons(container) {
 function bindOperatorButtons(container) {
   const opBtns = container.querySelectorAll('.alchemy-op-btn');
   opBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      if (btn._justDragged) {
+        e.preventDefault();
+        return;
+      }
       addTokenToBeaker(btn.dataset.op, container);
     });
     btn.addEventListener('dragstart', (e) => {
@@ -1761,7 +1769,11 @@ function refreshInventoryGrid(container) {
 function bindInventorySlotActions(container) {
   const slots = container.querySelectorAll('.inventory-item-slot');
   slots.forEach(slot => {
-    slot.addEventListener('click', () => {
+    slot.addEventListener('click', (e) => {
+      if (slot._justDragged) {
+        e.preventDefault();
+        return;
+      }
       addTokenToBeaker(slot.dataset.token, container);
     });
     slot.addEventListener('dragstart', (e) => {
@@ -1818,10 +1830,37 @@ function bindBeakerDragAndDrop(container) {
 }
 
 /**
- * 모바일 터치 드래그 앤 드롭 지원 (아이템을 끌어서 비커 위에 놓으면 투입!)
+ * 화면이 아래로 스크롤된 상태에서 드래그할 때 상단에 나타나는 플로팅 비커 드롭존 생성/반환
+ */
+function ensureFloatingBeakerDropZone() {
+  let zone = document.getElementById('floatingBeakerDropZone');
+  if (!zone) {
+    zone = document.createElement('div');
+    zone.id = 'floatingBeakerDropZone';
+    zone.className = 'floating-beaker-dropzone';
+    zone.innerHTML = `
+      <span class="floating-drop-icon">🧪</span>
+      <div class="floating-drop-text">
+        <strong>여기에 놓아 비커에 바로 투입!</strong>
+        <small id="floatingDropFormulaSub">비커 드롭 영역</small>
+      </div>
+    `;
+    document.body.appendChild(zone);
+  }
+  const sub = zone.querySelector('#floatingDropFormulaSub');
+  if (sub) {
+    const curExpr = formatBeakerExpression(alchemyState.beakerElements);
+    sub.textContent = curExpr ? `현재 비커: ${curExpr}` : '비커가 비어 있습니다';
+  }
+  return zone;
+}
+
+/**
+ * 모바일 터치 드래그 앤 드롭 지원 (화면 스크롤 완전 고정 + 아이템만 부드럽게 이동!)
  */
 function bindTouchDragToBeaker(el, getTokenFn, container) {
   let ghostEl = null;
+  let floatingZone = null;
   let startX = 0;
   let startY = 0;
   let isDragging = false;
@@ -1835,53 +1874,100 @@ function bindTouchDragToBeaker(el, getTokenFn, container) {
 
   el.addEventListener('touchmove', (e) => {
     if (e.touches.length !== 1) return;
+    // 첫 이동부터 기본 브라우저 스크롤(Viewport Pan) 및 내부 그리드 스크롤을 즉시 차단!
+    if (e.cancelable) {
+      e.preventDefault();
+    }
+    e.stopPropagation();
+
     const touch = e.touches[0];
     const dx = Math.abs(touch.clientX - startX);
     const dy = Math.abs(touch.clientY - startY);
 
-    if (!isDragging && (dx > 12 || dy > 12)) {
+    if (!isDragging && (dx > 5 || dy > 5)) {
       isDragging = true;
+      el.classList.add('dragging');
+      document.body.classList.add('alchemy-dragging-active');
+
       const token = getTokenFn();
+      const koName = getTokenKoreanName(token);
       ghostEl = document.createElement('div');
       ghostEl.className = 'alchemy-touch-ghost';
-      ghostEl.textContent = token;
+      ghostEl.textContent = (koName && koName !== token) ? `${token} (${koName})` : token;
       document.body.appendChild(ghostEl);
+
+      // 만약 비커가 화면 위쪽으로 스크롤되어 가려져 있다면 상단 플로팅 드롭존 표시
+      const beakerGlass = document.getElementById('beakerGlassEl');
+      if (beakerGlass) {
+        const bRect = beakerGlass.getBoundingClientRect();
+        if (bRect.top < 40) {
+          floatingZone = ensureFloatingBeakerDropZone();
+          floatingZone.classList.add('visible');
+        }
+      }
     }
 
     if (isDragging && ghostEl) {
-      e.preventDefault();
       ghostEl.style.left = `${touch.clientX}px`;
       ghostEl.style.top = `${touch.clientY}px`;
 
       const beakerGlass = document.getElementById('beakerGlassEl');
       if (beakerGlass) {
         const rect = beakerGlass.getBoundingClientRect();
-        const over = touch.clientX >= rect.left && touch.clientX <= rect.right &&
-                     touch.clientY >= rect.top && touch.clientY <= rect.bottom;
-        beakerGlass.classList.toggle('drag-over', over);
+        const overBeaker = touch.clientX >= rect.left - 15 && touch.clientX <= rect.right + 15 &&
+                           touch.clientY >= rect.top - 15 && touch.clientY <= rect.bottom + 15;
+        beakerGlass.classList.toggle('drag-over', overBeaker);
+      }
+
+      if (floatingZone && floatingZone.classList.contains('visible')) {
+        const fRect = floatingZone.getBoundingClientRect();
+        const overFloat = touch.clientX >= fRect.left && touch.clientX <= fRect.right &&
+                          touch.clientY >= fRect.top && touch.clientY <= fRect.bottom + 25;
+        floatingZone.classList.toggle('drag-over', overFloat);
       }
     }
   }, { passive: false });
 
   const endTouch = (e) => {
+    document.body.classList.remove('alchemy-dragging-active');
+    el.classList.remove('dragging');
+
     if (!isDragging) return;
     isDragging = false;
+    el._justDragged = true;
+    setTimeout(() => { el._justDragged = false; }, 350);
+
     if (ghostEl) {
       ghostEl.remove();
       ghostEl = null;
     }
+
+    const touch = e.changedTouches?.[0];
+    let dropped = false;
+
     const beakerGlass = document.getElementById('beakerGlassEl');
     if (beakerGlass) {
       beakerGlass.classList.remove('drag-over');
-      const touch = e.changedTouches?.[0];
       if (touch) {
         const rect = beakerGlass.getBoundingClientRect();
-        const over = touch.clientX >= rect.left && touch.clientX <= rect.right &&
-                     touch.clientY >= rect.top && touch.clientY <= rect.bottom;
-        if (over) {
-          addTokenToBeaker(getTokenFn(), container);
-        }
+        const overBeaker = touch.clientX >= rect.left - 15 && touch.clientX <= rect.right + 15 &&
+                           touch.clientY >= rect.top - 15 && touch.clientY <= rect.bottom + 15;
+        if (overBeaker) dropped = true;
       }
+    }
+
+    if (floatingZone) {
+      if (touch && floatingZone.classList.contains('visible')) {
+        const fRect = floatingZone.getBoundingClientRect();
+        const overFloat = touch.clientX >= fRect.left && touch.clientX <= fRect.right &&
+                          touch.clientY >= fRect.top && touch.clientY <= fRect.bottom + 25;
+        if (overFloat) dropped = true;
+      }
+      floatingZone.classList.remove('visible', 'drag-over');
+    }
+
+    if (dropped) {
+      addTokenToBeaker(getTokenFn(), container);
     }
   };
 

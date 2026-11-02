@@ -6165,3 +6165,79 @@ body.light-theme .formula-ko-sub {
   border-left: 1px solid rgba(255, 255, 255, 0.3);
 }
 
+/* =========================================================================
+   🔒 연금술 터치 드래그 시 화면 스크롤 동시 발생 완벽 차단 & 상단 플로팅 드롭존
+   ========================================================================= */
+.shelf-atom-btn,
+.inventory-item-slot,
+.alchemy-op-btn {
+  touch-action: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-drag: element;
+}
+
+body.alchemy-dragging-active,
+body.alchemy-dragging-active .quiz-container,
+body.alchemy-dragging-active .game-suite-wrapper,
+body.alchemy-dragging-active .alchemy-inventory-grid,
+body.alchemy-dragging-active .alchemy-atoms-grid {
+  overflow: hidden !important;
+  touch-action: none !important;
+  overscroll-behavior: none !important;
+}
+
+.floating-beaker-dropzone {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translate(-50%, -140%);
+  width: min(92vw, 460px);
+  background: rgba(15, 23, 42, 0.96);
+  border: 2.5px dashed #38bdf8;
+  border-radius: 16px;
+  padding: 0.75rem 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  z-index: 999990;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.65);
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), background 0.15s, border-color 0.15s;
+  pointer-events: none;
+}
+
+.floating-beaker-dropzone.visible {
+  transform: translate(-50%, 0);
+}
+
+.floating-beaker-dropzone.drag-over {
+  background: rgba(2, 132, 199, 0.95);
+  border-style: solid;
+  border-color: #fde047;
+  transform: translate(-50%, 2px) scale(1.03);
+}
+
+.floating-drop-icon {
+  font-size: 1.7rem;
+}
+
+.floating-drop-text {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.floating-drop-text strong {
+  color: #f8fafc;
+  font-size: 0.92rem;
+}
+
+.floating-drop-text small {
+  color: #7dd3fc;
+  font-size: 0.76rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+
