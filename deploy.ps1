@@ -93,9 +93,10 @@ if (Test-Path $swPath) {
 $indexPath = Join-Path $proj 'index.html'
 if (Test-Path $indexPath) {
   $idxContent = [System.IO.File]::ReadAllText($indexPath, [System.Text.Encoding]::UTF8)
-  $idxContent = [regex]::Replace($idxContent, "const CURRENT_EMBEDDED_BUILD = \d+;", "const CURRENT_EMBEDDED_BUILD = 4;")
+  $idxContent = [regex]::Replace($idxContent, "const CURRENT_EMBEDDED_BUILD = \d+;", "const CURRENT_EMBEDDED_BUILD = $newBuild;")
+  $idxContent = [regex]::Replace($idxContent, '<span class="update-ver-tag" id="updateModalVerTag">.*?</span>', "<span class=`"update-ver-tag`" id=`"updateModalVerTag`">v$($vObj.version) (빌드 #$newBuild)</span>")
   [System.IO.File]::WriteAllText($indexPath, $idxContent, (New-Object System.Text.UTF8Encoding($false)))
-  Write-Host "🔄 index.html CURRENT_EMBEDDED_BUILD = 4 확인 완료" -ForegroundColor Cyan
+  Write-Host "🔄 index.html CURRENT_EMBEDDED_BUILD = $newBuild 동기화 완료" -ForegroundColor Cyan
 }
 
 # 5-1) www/ 및 android assets 폴더 동기화

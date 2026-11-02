@@ -744,4 +744,61 @@
     getQuizExplanation,
     showApiKeyModal
   };
+
+  // =========================================================================
+  // 🚀 구버전(1.3.5~1.3.8) 네이티브 앱 원스톱(1회) 업데이트 보정 & 실시간 OTA 핫패치
+  // - 구버전 APK에 하드코딩된 CURRENT_EMBEDDED_BUILD = 4 버그로 인해 최신 APK 설치 후에도
+  //   업데이트 안내가 반복해서 뜨거나 여러 번 업데이트해야 하는 현상을 원격에서 즉시 해결합니다.
+  // =========================================================================
+  (function applyOneStopUpdateAndHotfix() {
+    if (typeof window === 'undefined') return;
+    const REMOTE_BASE = 'https://periodic-table-adj.web.app';
+    const LATEST_BUILD_NUM = 26; // 배포 스크립트가 최신 빌드 번호로 자동 갱신
+
+    try {
+      // 1) 이미 최신(1.3.8 #25 이상) APK를 설치한 경우: CURRENT_EMBEDDED_BUILD=4 버그 즉시 보정
+      //    또한 구버전(1.3.5 등)에서 OTA 핫패치가 적용된 경우 중복 업데이트 팝업 루프 차단
+      const verTagEl = document.getElementById('updateModalVerTag');
+      const verTagText = verTagEl ? verTagEl.textContent : '';
+      const buildMatch = verTagText.match(/#(\d+)/);
+      const embeddedTagBuild = buildMatch ? parseInt(buildMatch[1], 10) : 0;
+
+      // 내장 태그가 #25(v1.3.8) 이상이거나 이미 업데이트를 수행한 기기라면 최신 빌드로 즉시 동기화
+      if (embeddedTagBuild >= 25) {
+        localStorage.setItem('app_installed_build', String(LATEST_BUILD_NUM));
+        sessionStorage.setItem('dismissed_update_build', String(LATEST_BUILD_NUM));
+        const modalEl = document.getElementById('appUpdateModal');
+        if (modalEl) modalEl.style.display = 'none';
+      }
+
+      // 2) 구버전(1.3.5~1.3.7)에서 [업데이트 설치] 클릭 시 단 한 번에 최신 빌드로 기록되도록 이벤트 보강
+      const applyBtn = document.getElementById('modalApplyUpdateBtn');
+      if (applyBtn && !applyBtn.dataset.oneStopBound) {
+        applyBtn.dataset.oneStopBound = '1';
+        applyBtn.addEventListener('click', () => {
+          try {
+            localStorage.setItem('app_installed_build', String(LATEST_BUILD_NUM));
+            sessionStorage.setItem('dismissed_update_build', String(LATEST_BUILD_NUM));
+          } catch (e) {}
+        }, true);
+      }
+
+      // 3) Capacitor 네이티브 앱인 경우 최신 style.css 및 game_suite.js를 OTA 핫패치로 즉시 주입
+      if (window.Capacitor !== undefined && !window.__OTA_HOTFIX_APPLIED__) {
+        window.__OTA_HOTFIX_APPLIED__ = true;
+        const ts = Math.floor(Date.now() / 60000); // 1분 단위 캐시 버스팅
+
+        const hotCss = document.createElement('link');
+        hotCss.rel = 'stylesheet';
+        hotCss.href = `${REMOTE_BASE}/style.css?_v=${LATEST_BUILD_NUM}_${ts}`;
+        document.head.appendChild(hotCss);
+
+        const hotGame = document.createElement('script');
+        hotGame.src = `${REMOTE_BASE}/game_suite.js?_v=${LATEST_BUILD_NUM}_${ts}`;
+        document.head.appendChild(hotGame);
+      }
+    } catch (err) {
+      console.warn('OTA One-Stop Patch warning:', err);
+    }
+  })();
 })();
