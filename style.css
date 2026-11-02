@@ -6534,5 +6534,59 @@ body.alchemy-dragging-active .alchemy-scroll-deck {
   }
 }
 
+/* =========================================================================
+   🗣️ 원소 · 이온 · 화학식 한글 발음 표기 스타일 (주기율표 타일 & 연금술)
+   ========================================================================= */
+.element-cell .name-pron-ko {
+  font-size: clamp(0.36rem, 7.2cqw, 0.68rem);
+  font-weight: 700;
+  color: #38bdf8;
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+body.light-theme .element-cell .name-pron-ko {
+  color: #0284c7;
+}
+
+.shelf-atom-btn .shelf-pron-tag {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #7dd3fc;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+body.light-theme .shelf-atom-btn .shelf-pron-tag {
+  color: #0369a1;
+}
+
+.inventory-item-slot .inv-slot-pron {
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: #7dd3fc;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.formula-pron-sub {
+  color: #fde047;
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+body.light-theme .formula-pron-sub {
+  color: #b45309;
+}
+
+
 
 

@@ -40,12 +40,101 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// 118개 원소 매핑 객체 (기본 정보 + 상세 물리화학/역사 데이터 + 실제 표본 사진 병합)
+// =========================================================================
+// 🗣️ 원소 기호 · 이온식 · 영문명 한글 발음(Pronunciation) 변환 엔진
+// =========================================================================
+const ALPHABET_KO_PRON = {
+  A: '에이', B: '비', C: '씨', D: '디', E: '이', F: '에프', G: '지',
+  H: '에이치', I: '아이', J: '제이', K: '케이', L: '엘', M: '엠', N: '엔',
+  O: '오', P: '피', Q: '큐', R: '알', S: '에스', T: '티', U: '유',
+  V: '브이', W: '더블유', X: '엑스', Y: '와이', Z: '제트'
+};
+
+const SUB_SUP_DIGIT_PRON = {
+  '₂': '투', '₃': '쓰리', '₄': '포', '₅': '파이브', '₆': '식스', '₇': '세븐', '₈': '에잇',
+  '2': '투', '3': '쓰리', '4': '포', '5': '파이브', '6': '식스', '7': '세븐', '8': '에잇'
+};
+
+// 1~118번 원소 영문명(nameEn)의 한글 발음 사전
+const ELEMENT_EN_PRON_MAP = {
+  1: '하이드로젠', 2: '힐륨', 3: '리튬', 4: '베릴륨', 5: '보론', 6: '카본', 7: '나이트로젠', 8: '옥시젠', 9: '플루오린', 10: '네온',
+  11: '소듐', 12: '마그네슘', 13: '알루미늄', 14: '실리콘', 15: '포스포러스', 16: '설퍼', 17: '클로린', 18: '아르곤', 19: '포타슘', 20: '칼슘',
+  21: '스칸듐', 22: '타이타늄', 23: '바나듐', 24: '크로뮴', 25: '망가니즈', 26: '아이언', 27: '코발트', 28: '니켈', 29: '카퍼', 30: '징크',
+  31: '갈륨', 32: '저마늄', 33: '아세닉', 34: '셀레늄', 35: '브로민', 36: '크립톤', 37: '루비듐', 38: '스트론튬', 39: '이트륨', 40: '지르코늄',
+  41: '나이오븀', 42: '몰리브데넘', 43: '테크네튬', 44: '루테늄', 45: '로듐', 46: '팔라듐', 47: '실버', 48: '카드뮴', 49: '인듐', 50: '틴',
+  51: '안티모니', 52: '텔루륨', 53: '아이오다인', 54: '제논', 55: '세슘', 56: '바륨', 57: '란타넘', 58: '세륨', 59: '프라세오디뮴', 60: '네오디뮴',
+  61: '프로메튬', 62: '사마륨', 63: '유로퓸', 64: '가돌리늄', 65: '터븀', 66: '디스프로슘', 67: '홀뮴', 68: '어븀', 69: '툴륨', 70: '이터븀',
+  71: '루테튬', 72: '하프늄', 73: '탄탈럼', 74: '텅스텐', 75: '레늄', 76: '오스뮴', 77: '이리듐', 78: '플래티넘', 79: '골드', 80: '머큐리',
+  81: '탈륨', 82: '레드', 83: '비스무트', 84: '폴로늄', 85: '아스타틴', 86: '라돈', 87: '프랑슘', 88: '라듐', 89: '악티늄', 90: '토륨',
+  91: '프로탁티늄', 92: '유레이늄', 93: '넵투늄', 94: '플루토늄', 95: '아메리슘', 96: '퀴륨', 97: '버클륨', 98: '캘리포늄', 99: '아인슈타이늄', 100: '페르뮴',
+  101: '멘델레븀', 102: '노벨륨', 103: '로렌슘', 104: '러더포듐', 105: '더브늄', 106: '시보귬', 107: '보륨', 108: '하슘', 109: '마이트너륨', 110: '다름슈타튬',
+  111: '뢴트게늄', 112: '코페르니슘', 113: '니호늄', 114: '플레로븀', 115: '모스코븀', 116: '리버모륨', 117: '테네신', 118: '오가네손'
+};
+
+/**
+ * 원소 기호, 이온 기호, 화학식(예: Na, Fe, Na⁺, SO₄²⁻, H₂O, 2NaOH⁻)을 한글 발음으로 변환
+ */
+function getSymbolPronunciationKo(rawSym) {
+  if (!rawSym) return '';
+  let s = String(rawSym).trim();
+  if (s === 'e⁻') return '이 마이너스';
+
+  // 연산자 단독 처리
+  const opOnly = {
+    '+': '더하기', '-': '마이너스', '×': '곱하기', '÷': '나누기', '➔': '화살표', '=': '화살표',
+    '(': '괄호열고', ')': '괄호닫고',
+    '⁺': '플러스', '⁻': '마이너스',
+    '²⁺': '투플러스', '²⁻': '투마이너스',
+    '³⁺': '쓰리플러스', '³⁻': '쓰리마이너스',
+    '⁴⁺': '포플러스', '⁴⁻': '포마이너스'
+  };
+  if (opOnly[s]) return opOnly[s];
+
+  // 끝부분 이온 전하 분리
+  let chargeSuffix = '';
+  const chargePatterns = [
+    ['⁸⁺', ' 에잇플러스'], ['⁷⁺', ' 세븐플러스'], ['⁶⁺', ' 식스플러스'], ['⁵⁺', ' 파이브플러스'],
+    ['⁴⁺', ' 포플러스'], ['⁴⁻', ' 포마이너스'],
+    ['³⁺', ' 쓰리플러스'], ['³⁻', ' 쓰리마이너스'],
+    ['²⁺', ' 투플러스'], ['²⁻', ' 투마이너스'],
+    ['⁺', ' 플러스'], ['⁻', ' 마이너스']
+  ];
+  for (const [pat, pron] of chargePatterns) {
+    if (s.endsWith(pat)) {
+      chargeSuffix = pron;
+      s = s.slice(0, -pat.length);
+      break;
+    }
+  }
+
+  let out = '';
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    const upper = ch.toUpperCase();
+    if (ALPHABET_KO_PRON[upper]) {
+      out += ALPHABET_KO_PRON[upper];
+    } else if (SUB_SUP_DIGIT_PRON[ch]) {
+      out += SUB_SUP_DIGIT_PRON[ch];
+    } else if (ch === '(' || ch === '[' || ch === ')' || ch === ']' || ch === '·') {
+      continue;
+    } else {
+      out += ch;
+    }
+  }
+  return (out + chargeSuffix).trim();
+}
+
+window.getSymbolPronunciationKo = getSymbolPronunciationKo;
+window.ELEMENT_EN_PRON_MAP = ELEMENT_EN_PRON_MAP;
+
+// 118개 원소 매핑 객체 (기본 정보 + 상세 물리화학/역사 데이터 + 실제 표본 사진 + 한글 발음 병합)
 const elementsMap = new Map();
 ELEMENTS_DATA.forEach(el => {
   const extra = (typeof ELEMENTS_EXTRA_DATA !== 'undefined' && ELEMENTS_EXTRA_DATA[el.atomicNumber]) || {};
   const photo = (typeof ELEMENTS_PHOTOS_DATA !== 'undefined' && ELEMENTS_PHOTOS_DATA[el.atomicNumber]) || {};
-  elementsMap.set(el.atomicNumber, { ...el, ...extra, ...photo });
+  const symPronKo = getSymbolPronunciationKo(el.symbol);
+  const enPronKo = ELEMENT_EN_PRON_MAP[el.atomicNumber] || el.nameKo;
+  elementsMap.set(el.atomicNumber, { ...el, ...extra, ...photo, symPronKo, enPronKo });
 });
 
 // 주기-족 기반 O(1) 원소 빠른 탐색용 캐시 맵 (란타넘족 57~71번 및 악티늄족 89~103번 제외)
@@ -145,13 +234,18 @@ function createElementCellByTheme(element, themeId) {
   cell.dataset.nameKo = element.nameKo.toLowerCase();
   cell.dataset.altNameKo = (element.altNameKo || '').toLowerCase();
   cell.dataset.nameEn = element.nameEn.toLowerCase();
+  cell.dataset.pronKo = `${element.symPronKo || ''} ${element.enPronKo || ''}`.toLowerCase();
   cell.dataset.radioactive = element.isRadioactive ? 'true' : 'false';
+  cell.title = `${element.atomicNumber}번 ${element.nameKo} (${element.symbol} [${element.symPronKo}] / ${element.nameEn} [${element.enPronKo}])`;
 
   const radMark = element.isRadioactive ? '<span class="radioactive-badge" title="방사성 원소">☢️</span>' : '';
+  const pronLabel = element.enPronKo && element.enPronKo !== element.nameKo
+    ? `${element.symPronKo}·${element.enPronKo}`
+    : `${element.symPronKo}`;
 
   if (themeId === 0) {
     // 🌟 종합판 (최초 개발한 1편+2편 합본 1장 완성형)
-    // 원자번호, 방사능(☢️), 기호, 한글표준명, 이명[나트륨], 영문명, 원자량 모두 표시
+    // 원자번호, 방사능(☢️), 기호, 한글표준명, 이명[나트륨], 한글발음, 영문명, 원자량 모두 표시
     const cleanAlt = element.altNameKo ? `[${element.altNameKo.split('/')[0].split('(')[0].trim()}]` : '';
     cell.innerHTML = `
       <div class="cell-top">
@@ -163,13 +257,14 @@ function createElementCellByTheme(element, themeId) {
       </div>
       <div class="cell-names">
         <span class="name-ko-main">${element.nameKo}</span>
+        <span class="name-pron-ko">(${pronLabel})</span>
         ${cleanAlt ? `<span class="name-ko-alt">${cleanAlt}</span>` : ''}
         <span class="name-en">${element.nameEn}</span>
         <span class="cell-mass">${element.atomicMass}</span>
       </div>
     `;
   } else if (themeId === 1) {
-    // 제1편: 기본 명칭판 (기호 큼직, 한글 표준명, 영문명)
+    // 제1편: 기본 명칭판 (기호 큼직, 한글 표준명, 한글발음, 영문명)
     cell.innerHTML = `
       <div class="cell-top">
         <span class="atomic-number">${element.atomicNumber}</span>
@@ -180,6 +275,7 @@ function createElementCellByTheme(element, themeId) {
       </div>
       <div class="cell-names">
         <span class="name-ko-main">${element.nameKo}</span>
+        <span class="name-pron-ko">(${pronLabel})</span>
         <span class="name-en">${element.nameEn}</span>
       </div>
     `;
@@ -690,13 +786,15 @@ function initSearchAndFilter() {
         const ko = cell.dataset.nameKo;
         const alt = cell.dataset.altNameKo;
         const en = cell.dataset.nameEn;
+        const pron = cell.dataset.pronKo || '';
 
         matchesSearch = (
           num.includes(query) ||
           sym.includes(query) ||
           ko.includes(query) ||
           alt.includes(query) ||
-          en.includes(query)
+          en.includes(query) ||
+          pron.includes(query)
         );
       }
 
@@ -921,15 +1019,17 @@ function updateModalContent(atomicNum) {
   document.getElementById('modalNameKo').textContent = element.nameKo;
 
   const altBadge = document.getElementById('modalAltNameKo');
+  const pronInfo = `기호발음: [${element.symPronKo}] / 영문발음: [${element.enPronKo}]`;
   if (element.altNameKo) {
-    altBadge.textContent = `이명: ${element.altNameKo}`;
-    altBadge.title = `이명 및 구 명칭: ${element.altNameKo}`;
+    altBadge.textContent = `이명: ${element.altNameKo} · 🗣️ ${pronInfo}`;
+    altBadge.title = `이명 및 한글 발음: ${element.altNameKo} (${pronInfo})`;
     altBadge.style.display = 'inline-block';
   } else {
-    altBadge.style.display = 'none';
+    altBadge.textContent = `🗣️ ${pronInfo}`;
+    altBadge.style.display = 'inline-block';
   }
 
-  document.getElementById('modalNameEn').textContent = element.nameEn;
+  document.getElementById('modalNameEn').textContent = `${element.nameEn} (${element.enPronKo})`;
   document.getElementById('modalCategoryName').textContent = cat.nameKo || '';
 
   document.getElementById('modalMass').textContent = element.atomicMass;

@@ -1199,6 +1199,90 @@ function getTokenKoreanName(sym) {
 }
 
 /**
+ * 원소·이온·화학식 기호의 한글 발음(예: Na⁺ -> "엔에이 플러스", Fe -> "에프이·아이언", SO₄²⁻ -> "에스오포 투마이너스") 반환
+ */
+const _LOCAL_ALPHA_PRON = {
+  A: '에이', B: '비', C: '씨', D: '디', E: '이', F: '에프', G: '지',
+  H: '에이치', I: '아이', J: '제이', K: '케이', L: '엘', M: '엠', N: '엔',
+  O: '오', P: '피', Q: '큐', R: '알', S: '에스', T: '티', U: '유',
+  V: '브이', W: '더블유', X: '엑스', Y: '와이', Z: '제트'
+};
+const _LOCAL_DIGIT_PRON = {
+  '₂': '투', '₃': '쓰리', '₄': '포', '₅': '파이브', '₆': '식스', '₇': '세븐', '₈': '에잇',
+  '2': '투', '3': '쓰리', '4': '포', '5': '파이브', '6': '식스', '7': '세븐', '8': '에잇'
+};
+
+function getTokenPronunciationKo(rawSym) {
+  if (!rawSym) return '';
+  if (typeof window.getSymbolPronunciationKo === 'function') {
+    return window.getSymbolPronunciationKo(rawSym);
+  }
+  let s = String(rawSym).trim();
+  if (s === 'e⁻') return '이 마이너스';
+  const opOnly = {
+    '+': '+', '-': '-', '×': '×', '÷': '÷', '➔': '➔', '=': '➔',
+    '⁺': '플러스', '⁻': '마이너스', '²⁺': '투플러스', '²⁻': '투마이너스',
+    '³⁺': '쓰리플러스', '³⁻': '쓰리마이너스', '⁴⁺': '포플러스', '⁴⁻': '포마이너스'
+  };
+  if (opOnly[s]) return opOnly[s];
+
+  let chargeSuffix = '';
+  const chargePatterns = [
+    ['⁸⁺', ' 에잇플러스'], ['⁷⁺', ' 세븐플러스'], ['⁶⁺', ' 식스플러스'], ['⁵⁺', ' 파이브플러스'],
+    ['⁴⁺', ' 포플러스'], ['⁴⁻', ' 포마이너스'],
+    ['³⁺', ' 쓰리플러스'], ['³⁻', ' 쓰리마이너스'],
+    ['²⁺', ' 투플러스'], ['²⁻', ' 투마이너스'],
+    ['⁺', ' 플러스'], ['⁻', ' 마이너스']
+  ];
+  for (const [pat, pron] of chargePatterns) {
+    if (s.endsWith(pat)) {
+      chargeSuffix = pron;
+      s = s.slice(0, -pat.length);
+      break;
+    }
+  }
+  let out = '';
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    const upper = ch.toUpperCase();
+    if (_LOCAL_ALPHA_PRON[upper]) out += _LOCAL_ALPHA_PRON[upper];
+    else if (_LOCAL_DIGIT_PRON[ch]) out += _LOCAL_DIGIT_PRON[ch];
+    else if (!['(', ')', '[', ']', '·'].includes(ch)) out += ch;
+  }
+  return (out + chargeSuffix).trim();
+}
+
+/**
+ * 보관함 카드 표시용: 중성 원소는 기호발음+영문발음(예: "에프이·아이언"), 이온은 이온기호 발음(예: "엔에이 플러스") 반환
+ */
+function getShelfCardPronunciation(sym) {
+  const symPron = getTokenPronunciationKo(sym);
+  if (!sym || sym.includes('⁺') || sym.includes('⁻')) {
+    return symPron;
+  }
+  if (typeof elementsMap !== 'undefined') {
+    for (const [, el] of elementsMap.entries()) {
+      if (el.symbol === sym) {
+        const enPron = el.enPronKo || (window.ELEMENT_EN_PRON_MAP && window.ELEMENT_EN_PRON_MAP[el.atomicNumber]);
+        if (enPron && enPron !== symPron && !el.nameKo.includes(enPron)) {
+          return `${symPron}·${enPron}`;
+        }
+        break;
+      }
+    }
+  }
+  return symPron;
+}
+
+function formatBeakerPronunciations(tokens) {
+  if (!tokens || tokens.length === 0) return '';
+  return tokens.map(t => {
+    if (['+', '-', '×', '÷', '➔', '='].includes(t)) return t;
+    return getTokenPronunciationKo(t);
+  }).join(' ').replace(/\s+/g, ' ').trim();
+}
+
+/**
  * 비커 토큰 배열을 한글 명칭 수식(예: "나트륨 양이온 + 염화 음이온")으로 변환
  */
 function formatBeakerKoreanNames(tokens) {
@@ -1326,9 +1410,11 @@ function getFilteredShelfElements() {
 
     if (!catMatch) return false;
     if (!q) return true;
+    const pronStr = getShelfCardPronunciation(item.symbol).toLowerCase();
     return (
       item.symbol.toLowerCase().includes(q) ||
-      item.name.toLowerCase().includes(q)
+      item.name.toLowerCase().includes(q) ||
+      pronStr.includes(q)
     );
   });
 }
@@ -1347,6 +1433,7 @@ function renderAlchemyGameLobby(container) {
 
   const currentExpr = formatBeakerExpression(alchemyState.beakerElements);
   const currentKoNames = formatBeakerKoreanNames(alchemyState.beakerElements);
+  const currentPronNames = formatBeakerPronunciations(alchemyState.beakerElements);
   const isSideMode = alchemyState.splitMode === 'side';
   const isDragPriority = alchemyState.touchDragMode !== 'scroll';
 
@@ -1384,14 +1471,14 @@ function renderAlchemyGameLobby(container) {
             <!-- 실시간 화학식/이온식/수식 전광판 -->
             <div class="alchemy-formula-board">
               <div class="formula-board-top">
-                <span class="formula-badge-label">📌 고정 비커 & 실시간 수식 전광판</span>
+                <span class="formula-badge-label">📌 고정 비커 & 실시간 수식·발음 전광판</span>
                 <span class="formula-drag-tip">원소·이온을 여기 비커로 끌어놓으세요!</span>
               </div>
               <div class="formula-display-row">
                 <div id="beakerFormulaPreview" class="formula-preview-text">
                   ${currentExpr
-                    ? `<div class="formula-expr-main"><strong>${currentExpr}</strong></div><div class="formula-ko-sub">🇰🇷 ${currentKoNames}</div>`
-                    : '<span class="formula-placeholder">예: Na⁺ + Cl⁻, 2NaOH⁻, Ba²⁺ + SO₄²⁻</span>'}
+                    ? `<div class="formula-expr-main"><strong>${currentExpr}</strong></div><div class="formula-ko-sub">🇰🇷 ${currentKoNames} <span class="formula-pron-sub">🗣️ [${currentPronNames}]</span></div>`
+                    : '<span class="formula-placeholder">예: Na⁺[엔에이 플러스] + Cl⁻[씨엘 마이너스], 2NaOH⁻</span>'}
                 </div>
                 <div class="formula-direct-input-wrap">
                   <input type="text" id="directFormulaInput" class="direct-formula-input" placeholder="수식 직접입력 (예: 2NaOH-)" value="${currentExpr}" autocomplete="off" spellcheck="false" />
@@ -1551,6 +1638,7 @@ function renderAlchemyGameLobby(container) {
 
   // 상단 고정 / 좌측 고정 레이아웃 전환 버튼
   document.getElementById('toggleSplitModeBtn')?.addEventListener('click', () => {
+    alchemyState.userToggledSplit = true;
     alchemyState.splitMode = alchemyState.splitMode === 'side' ? 'top' : 'side';
     renderAlchemyGameLobby(container);
   });
@@ -1560,6 +1648,25 @@ function renderAlchemyGameLobby(container) {
     alchemyState.touchDragMode = alchemyState.touchDragMode === 'scroll' ? 'drag' : 'scroll';
     renderAlchemyGameLobby(container);
   });
+
+  // 모바일 · 태블릿 화면 회전(resize / orientationchange) 시 자동 최적 레이아웃 반응
+  if (!window._alchemyResizeBound) {
+    window._alchemyResizeBound = true;
+    window.addEventListener('resize', () => {
+      if (alchemyState.userToggledSplit) return;
+      const desired = window.innerWidth >= 820 ? 'side' : 'top';
+      if (alchemyState.splitMode !== desired) {
+        alchemyState.splitMode = desired;
+        const root = document.getElementById('alchemyLabRoot');
+        if (root) {
+          root.classList.remove('split-mode-side', 'split-mode-top');
+          root.classList.add(`split-mode-${desired}`);
+          const btn = document.getElementById('toggleSplitModeBtn');
+          if (btn) btn.textContent = desired === 'side' ? '◫ 좌측비커 고정중' : '⊟ 상단비커 고정중';
+        }
+      }
+    });
+  }
 
   // 덱 서브탭 (전체 / 원소·이온만 / 도감 인벤토리만) 전환
   const deckTabBtns = container.querySelectorAll('[data-deck-view]');
@@ -1688,10 +1795,12 @@ function renderShelfButtonsHtml(elementsList) {
   return elementsList.map(el => {
     const isIon = el.cat === 'cation' || el.cat === 'anion';
     const badgeTag = el.cat === 'cation' ? '<span class="ion-mini-tag cation-tag">+양이온</span>' : (el.cat === 'anion' ? '<span class="ion-mini-tag anion-tag">-음이온</span>' : '');
+    const pronText = getShelfCardPronunciation(el.symbol);
     return `
-      <button class="shelf-atom-btn ${isIon ? 'shelf-ion-btn' : ''}" data-symbol="${el.symbol}" draggable="true" style="border-color:${el.color};">
+      <button class="shelf-atom-btn ${isIon ? 'shelf-ion-btn' : ''}" data-symbol="${el.symbol}" draggable="true" style="border-color:${el.color};" title="${el.symbol} [${pronText}] - ${el.name}">
         ${badgeTag}
         <strong style="color:${el.color};">${el.symbol}</strong>
+        <span class="shelf-pron-tag">[${pronText}]</span>
         <small>${el.name}</small>
       </button>
     `;
@@ -1713,12 +1822,13 @@ function renderBeakerPillsHtml() {
     else if (sym.includes('⁺') || sym.includes('⁻')) extraClass = 'pill-ion';
 
     const koName = (!isOp && !isCharge && !isNum) ? getTokenKoreanName(sym) : '';
+    const pronName = (!isOp && !isCharge && !isNum) ? getTokenPronunciationKo(sym) : '';
     const showSubName = koName && koName !== sym;
 
     return `
-      <button class="beaker-atom-pill ${extraClass}" data-beaker-idx="${idx}" title="${showSubName ? `${sym} (${koName}) - 터치하여 꺼내기` : '터치하여 비커에서 꺼내기'}">
+      <button class="beaker-atom-pill ${extraClass}" data-beaker-idx="${idx}" title="${showSubName ? `${sym} [${pronName}] (${koName}) - 터치하여 꺼내기` : '터치하여 비커에서 꺼내기'}">
         <span class="pill-sym-text">${sym}</span>
-        ${showSubName ? `<small class="pill-ko-name">${koName}</small>` : ''}
+        ${showSubName ? `<small class="pill-ko-name">${koName}${pronName ? ` [${pronName}]` : ''}</small>` : ''}
         <span class="pill-remove-x">✕</span>
       </button>
     `;
@@ -1731,10 +1841,13 @@ function getInventoryRecipes(mode) {
     const isAvailable = mode === 'all' || alchemyState.unlockedRecipes.includes(r.id) || STARTER_INVENTORY_IDS.includes(r.id);
     if (!isAvailable) return false;
     if (!query) return true;
+    const tokenVal = r.shortFormula || r.formula.split(' ')[0];
+    const pronStr = getTokenPronunciationKo(tokenVal).toLowerCase();
     return (
       r.name.toLowerCase().includes(query) ||
       r.formula.toLowerCase().includes(query) ||
-      (r.shortFormula && r.shortFormula.toLowerCase().includes(query))
+      (r.shortFormula && r.shortFormula.toLowerCase().includes(query)) ||
+      pronStr.includes(query)
     );
   });
 }
@@ -1748,16 +1861,18 @@ function renderInventoryItemsHtml() {
     const isUnlocked = alchemyState.unlockedRecipes.includes(r.id);
     const isStarter = STARTER_INVENTORY_IDS.includes(r.id);
     const tokenVal = r.shortFormula || r.formula.split(' ')[0];
+    const pronVal = getTokenPronunciationKo(tokenVal);
     return `
       <div class="inventory-item-slot ${isUnlocked ? 'unlocked' : (isStarter ? 'starter' : 'preview')}"
            draggable="true"
            data-token="${tokenVal}"
            data-recipe-id="${r.id}"
-           title="비커로 드래그하거나 클릭하여 [${tokenVal}] 투입!">
+           title="비커로 드래그하거나 클릭하여 [${tokenVal} (${pronVal})] 투입!">
         <div class="inv-slot-top">
           <span class="inv-slot-icon">${r.icon}</span>
           <span class="inv-slot-formula">${tokenVal}</span>
         </div>
+        <div class="inv-slot-pron">[${pronVal}]</div>
         <div class="inv-slot-name">${r.name.replace(/\s*\(.*?\)/, '')}</div>
         <div class="inv-slot-badge">${isUnlocked ? '✅ 도감해금' : (isStarter ? '🧪 기본시약' : '🔓 실험시약')}</div>
       </div>
@@ -2135,11 +2250,12 @@ function updateBeakerDisplay(container) {
   }
   const expr = formatBeakerExpression(alchemyState.beakerElements);
   const koNames = formatBeakerKoreanNames(alchemyState.beakerElements);
+  const pronNames = formatBeakerPronunciations(alchemyState.beakerElements);
   const previewEl = document.getElementById('beakerFormulaPreview');
   if (previewEl) {
     previewEl.innerHTML = expr
-      ? `<div class="formula-expr-main"><strong>${expr}</strong></div><div class="formula-ko-sub">🇰🇷 ${koNames}</div>`
-      : '<span class="formula-placeholder">예: Na⁺(나트륨 양이온) + Cl⁻(염화 음이온), 2NaOH⁻, Ba²⁺ + SO₄²⁻</span>';
+      ? `<div class="formula-expr-main"><strong>${expr}</strong></div><div class="formula-ko-sub">🇰🇷 ${koNames} <span class="formula-pron-sub">🗣️ [${pronNames}]</span></div>`
+      : '<span class="formula-placeholder">예: Na⁺[엔에이 플러스] + Cl⁻[씨엘 마이너스], 2NaOH⁻</span>';
   }
   const directInput = document.getElementById('directFormulaInput');
   if (directInput && document.activeElement !== directInput) {
