@@ -153,7 +153,8 @@ function filterCardExplorerList() {
       const altMatch = (el.altNameKo || '').toLowerCase().includes(query);
       const nameEnMatch = el.nameEn.toLowerCase().includes(query);
       const itemMatch = (el.item || '').toLowerCase().includes(query);
-      return numMatch || symbolMatch || nameKoMatch || altMatch || nameEnMatch || itemMatch;
+      const pronMatch = `${el.symPronKo || ''} ${el.enPronKo || ''}`.toLowerCase().includes(query);
+      return numMatch || symbolMatch || nameKoMatch || altMatch || nameEnMatch || itemMatch || pronMatch;
     });
   }
 
@@ -318,19 +319,12 @@ function renderCardExplorerView() {
 }
 
 /**
- * 카드 탐색기 전용 Web Speech API TTS 발음 재생기
+ * 카드 탐색기 전용 Web Speech API TTS 발음 재생기 (core_utils.js의 AppAudio.speakText 위임)
  */
 function speakCardExplorerName(text, lang = 'ko-KR') {
-  if (!('speechSynthesis' in window)) {
-    alert('현재 브라우저에서는 음성 합성(TTS) 기능을 지원하지 않습니다.');
-    return;
+  if (window.AppAudio && typeof window.AppAudio.speakText === 'function') {
+    window.AppAudio.speakText(text, lang);
   }
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = lang;
-  utterance.rate = 0.9;
-  utterance.pitch = 1.0;
-  window.speechSynthesis.speak(utterance);
 }
 
 /**
@@ -345,11 +339,10 @@ function createFullCardHtml(el, isSingle = false) {
   const itemIcon = el.icon || '🧪';
   const itemName = el.item || el.nameKo;
 
-  // 보어 전자 껍질(K, L, M, N...) 데이터 계산
-  const shells = (typeof BOHR_SHELLS_DATA !== 'undefined' && BOHR_SHELLS_DATA[el.atomicNumber]) || [];
-  const shellNames = ['K', 'L', 'M', 'N', 'O', 'P', 'Q'];
+  // 보어 전자 껍질(K, L, M, N...) 데이터 계산 (core_utils.js의 BOHR_SHELLS_DATA, SHELL_NAMES 활용)
+  const shells = BOHR_SHELLS_DATA[el.atomicNumber] || [];
   const shellSummaryStr = shells.length
-    ? shells.map((cnt, idx) => `${shellNames[idx] || idx + 1}(${cnt})`).join(' · ')
+    ? shells.map((cnt, idx) => `${SHELL_NAMES[idx] || idx + 1}(${cnt})`).join(' · ')
     : el.electronConfig;
   const valenceCount = shells.length ? shells[shells.length - 1] : '-';
   const ency = (typeof ELEMENTS_ENCYCLOPEDIA !== 'undefined' && ELEMENTS_ENCYCLOPEDIA[el.atomicNumber]) || null;

@@ -27,91 +27,11 @@ let quizState = {
   timerSeconds: 15,
   timeLeft: 15,
   timerInterval: null,
+  cooldownTimerId: null,
   totalQuestions: 10
 };
 
-// Web Audio API 사운드 합성기 (외부 파일 없이 브라우저 내장 생성)
-let quizAudioCtx = null;
-
-function getQuizAudioContext() {
-  if (!quizAudioCtx) {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (AudioCtx) {
-      quizAudioCtx = new AudioCtx();
-    }
-  }
-  if (quizAudioCtx && quizAudioCtx.state === 'suspended') {
-    quizAudioCtx.resume();
-  }
-  return quizAudioCtx;
-}
-
-function playQuizSound(type) {
-  if (!quizState.isSoundEnabled) return;
-  try {
-    const ctx = getQuizAudioContext();
-    if (!ctx) return;
-    const now = ctx.currentTime;
-
-    if (type === 'correct') {
-      // 맑고 경쾌한 도-솔 화음 (C5: 523Hz -> G5: 784Hz)
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(523.25, now);
-      osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.12);
-      gain.gain.setValueAtTime(0.2, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.35);
-    } else if (type === 'wrong') {
-      // 둔탁한 저음 버저 (180Hz -> 130Hz)
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(180, now);
-      osc.frequency.linearRampToValueAtTime(130, now + 0.22);
-      gain.gain.setValueAtTime(0.22, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.25);
-    } else if (type === 'finish') {
-      // 승리의 팡파레 (도-미-솔-높은도)
-      const notes = [523.25, 659.25, 783.99, 1046.5];
-      notes.forEach((freq, idx) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(freq, now + idx * 0.09);
-        gain.gain.setValueAtTime(0.22, now + idx * 0.09);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.3);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now + idx * 0.09);
-        osc.stop(now + idx * 0.09 + 0.3);
-      });
-    }
-  } catch (e) {
-    // 오디오 컨텍스트 미지원 환경 무시
-  }
-}
-
-function triggerQuizHaptic(type) {
-  if (!('vibrate' in navigator)) return;
-  try {
-    if (type === 'correct') {
-      navigator.vibrate(30);
-    } else if (type === 'wrong') {
-      navigator.vibrate([40, 45, 40]);
-    } else if (type === 'finish') {
-      navigator.vibrate([40, 50, 40, 50, 80]);
-    }
-  } catch (e) {}
-}
+// 사운드 합성 및 모바일 햅틱 진동은 core_utils.js의 window.AppAudio 싱글톤(playQuizSound / triggerQuizHaptic)을 공유합니다.
 
 function getQuizContainer() {
   return document.getElementById('gameSuiteContent') || document.getElementById('quizContainer');
@@ -211,6 +131,7 @@ function renderQuizLobby() {
   if (soundToggle) {
     soundToggle.addEventListener('change', (e) => {
       quizState.isSoundEnabled = e.target.checked;
+      if (window.AppAudio) window.AppAudio.isSoundEnabled = e.target.checked;
       localStorage.setItem('periodic_quiz_sound_enabled', e.target.checked ? 'true' : 'false');
       if (e.target.checked) playQuizSound('correct');
     });
@@ -313,6 +234,10 @@ function stopQuestionTimer() {
   if (quizState.timerInterval) {
     clearInterval(quizState.timerInterval);
     quizState.timerInterval = null;
+  }
+  if (quizState.cooldownTimerId) {
+    clearTimeout(quizState.cooldownTimerId);
+    quizState.cooldownTimerId = null;
   }
 }
 window.stopQuestionTimer = stopQuestionTimer;
@@ -460,7 +385,6 @@ function buildQuestionByType(type, target, distractors) {
       subPrompt: `영문명: ${target.nameEn}`,
       choices: choices.map(c => ({
         label: `${c.symbol}`,
-        sub: `(${c.nameKo})`,
         isCorrect: c.atomicNumber === target.atomicNumber
       })),
       explanation: `정답은 [${target.symbol}]입니다! ${target.nameKo}(${target.nameEn})의 원소 기호는 '${target.symbol}'입니다.`
@@ -592,7 +516,8 @@ function renderQuizQuestionScreen() {
 
   // 화면 전환 직후 이전 클릭/터치가 새 버튼을 누르는 클릭 관통(Ghost Click) 방지 (300ms 쿨다운)
   quizState.isAnswered = true;
-  setTimeout(() => {
+  quizState.cooldownTimerId = setTimeout(() => {
+    quizState.cooldownTimerId = null;
     quizState.isAnswered = false;
   }, 300);
 
@@ -693,9 +618,9 @@ function handleChoiceSelect(selectedIdx, choiceBtns) {
   }
 
   // LLM API 키가 등록되어 있으면 백그라운드로 AI 팁 보강 요청 가능
-  const apiKey = localStorage.getItem('gemini_api_key');
+  const apiKey = window.GeminiService ? window.GeminiService.getApiKey() : localStorage.getItem('gemini_api_key');
   if (apiKey && feedbackDesc) {
-    fetchGeminiExplanation(q.target, feedbackDesc, apiKey);
+    fetchGeminiExplanation(q.target, feedbackDesc, quizState.currentIndex);
   }
 }
 
@@ -809,7 +734,11 @@ function renderQuizResultScreen() {
 
   if (retryWrongBtn) {
     retryWrongBtn.addEventListener('click', () => {
-      const wrongQuestions = quizState.wrongAnswers.map(w => w.question);
+      // 오답 재도전 시 보기(choices) 순서를 새로 셔플하여 위치 암기를 방지
+      const wrongQuestions = quizState.wrongAnswers.map(w => ({
+        ...w.question,
+        choices: [...w.question.choices].sort(() => Math.random() - 0.5)
+      }));
       quizState.questions = wrongQuestions;
       quizState.totalQuestions = wrongQuestions.length;
       quizState.currentIndex = 0;
@@ -837,12 +766,19 @@ function renderQuizResultScreen() {
 
 /**
  * 7. Gemini API 연동 심화 해설 보강 (선택적 기능)
+ * - requestedIndex 검증을 통해 이미 다음 문제로 넘어간 경우 이전 비동기 해설이 끼어드는 현상 차단
  */
-async function fetchGeminiExplanation(element, targetEl, apiKey) {
+async function fetchGeminiExplanation(element, targetEl, requestedIndex) {
   try {
     if (window.GeminiService) {
       const res = await window.GeminiService.getQuizExplanation(element);
-      if (res.ok && res.text) {
+      if (
+        res.ok &&
+        res.text &&
+        quizState.currentIndex === requestedIndex &&
+        targetEl &&
+        document.body.contains(targetEl)
+      ) {
         const aiTipBox = document.createElement('div');
         aiTipBox.className = 'ai-explanation-bubble';
         aiTipBox.innerHTML = `<strong>💡 AI 선생님 팁 (${res.modelName || 'Gemini'}):</strong> ${res.text}`;

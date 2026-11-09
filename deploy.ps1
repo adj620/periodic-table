@@ -96,11 +96,19 @@ if (Test-Path $indexPath) {
   $idxContent = [regex]::Replace($idxContent, "const CURRENT_EMBEDDED_BUILD = \d+;", "const CURRENT_EMBEDDED_BUILD = $newBuild;")
   $idxContent = [regex]::Replace($idxContent, '<span class="update-ver-tag" id="updateModalVerTag">.*?</span>', "<span class=`"update-ver-tag`" id=`"updateModalVerTag`">v$($vObj.version) (빌드 #$newBuild)</span>")
   [System.IO.File]::WriteAllText($indexPath, $idxContent, (New-Object System.Text.UTF8Encoding($false)))
-  Write-Host "🔄 index.html CURRENT_EMBEDDED_BUILD = $newBuild 동기화 완료" -ForegroundColor Cyan
+  Write-Host "🔄 index.html 버전 태그 동기화 완료" -ForegroundColor Cyan
+}
+
+$pwaUpdaterPath = Join-Path $proj 'pwa_updater.js'
+if (Test-Path $pwaUpdaterPath) {
+  $pwaContent = [System.IO.File]::ReadAllText($pwaUpdaterPath, [System.Text.Encoding]::UTF8)
+  $pwaContent = [regex]::Replace($pwaContent, "const CURRENT_EMBEDDED_BUILD = \d+;", "const CURRENT_EMBEDDED_BUILD = $newBuild;")
+  [System.IO.File]::WriteAllText($pwaUpdaterPath, $pwaContent, (New-Object System.Text.UTF8Encoding($false)))
+  Write-Host "🔄 pwa_updater.js CURRENT_EMBEDDED_BUILD = $newBuild 동기화 완료" -ForegroundColor Cyan
 }
 
 # 5-1) www/ 및 android assets 폴더 동기화
-$syncFiles = @('index.html','style.css','app.js','elements.js','elements_extra.js','elements_photos.js','elements_encyclopedia.js','in_app_browser.js','gemini_service.js','quiz.js','game_suite.js','card_explorer.js','manifest.json','icon.svg','version.json','service-worker.js','download.html','firebase.json')
+$syncFiles = @('index.html','print-multi.html','print-split.html','style.css','core_utils.js','alchemy_data.js','pwa_updater.js','app.js','elements.js','elements_extra.js','elements_photos.js','elements_encyclopedia.js','in_app_browser.js','gemini_service.js','quiz.js','game_suite.js','card_explorer.js','manifest.json','icon.svg','version.json','service-worker.js','download.html','firebase.json')
 foreach ($targetRel in @('www', 'android\app\src\main\assets\public')) {
   $targetDir = Join-Path $proj $targetRel
   if (Test-Path $targetDir) {

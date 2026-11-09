@@ -41,114 +41,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // =========================================================================
-// 🗣️ 원소 기호 · 이온식 · 영문명 한글 발음(Pronunciation) 변환 엔진
+// 1. 주기율표 격자 및 란타넘/악티늄족 렌더링 (core_utils.js의 SSOT 데이터 & 빌더 활용)
 // =========================================================================
-const ALPHABET_KO_PRON = {
-  A: '에이', B: '비', C: '씨', D: '디', E: '이', F: '에프', G: '지',
-  H: '에이치', I: '아이', J: '제이', K: '케이', L: '엘', M: '엠', N: '엔',
-  O: '오', P: '피', Q: '큐', R: '알', S: '에스', T: '티', U: '유',
-  V: '브이', W: '더블유', X: '엑스', Y: '와이', Z: '제트'
-};
+let activeCategoryFilter = null;
+let currentTypeFilter = 'all';
 
-const SUB_SUP_DIGIT_PRON = {
-  '₂': '투', '₃': '쓰리', '₄': '포', '₅': '파이브', '₆': '식스', '₇': '세븐', '₈': '에잇',
-  '2': '투', '3': '쓰리', '4': '포', '5': '파이브', '6': '식스', '7': '세븐', '8': '에잇'
-};
-
-// 1~118번 원소 영문명(nameEn)의 한글 발음 사전
-const ELEMENT_EN_PRON_MAP = {
-  1: '하이드로젠', 2: '힐륨', 3: '리튬', 4: '베릴륨', 5: '보론', 6: '카본', 7: '나이트로젠', 8: '옥시젠', 9: '플루오린', 10: '네온',
-  11: '소듐', 12: '마그네슘', 13: '알루미늄', 14: '실리콘', 15: '포스포러스', 16: '설퍼', 17: '클로린', 18: '아르곤', 19: '포타슘', 20: '칼슘',
-  21: '스칸듐', 22: '타이타늄', 23: '바나듐', 24: '크로뮴', 25: '망가니즈', 26: '아이언', 27: '코발트', 28: '니켈', 29: '카퍼', 30: '징크',
-  31: '갈륨', 32: '저마늄', 33: '아세닉', 34: '셀레늄', 35: '브로민', 36: '크립톤', 37: '루비듐', 38: '스트론튬', 39: '이트륨', 40: '지르코늄',
-  41: '나이오븀', 42: '몰리브데넘', 43: '테크네튬', 44: '루테늄', 45: '로듐', 46: '팔라듐', 47: '실버', 48: '카드뮴', 49: '인듐', 50: '틴',
-  51: '안티모니', 52: '텔루륨', 53: '아이오다인', 54: '제논', 55: '세슘', 56: '바륨', 57: '란타넘', 58: '세륨', 59: '프라세오디뮴', 60: '네오디뮴',
-  61: '프로메튬', 62: '사마륨', 63: '유로퓸', 64: '가돌리늄', 65: '터븀', 66: '디스프로슘', 67: '홀뮴', 68: '어븀', 69: '툴륨', 70: '이터븀',
-  71: '루테튬', 72: '하프늄', 73: '탄탈럼', 74: '텅스텐', 75: '레늄', 76: '오스뮴', 77: '이리듐', 78: '플래티넘', 79: '골드', 80: '머큐리',
-  81: '탈륨', 82: '레드', 83: '비스무트', 84: '폴로늄', 85: '아스타틴', 86: '라돈', 87: '프랑슘', 88: '라듐', 89: '악티늄', 90: '토륨',
-  91: '프로탁티늄', 92: '유레이늄', 93: '넵투늄', 94: '플루토늄', 95: '아메리슘', 96: '퀴륨', 97: '버클륨', 98: '캘리포늄', 99: '아인슈타이늄', 100: '페르뮴',
-  101: '멘델레븀', 102: '노벨륨', 103: '로렌슘', 104: '러더포듐', 105: '더브늄', 106: '시보귬', 107: '보륨', 108: '하슘', 109: '마이트너륨', 110: '다름슈타튬',
-  111: '뢴트게늄', 112: '코페르니슘', 113: '니호늄', 114: '플레로븀', 115: '모스코븀', 116: '리버모륨', 117: '테네신', 118: '오가네손'
-};
-
-/**
- * 원소 기호, 이온 기호, 화학식(예: Na, Fe, Na⁺, SO₄²⁻, H₂O, 2NaOH⁻)을 한글 발음으로 변환
- */
-function getSymbolPronunciationKo(rawSym) {
-  if (!rawSym) return '';
-  let s = String(rawSym).trim();
-  if (s === 'e⁻') return '이 마이너스';
-
-  // 연산자 단독 처리
-  const opOnly = {
-    '+': '더하기', '-': '마이너스', '×': '곱하기', '÷': '나누기', '➔': '화살표', '=': '화살표',
-    '(': '괄호열고', ')': '괄호닫고',
-    '⁺': '플러스', '⁻': '마이너스',
-    '²⁺': '투플러스', '²⁻': '투마이너스',
-    '³⁺': '쓰리플러스', '³⁻': '쓰리마이너스',
-    '⁴⁺': '포플러스', '⁴⁻': '포마이너스'
-  };
-  if (opOnly[s]) return opOnly[s];
-
-  // 끝부분 이온 전하 분리
-  let chargeSuffix = '';
-  const chargePatterns = [
-    ['⁸⁺', ' 에잇플러스'], ['⁷⁺', ' 세븐플러스'], ['⁶⁺', ' 식스플러스'], ['⁵⁺', ' 파이브플러스'],
-    ['⁴⁺', ' 포플러스'], ['⁴⁻', ' 포마이너스'],
-    ['³⁺', ' 쓰리플러스'], ['³⁻', ' 쓰리마이너스'],
-    ['²⁺', ' 투플러스'], ['²⁻', ' 투마이너스'],
-    ['⁺', ' 플러스'], ['⁻', ' 마이너스']
-  ];
-  for (const [pat, pron] of chargePatterns) {
-    if (s.endsWith(pat)) {
-      chargeSuffix = pron;
-      s = s.slice(0, -pat.length);
-      break;
-    }
-  }
-
-  let out = '';
-  for (let i = 0; i < s.length; i++) {
-    const ch = s[i];
-    const upper = ch.toUpperCase();
-    if (ALPHABET_KO_PRON[upper]) {
-      out += ALPHABET_KO_PRON[upper];
-    } else if (SUB_SUP_DIGIT_PRON[ch]) {
-      out += SUB_SUP_DIGIT_PRON[ch];
-    } else if (ch === '(' || ch === '[' || ch === ')' || ch === ']' || ch === '·') {
-      continue;
-    } else {
-      out += ch;
-    }
-  }
-  return (out + chargeSuffix).trim();
-}
-
-window.getSymbolPronunciationKo = getSymbolPronunciationKo;
-window.ELEMENT_EN_PRON_MAP = ELEMENT_EN_PRON_MAP;
-
-// 118개 원소 매핑 객체 (기본 정보 + 상세 물리화학/역사 데이터 + 실제 표본 사진 + 한글 발음 병합)
-const elementsMap = new Map();
-ELEMENTS_DATA.forEach(el => {
-  const extra = (typeof ELEMENTS_EXTRA_DATA !== 'undefined' && ELEMENTS_EXTRA_DATA[el.atomicNumber]) || {};
-  const photo = (typeof ELEMENTS_PHOTOS_DATA !== 'undefined' && ELEMENTS_PHOTOS_DATA[el.atomicNumber]) || {};
-  const symPronKo = getSymbolPronunciationKo(el.symbol);
-  const enPronKo = ELEMENT_EN_PRON_MAP[el.atomicNumber] || el.nameKo;
-  elementsMap.set(el.atomicNumber, { ...el, ...extra, ...photo, symPronKo, enPronKo });
-});
-
-// 주기-족 기반 O(1) 원소 빠른 탐색용 캐시 맵 (란타넘족 57~71번 및 악티늄족 89~103번 제외)
-const elementPositionMap = new Map();
-ELEMENTS_DATA.forEach(el => {
-  if ((el.atomicNumber >= 57 && el.atomicNumber <= 71) || (el.atomicNumber >= 89 && el.atomicNumber <= 103)) {
-    return;
-  }
-  elementPositionMap.set(`${el.period}-${el.group}`, el);
-});
-
-/**
- * 1. 주기율표 격자 및 란타넘/악티늄족 렌더링 (테마별 동적 렌더링)
- */
 function initPeriodicTable(themeId = 1) {
   currentThemeId = themeId;
   const mainGrid = document.getElementById('mainPeriodicTable');
@@ -176,7 +73,7 @@ function initPeriodicTable(themeId = 1) {
         placeholder.style.gridRow = period;
         placeholder.style.gridColumn = colIdx;
         placeholder.addEventListener('click', () => {
-          document.getElementById('lanthanideRow').scrollIntoView({ behavior: 'smooth' });
+          document.getElementById('lanthanideRow')?.scrollIntoView({ behavior: 'smooth' });
         });
         mainGrid.appendChild(placeholder);
         continue;
@@ -187,7 +84,7 @@ function initPeriodicTable(themeId = 1) {
         placeholder.style.gridRow = period;
         placeholder.style.gridColumn = colIdx;
         placeholder.addEventListener('click', () => {
-          document.getElementById('actinideRow').scrollIntoView({ behavior: 'smooth' });
+          document.getElementById('actinideRow')?.scrollIntoView({ behavior: 'smooth' });
         });
         mainGrid.appendChild(placeholder);
         continue;
@@ -220,10 +117,13 @@ function initPeriodicTable(themeId = 1) {
     const el = elementsMap.get(num);
     if (el) actinideContainer.appendChild(createElementCellByTheme(el, themeId));
   }
+
+  // 테마 탭 전환 시에도 현재 활성화된 검색어 · 방사성 필터 · 범례 카테고리 하이라이트 상태를 유지
+  applyPeriodicTableFilters();
 }
 
 /**
- * 테마(1~5편)에 따른 원소 타일 렌더러
+ * 테마(0~7편)에 따른 원소 타일 렌더러 (core_utils.js의 buildElementTileInnerHtml 사용)
  */
 function createElementCellByTheme(element, themeId) {
   const cell = document.createElement('div');
@@ -238,150 +138,7 @@ function createElementCellByTheme(element, themeId) {
   cell.dataset.radioactive = element.isRadioactive ? 'true' : 'false';
   cell.title = `${element.atomicNumber}번 ${element.nameKo} (${element.symbol} [${element.symPronKo}] / ${element.nameEn} [${element.enPronKo}])`;
 
-  const radMark = element.isRadioactive ? '<span class="radioactive-badge" title="방사성 원소">☢️</span>' : '';
-  const pronLabel = element.enPronKo && element.enPronKo !== element.nameKo
-    ? `${element.symPronKo}·${element.enPronKo}`
-    : `${element.symPronKo}`;
-
-  if (themeId === 0) {
-    // 🌟 종합판 (최초 개발한 1편+2편 합본 1장 완성형)
-    // 원자번호, 방사능(☢️), 기호, 한글표준명, 이명[나트륨], 한글발음, 영문명, 원자량 모두 표시
-    const cleanAlt = element.altNameKo ? `[${element.altNameKo.split('/')[0].split('(')[0].trim()}]` : '';
-    cell.innerHTML = `
-      <div class="cell-top">
-        <span class="atomic-number">${element.atomicNumber}</span>
-        ${radMark}
-      </div>
-      <div class="cell-symbol-wrap">
-        <span class="element-symbol">${element.symbol}</span>
-      </div>
-      <div class="cell-names">
-        <span class="name-ko-main">${element.nameKo}</span>
-        <span class="name-pron-ko">(${pronLabel})</span>
-        ${cleanAlt ? `<span class="name-ko-alt">${cleanAlt}</span>` : ''}
-        <span class="name-en">${element.nameEn}</span>
-        <span class="cell-mass">${element.atomicMass}</span>
-      </div>
-    `;
-  } else if (themeId === 1) {
-    // 제1편: 기본 명칭판 (기호 큼직, 한글 표준명, 한글발음, 영문명)
-    cell.innerHTML = `
-      <div class="cell-top">
-        <span class="atomic-number">${element.atomicNumber}</span>
-        ${radMark}
-      </div>
-      <div class="cell-symbol-wrap">
-        <span class="element-symbol">${element.symbol}</span>
-      </div>
-      <div class="cell-names">
-        <span class="name-ko-main">${element.nameKo}</span>
-        <span class="name-pron-ko">(${pronLabel})</span>
-        <span class="name-en">${element.nameEn}</span>
-      </div>
-    `;
-  } else if (themeId === 2) {
-    // 제2편: 원자량 · 관용명(이명) · 전자배치판
-    const cleanAlt = element.altNameKo ? `[${element.altNameKo.split('/')[0].split('(')[0].trim()}]` : element.nameKo;
-    cell.innerHTML = `
-      <div class="cell-top">
-        <span class="atomic-number">${element.atomicNumber}</span>
-        ${radMark}
-      </div>
-      <div class="cell-symbol-wrap">
-        <span class="element-symbol">${element.symbol}</span>
-      </div>
-      <div class="cell-names">
-        <span class="name-ko-alt">${cleanAlt}</span>
-        <span class="cell-mass">${element.atomicMass}</span>
-        <span class="electron-config">${element.electronConfig}</span>
-      </div>
-    `;
-  } else if (themeId === 3) {
-    // 제3편: 열역학 및 밀도·물리상태판
-    cell.innerHTML = `
-      <div class="cell-top">
-        <span class="atomic-number">${element.atomicNumber}</span>
-        <span class="phase">${element.phase || '-'}</span>
-      </div>
-      <div class="cell-symbol-wrap">
-        <span class="element-symbol">${element.symbol}</span>
-      </div>
-      <div class="cell-names">
-        <span class="temp-row">녹 ${element.melting || '-'}℃</span>
-        <span class="temp-row">끓 ${element.boiling || '-'}℃</span>
-        <span class="density">${element.density || '-'}</span>
-      </div>
-    `;
-  } else if (themeId === 4) {
-    // 제4편: 산화수 및 전기음성도판
-    cell.innerHTML = `
-      <div class="cell-top">
-        <span class="atomic-number">${element.atomicNumber}</span>
-        <span class="name-ko-sub">${element.nameKo}</span>
-      </div>
-      <div class="cell-symbol-wrap">
-        <span class="element-symbol">${element.symbol}</span>
-      </div>
-      <div class="cell-names">
-        <span class="ox-states" title="${element.oxStates || ''}">산화: ${element.oxStates || '-'}</span>
-        <span class="en-val">전기음성: ${element.en || '-'}</span>
-      </div>
-    `;
-  } else if (themeId === 5) {
-    // 제5편: 역사 및 실생활 용도판
-    cell.innerHTML = `
-      <div class="cell-top">
-        <span class="atomic-number">${element.atomicNumber}</span>
-        <span class="year">${element.year || ''}</span>
-      </div>
-      <div class="cell-symbol-wrap">
-        <span class="element-symbol">${element.symbol}</span>
-      </div>
-      <div class="cell-names">
-        <span class="usage" title="${element.usage || ''}">${element.usage || element.description}</span>
-      </div>
-    `;
-  } else if (themeId === 6) {
-    // 제6편: 실생활 대표 물건 및 일러스트 그림(이모지) 판
-    const icon = element.icon || "🧪";
-    const item = element.item || element.nameKo;
-    cell.innerHTML = `
-      <div class="cell-top">
-        <span class="atomic-number">${element.atomicNumber}</span>
-        <span class="name-ko-sub">${element.nameKo}</span>
-      </div>
-      <div class="cell-symbol-wrap">
-        <span class="element-symbol">${element.symbol}</span>
-      </div>
-      <div class="cell-names theme-6-content">
-        <div class="item-icon">${icon}</div>
-        <span class="item-name" title="${item}">${item}</span>
-      </div>
-    `;
-  } else if (themeId === 7) {
-    // 제7편: 실제 원소 표본 사진 및 외형 판
-    const photoUrl = element.photo || '';
-    const isSynthetic = element.isSynthetic || (element.atomicNumber >= 99);
-    const lookText = element.look || (isSynthetic ? '🔬 인공합성 (표본 미존재)' : element.symbol);
-    const fallbackIcon = element.icon || '⚛️';
-
-    cell.innerHTML = `
-      <div class="cell-top">
-        <span class="atomic-number">${element.atomicNumber}</span>
-        <span class="name-ko-sub">${element.nameKo}</span>
-      </div>
-      <div class="cell-photo-thumb-wrap">
-        ${photoUrl ? `<img src="${photoUrl}" alt="${element.nameKo} 표본" class="cell-photo-thumb" loading="lazy" onerror="this.style.display='none';if(this.nextElementSibling)this.nextElementSibling.style.display='flex';"/>` : ''}
-        <div class="cell-photo-symbol-fallback ${isSynthetic ? 'synthetic-fallback' : ''}" style="${photoUrl ? 'display:none;' : 'display:flex;'}">
-          <span class="fallback-icon">${fallbackIcon}</span>
-          <span class="element-symbol">${element.symbol}</span>
-        </div>
-      </div>
-      <div class="cell-names">
-        <span class="cell-photo-look" title="${lookText}">${lookText}</span>
-      </div>
-    `;
-  }
+  cell.innerHTML = buildElementTileInnerHtml(element, themeId);
 
   cell.addEventListener('click', () => {
     openElementModal(element);
@@ -394,7 +151,7 @@ function createElementCellByTheme(element, themeId) {
  * 2. 전역 메인 뷰 전환 컨트롤러 (상단 탭, 모바일 하단 바, 외부 시뮬레이터 모두 100% 동기화)
  */
 window.switchMainView = function(targetId) {
-  // 1) 실행 중인 게임 타이머(퀴즈, 메모리, 퍼즐) 일괄 중지 및 타이머 누수 방지
+  // 1) 실행 중인 게임 타이머(퀴즈, 메모리, 퍼즐, 연금술 비동기 타이머) 일괄 중지
   if (typeof window.stopAllGameTimers === 'function') {
     window.stopAllGameTimers();
   } else if (typeof window.stopQuestionTimer === 'function') {
@@ -416,7 +173,6 @@ window.switchMainView = function(targetId) {
   const quizContainer = document.getElementById('quizContainer');
   const themeBtns = document.querySelectorAll('.theme-tab-btn');
   const bottomNavItems = document.querySelectorAll('.mobile-bottom-nav .bottom-nav-item');
-  const zoomFab = document.getElementById('mobileZoomToggleFab');
 
   // 모든 뷰 숨김 초기화
   if (screenContainer) screenContainer.style.display = 'none';
@@ -442,18 +198,16 @@ window.switchMainView = function(targetId) {
   });
 
   if (targetId === 'all') {
-    // 전체 N장 뷰 (지연 초기화 적용)
+    // 전체 7장(제1편~제7편) 연속 모아보기 뷰 (지연 초기화 적용)
     ensureSplitPagesInitialized();
     document.body.classList.add('view-mode-split');
     if (twoPagesPrintContainer) twoPagesPrintContainer.style.display = 'flex';
-    if (zoomFab) zoomFab.style.display = 'none';
   } else if (targetId === 'cards') {
     // 📱 모바일 카드 탐색기 뷰
     if (cardExplorerContainer) {
       cardExplorerContainer.style.display = 'block';
       if (typeof initCardExplorer === 'function') initCardExplorer();
     }
-    if (zoomFab) zoomFab.style.display = 'none';
   } else if (targetId === 'quiz') {
     // 🎮 원소 게임 스위트 (퀴즈, 카드 짝맞추기, 주기율표 퍼즐, 연금술)
     if (quizContainer) {
@@ -464,13 +218,11 @@ window.switchMainView = function(targetId) {
         initQuiz();
       }
     }
-    if (zoomFab) zoomFab.style.display = 'none';
   } else {
     // 주기율표 편별 뷰 (0~7)
     if (screenContainer) screenContainer.style.display = 'block';
     const tid = parseInt(targetId, 10);
     initPeriodicTable(isNaN(tid) ? 1 : tid);
-    if (zoomFab) zoomFab.style.display = 'flex';
     if (isFitMode && typeof fitScreenProportionally === 'function') {
       fitScreenProportionally();
     }
@@ -584,7 +336,8 @@ function initAccessibilityMode() {
 }
 
 /**
- * 4. 기존 2장 분할 뷰 초기화 (하위 호환 - Lazy Init 지원)
+ * 4. 전체 7장(제1편~제7편) 연속 모아보기 뷰 초기화 (Lazy Init + 동적 시트 빌더)
+ * - 개선: 과거 1·2편만 하드코딩되어 3~7편이 누락되던 문제를 해결하고, PERIODIC_THEMES 기반으로 1~7편 전체를 동적 생성
  */
 let isSplitPagesInitialized = false;
 
@@ -595,11 +348,78 @@ function ensureSplitPagesInitialized() {
 }
 
 function initSplitPages() {
-  renderSplitGrid('splitGrid1', 'splitLanthanide1', 'splitActinide1', (el) => createElementCellByTheme(el, 1));
-  renderSplitGrid('splitGrid2', 'splitLanthanide2', 'splitActinide2', (el) => createElementCellByTheme(el, 2));
-  renderSplitLegend('splitLegend1');
-  renderSplitLegend('splitLegend2');
+  const container = document.getElementById('twoPagesPrintContainer');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const themesToRender = (typeof PERIODIC_THEMES !== 'undefined')
+    ? PERIODIC_THEMES.filter(t => t.id >= 1 && t.id <= 7)
+    : [];
+
+  const groupNumsHtml = Array.from({ length: 18 }, (_, idx) => `<div class="group-num">${idx + 1}</div>`).join('');
+
+  themesToRender.forEach(theme => {
+    const section = document.createElement('section');
+    section.className = 'split-print-page';
+    section.id = `splitPage${theme.id}`;
+    section.innerHTML = `
+      <div class="split-page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+        <div>
+          <h2 class="split-title">${theme.shortTitle || theme.title}</h2>
+          <span class="split-sub">${theme.info}</span>
+        </div>
+        <button type="button" class="pill-btn primary small-btn no-print split-sheet-print-btn" data-page-id="${theme.id}">
+          🖨️ 제${theme.id}편 A4 인쇄
+        </button>
+      </div>
+      <div class="group-header-row">
+        <div class="corner-cell">주기＼족</div>
+        ${groupNumsHtml}
+      </div>
+      <div class="periodic-grid split-grid" id="splitGrid${theme.id}"></div>
+      <div class="f-block-wrapper">
+        <div class="f-block-row">
+          <div class="f-block-label">란타넘족 <span class="range">57-71</span></div>
+          <div class="f-block-elements" id="splitLanthanide${theme.id}"></div>
+        </div>
+        <div class="f-block-row">
+          <div class="f-block-label">악티늄족 <span class="range">89-103</span></div>
+          <div class="f-block-elements" id="splitActinide${theme.id}"></div>
+        </div>
+      </div>
+      <footer class="legend-section">
+        <div class="legend-header">
+          <h3 class="legend-title">7대 족 및 화학 계열 분류 (색상 범례)</h3>
+        </div>
+        <div class="legend-grid" id="splitLegend${theme.id}"></div>
+      </footer>
+    `;
+    container.appendChild(section);
+
+    renderSplitGrid(
+      `splitGrid${theme.id}`,
+      `splitLanthanide${theme.id}`,
+      `splitActinide${theme.id}`,
+      (el) => createElementCellByTheme(el, theme.id)
+    );
+    renderSplitLegend(`splitLegend${theme.id}`);
+  });
+
+  // 시트별 개별 인쇄 버튼 이벤트 바인딩
+  container.querySelectorAll('.split-sheet-print-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pid = btn.dataset.pageId;
+      const url = `print-multi.html?page=${pid}&print=true`;
+      if (typeof window.openInAppPrint === 'function') {
+        window.openInAppPrint(url, `표준 주기율표 제${pid}편 (A4 인쇄)`);
+      } else {
+        window.open(url, '_blank');
+      }
+    });
+  });
+
   isSplitPagesInitialized = true;
+  applyPeriodicTableFilters();
 }
 
 function renderSplitGrid(gridId, lanthId, actinId, cellBuilder) {
@@ -692,10 +512,8 @@ function createPlaceholderCell(rangeText, titleText, type) {
 }
 
 /**
- * 5. 하단 7개 족 범례 렌더링
+ * 5. 하단 7개 족 범례 렌더링 및 검색/방사성/범례 통합 필터 엔진
  */
-let activeCategoryFilter = null;
-
 function initLegend() {
   const legendGrid = document.getElementById('legendGrid');
   if (!legendGrid) return;
@@ -725,116 +543,111 @@ function initLegend() {
 
 function toggleCategoryHighlight(categoryId) {
   const legendCards = document.querySelectorAll('#legendSection .legend-card');
-  const allCells = document.querySelectorAll('.element-cell');
 
   if (activeCategoryFilter === categoryId) {
     activeCategoryFilter = null;
     legendCards.forEach(c => c.classList.remove('active'));
-    allCells.forEach(cell => {
-      cell.classList.remove('is-dimmed');
-      cell.classList.remove('is-highlighted');
-    });
   } else {
     activeCategoryFilter = categoryId;
     legendCards.forEach(c => {
       if (c.dataset.categoryId === categoryId) c.classList.add('active');
       else c.classList.remove('active');
     });
-
-    allCells.forEach(cell => {
-      if (cell.dataset.category === categoryId) {
-        cell.classList.remove('is-dimmed');
-        cell.classList.add('is-highlighted');
-      } else {
-        cell.classList.add('is-dimmed');
-        cell.classList.remove('is-highlighted');
-      }
-    });
   }
+
+  applyPeriodicTableFilters();
 }
 
 /**
- * 6. 검색 및 필터
+ * 통합 필터 적용 함수 (검색어 + 방사성 여부 + 범례 카테고리 필터를 동시에 일관되게 반영)
  */
-function initSearchAndFilter() {
+function applyPeriodicTableFilters() {
   const searchInput = document.getElementById('searchInput');
   const searchBar = document.querySelector('.search-bar');
-  const clearBtn = document.getElementById('clearSearchBtn');
-  const pillBtns = document.querySelectorAll('.pill-btn');
+  const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+  const allCells = document.querySelectorAll('.element-cell');
 
-  if (!searchInput) return;
-
-  let currentTypeFilter = 'all';
-
-  function applyFilters() {
-    const query = searchInput.value.trim().toLowerCase();
-    const allCells = document.querySelectorAll('#mainPeriodicTable .element-cell, #lanthanideElements .element-cell, #actinideElements .element-cell');
-
+  if (searchBar) {
     if (query.length > 0) {
       searchBar.classList.add('has-value');
     } else {
       searchBar.classList.remove('has-value');
     }
-
-    allCells.forEach(cell => {
-      let matchesSearch = true;
-      let matchesType = true;
-
-      if (query.length > 0) {
-        const num = cell.dataset.atomicNumber;
-        const sym = cell.dataset.symbol;
-        const ko = cell.dataset.nameKo;
-        const alt = cell.dataset.altNameKo;
-        const en = cell.dataset.nameEn;
-        const pron = cell.dataset.pronKo || '';
-
-        matchesSearch = (
-          num.includes(query) ||
-          sym.includes(query) ||
-          ko.includes(query) ||
-          alt.includes(query) ||
-          en.includes(query) ||
-          pron.includes(query)
-        );
-      }
-
-      if (currentTypeFilter === 'radioactive') {
-        matchesType = (cell.dataset.radioactive === 'true');
-      }
-
-      let matchesCat = true;
-      if (activeCategoryFilter) {
-        matchesCat = (cell.dataset.category === activeCategoryFilter);
-      }
-
-      if (matchesSearch && matchesType && matchesCat) {
-        cell.classList.remove('is-dimmed');
-        if (query.length > 0 || currentTypeFilter === 'radioactive') {
-          cell.classList.add('is-highlighted');
-        } else {
-          cell.classList.remove('is-highlighted');
-        }
-      } else {
-        cell.classList.add('is-dimmed');
-        cell.classList.remove('is-highlighted');
-      }
-    });
   }
 
-  searchInput.addEventListener('input', applyFilters);
+  const hasActiveFilter = query.length > 0 || currentTypeFilter === 'radioactive' || Boolean(activeCategoryFilter);
 
-  clearBtn.addEventListener('click', () => {
-    searchInput.value = '';
-    applyFilters();
-    searchInput.focus();
+  allCells.forEach(cell => {
+    let matchesSearch = true;
+    let matchesType = true;
+    let matchesCat = true;
+
+    if (query.length > 0) {
+      const num = cell.dataset.atomicNumber || '';
+      const sym = cell.dataset.symbol || '';
+      const ko = cell.dataset.nameKo || '';
+      const alt = cell.dataset.altNameKo || '';
+      const en = cell.dataset.nameEn || '';
+      const pron = cell.dataset.pronKo || '';
+
+      matchesSearch = (
+        num.includes(query) ||
+        sym.includes(query) ||
+        ko.includes(query) ||
+        alt.includes(query) ||
+        en.includes(query) ||
+        pron.includes(query)
+      );
+    }
+
+    if (currentTypeFilter === 'radioactive') {
+      matchesType = (cell.dataset.radioactive === 'true');
+    }
+
+    if (activeCategoryFilter) {
+      matchesCat = (cell.dataset.category === activeCategoryFilter);
+    }
+
+    if (matchesSearch && matchesType && matchesCat) {
+      cell.classList.remove('is-dimmed');
+      if (hasActiveFilter) {
+        cell.classList.add('is-highlighted');
+      } else {
+        cell.classList.remove('is-highlighted');
+      }
+    } else {
+      cell.classList.add('is-dimmed');
+      cell.classList.remove('is-highlighted');
+    }
   });
+}
+
+/**
+ * 6. 검색 및 필터 이벤트 바인딩
+ */
+function initSearchAndFilter() {
+  const searchInput = document.getElementById('searchInput');
+  const clearBtn = document.getElementById('clearSearchBtn');
+  const pillBtns = document.querySelectorAll('.search-filter-group .pill-btn');
+
+  if (!searchInput) return;
+
+  searchInput.addEventListener('input', applyPeriodicTableFilters);
+
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      applyPeriodicTableFilters();
+      searchInput.focus();
+    });
+  }
 
   pillBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       pillBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      currentTypeFilter = btn.dataset.filter;
-      applyFilters();
+      currentTypeFilter = btn.dataset.filter || 'all';
+      applyPeriodicTableFilters();
     });
   });
 }
@@ -877,37 +690,8 @@ function initTheme() {
  */
 let currentModalAtomicNumber = 1;
 
-// 118개 원소 표준 주양자수 전자 껍질(K, L, M, N, O, P, Q) 데이터셋
-const BOHR_SHELLS_DATA = {
-  1: [1], 2: [2], 3: [2,1], 4: [2,2], 5: [2,3], 6: [2,4], 7: [2,5], 8: [2,6], 9: [2,7], 10: [2,8],
-  11: [2,8,1], 12: [2,8,2], 13: [2,8,3], 14: [2,8,4], 15: [2,8,5], 16: [2,8,6], 17: [2,8,7], 18: [2,8,8],
-  19: [2,8,8,1], 20: [2,8,8,2], 21: [2,8,9,2], 22: [2,8,10,2], 23: [2,8,11,2], 24: [2,8,13,1], 25: [2,8,13,2],
-  26: [2,8,14,2], 27: [2,8,15,2], 28: [2,8,16,2], 29: [2,8,18,1], 30: [2,8,18,2], 31: [2,8,18,3], 32: [2,8,18,4],
-  33: [2,8,18,5], 34: [2,8,18,6], 35: [2,8,18,7], 36: [2,8,18,8],
-  37: [2,8,18,8,1], 38: [2,8,18,8,2], 39: [2,8,18,9,2], 40: [2,8,18,10,2], 41: [2,8,18,12,1], 42: [2,8,18,13,1],
-  43: [2,8,18,13,2], 44: [2,8,18,15,1], 45: [2,8,18,16,1], 46: [2,8,18,18], 47: [2,8,18,18,1], 48: [2,8,18,18,2],
-  49: [2,8,18,18,3], 50: [2,8,18,18,4], 51: [2,8,18,18,5], 52: [2,8,18,18,6], 53: [2,8,18,18,7], 54: [2,8,18,18,8],
-  55: [2,8,18,18,8,1], 56: [2,8,18,18,8,2], 57: [2,8,18,18,9,2], 58: [2,8,18,19,9,2], 59: [2,8,18,21,8,2],
-  60: [2,8,18,22,8,2], 61: [2,8,18,23,8,2], 62: [2,8,18,24,8,2], 63: [2,8,18,25,8,2], 64: [2,8,18,25,9,2],
-  65: [2,8,18,27,8,2], 66: [2,8,18,28,8,2], 67: [2,8,18,29,8,2], 68: [2,8,18,30,8,2], 69: [2,8,18,31,8,2],
-  70: [2,8,18,32,8,2], 71: [2,8,18,32,9,2], 72: [2,8,18,32,10,2], 73: [2,8,18,32,11,2], 74: [2,8,18,32,12,2],
-  75: [2,8,18,32,13,2], 76: [2,8,18,32,14,2], 77: [2,8,18,32,15,2], 78: [2,8,18,32,17,1], 79: [2,8,18,32,18,1],
-  80: [2,8,18,32,18,2], 81: [2,8,18,32,18,3], 82: [2,8,18,32,18,4], 83: [2,8,18,32,18,5], 84: [2,8,18,32,18,6],
-  85: [2,8,18,32,18,7], 86: [2,8,18,32,18,8],
-  87: [2,8,18,32,18,8,1], 88: [2,8,18,32,18,8,2], 89: [2,8,18,32,18,9,2], 90: [2,8,18,32,18,10,2],
-  91: [2,8,18,32,20,9,2], 92: [2,8,18,32,21,9,2], 93: [2,8,18,32,22,9,2], 94: [2,8,18,32,24,8,2],
-  95: [2,8,18,32,25,8,2], 96: [2,8,18,32,25,9,2], 97: [2,8,18,32,27,8,2], 98: [2,8,18,32,28,8,2],
-  99: [2,8,18,32,29,8,2], 100: [2,8,18,32,30,8,2], 101: [2,8,18,32,31,8,2], 102: [2,8,18,32,32,8,2],
-  103: [2,8,18,32,32,8,3], 104: [2,8,18,32,32,10,2], 105: [2,8,18,32,32,11,2], 106: [2,8,18,32,32,12,2],
-  107: [2,8,18,32,32,13,2], 108: [2,8,18,32,32,14,2], 109: [2,8,18,32,32,15,2], 110: [2,8,18,32,32,16,2],
-  111: [2,8,18,32,32,17,2], 112: [2,8,18,32,32,18,2], 113: [2,8,18,32,32,18,3], 114: [2,8,18,32,32,18,4],
-  115: [2,8,18,32,32,18,5], 116: [2,8,18,32,32,18,6], 117: [2,8,18,32,32,18,7], 118: [2,8,18,32,32,18,8]
-};
-
-const SHELL_NAMES = ['K', 'L', 'M', 'N', 'O', 'P', 'Q'];
-
 /**
- * 보어 원자 모형 SVG 동적 렌더러
+ * 보어 원자 모형 SVG 동적 렌더러 (core_utils.js의 BOHR_SHELLS_DATA, SHELL_NAMES 활용)
  */
 function renderBohrModel(atomicNum, symbol, accentColor = '#38bdf8') {
   const container = document.getElementById('bohrModelContainer');
@@ -968,34 +752,20 @@ function renderBohrModel(atomicNum, symbol, accentColor = '#38bdf8') {
 }
 
 /**
- * Web Speech API TTS 발음 재생기
+ * Web Speech API TTS 발음 재생기 (core_utils.js의 AppAudio.speakText 통합 사용)
  */
 function speakElementName(lang = 'ko-KR') {
-  if (!('speechSynthesis' in window)) {
-    alert('현재 브라우저에서는 음성 합성(TTS)을 지원하지 않습니다.');
-    return;
-  }
   const element = elementsMap.get(currentModalAtomicNumber);
-  if (!element) return;
+  if (!element || !window.AppAudio) return;
 
-  window.speechSynthesis.cancel();
   const text = (lang === 'ko-KR') ? element.nameKo : element.nameEn;
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = lang;
-  utterance.rate = 0.9;
-  utterance.pitch = 1.0;
-
   const btn = (lang === 'ko-KR') ? document.getElementById('modalSpeakKoBtn') : document.getElementById('modalSpeakEnBtn');
-  if (btn) btn.classList.add('speaking');
 
-  utterance.onend = () => {
-    if (btn) btn.classList.remove('speaking');
-  };
-  utterance.onerror = () => {
-    if (btn) btn.classList.remove('speaking');
-  };
-
-  window.speechSynthesis.speak(utterance);
+  window.AppAudio.speakText(text, lang, {
+    onStart: () => { if (btn) btn.classList.add('speaking'); },
+    onEnd: () => { if (btn) btn.classList.remove('speaking'); },
+    onError: () => { if (btn) btn.classList.remove('speaking'); }
+  });
 }
 
 function updateModalContent(atomicNum) {
@@ -1199,7 +969,6 @@ function initModal() {
   const nextBtn = document.getElementById('modalNextBtn');
   const speakKoBtn = document.getElementById('modalSpeakKoBtn');
   const speakEnBtn = document.getElementById('modalSpeakEnBtn');
-  const modalTabBar = document.getElementById('modalTabBar');
   if (!modal || !closeBtn) return;
 
   function closeModal() {
@@ -1543,12 +1312,10 @@ function initMobileAppExperience() {
 
     // 1) 네이티브 앱/PWA 안에서 불필요한 설치 버튼/배너 100% 제거
     const installBtn = document.getElementById('installAppBtn');
-    const bottomNavInstallBtn = document.getElementById('bottomNavInstallBtn');
     const mobileInstallBanner = document.getElementById('mobileInstallBanner');
     
     if (isStandalone) {
       if (installBtn) installBtn.style.setProperty('display', 'none', 'important');
-      if (bottomNavInstallBtn) bottomNavInstallBtn.style.setProperty('display', 'none', 'important');
       if (mobileInstallBanner) mobileInstallBanner.style.setProperty('display', 'none', 'important');
     }
 
@@ -1573,41 +1340,7 @@ function initMobileAppExperience() {
     }
   }
 
-  // 4) 원터치 전체보기 / 확대 토글 플로팅 버튼 (FAB)
-  const zoomFab = document.getElementById('mobileZoomToggleFab');
-  const fabIcon = document.getElementById('mobileZoomFabIcon');
-  const fabText = document.getElementById('mobileZoomFabText');
-
-  function updateFabState() {
-    if (!zoomFab) return;
-    if (screenScaleFactor >= 1.2) {
-      // 현재 확대 상태 ➔ 누르면 전체보기로 전환
-      if (fabIcon) fabIcon.textContent = '🔍';
-      if (fabText) fabText.textContent = '전체보기';
-    } else {
-      // 현재 전체보기 상태 ➔ 누르면 확대보기로 전환
-      if (fabIcon) fabIcon.textContent = '🔎';
-      if (fabText) fabText.textContent = '확대보기';
-    }
-  }
-
-  if (zoomFab) {
-    zoomFab.addEventListener('click', () => {
-      if (screenScaleFactor >= 1.2) {
-        // 전체보기 모드로 축소 맞춤 (모바일 한눈에 조감)
-        const availW = window.innerWidth - 24;
-        const optimalFactor = Math.max(0.55, availW / BASE_TABLE_WIDTH);
-        applyScreenScale(optimalFactor, true);
-      } else {
-        // 시원하게 읽히는 160% 가독성 확대 모드로 전환
-        applyScreenScale(1.6, false);
-      }
-      updateFabState();
-    });
-    updateFabState();
-  }
-
-  // 5) 모바일 하단 고정 네비게이션 바 (Bottom Navigation)
+  // 4) 모바일 하단 고정 네비게이션 바 (Bottom Navigation)
   const bottomNavItems = document.querySelectorAll('.mobile-bottom-nav .bottom-nav-item');
   const bottomSearchBtn = document.getElementById('bottomNavSearchBtn');
   const searchInput = document.getElementById('searchInput');

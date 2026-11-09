@@ -528,13 +528,10 @@
   <script src="elements.js"></script>
   <script src="elements_extra.js"></script>
   <script src="elements_photos.js"></script>
+  <script src="core_utils.js"></script>
   <script>
-    const elMap = new Map();
-    ELEMENTS_DATA.forEach(el => {
-      const extra = (typeof ELEMENTS_EXTRA_DATA !== 'undefined' && ELEMENTS_EXTRA_DATA[el.atomicNumber]) || {};
-      const photo = (typeof ELEMENTS_PHOTOS_DATA !== 'undefined' && ELEMENTS_PHOTOS_DATA[el.atomicNumber]) || {};
-      elMap.set(el.atomicNumber, { ...el, ...extra, ...photo });
-    });
+    // core_utils.js의 전역 elementsMap 및 elementPositionMap(O(1) 조회)을 재사용합니다.
+    const elMap = elementsMap;
 
     function getCatColor(catKey) {
       const c = CATEGORIES[catKey];
@@ -832,15 +829,10 @@
               continue;
             }
 
-            const found = ELEMENTS_DATA.find(e => {
-              if (e.atomicNumber >= 57 && e.atomicNumber <= 71) return false;
-              if (e.atomicNumber >= 89 && e.atomicNumber <= 103) return false;
-              return e.period === p && e.group === g;
-            });
+            const found = elementPositionMap.get(`${p}-${g}`);
 
             if (found) {
-              const fullEl = elMap.get(found.atomicNumber);
-              const card = theme.cardBuilder(fullEl);
+              const card = theme.cardBuilder(found);
               card.style.gridRow = p;
               card.style.gridColumn = col;
               grid.appendChild(card);

@@ -14,7 +14,7 @@ vData.version = verParts.join('.');
 vData.build = oldBuild + 1;
 vData.versionCode = vData.build;
 vData.updatedAt = new Date().toISOString();
-vData.notes = '원소 연금술 대개편(118원소·양이온·음이온 한글명·사칙연산·인벤토리) 및 원스톱(1회) 즉시 업데이트 패치';
+vData.notes = '전체 아키텍처 모듈 리팩토링(core_utils/alchemy_data/pwa_updater 분리) 및 다중 필터·전체 N장 뷰·게임 상태 보존·비동기 타이머·수식 파서 등 9대 구조적 버그 개선';
 
 console.log(`🚀 버전 상향: v${oldVersion} (#${oldBuild}) -> v${vData.version} (#${vData.build})`);
 
@@ -26,20 +26,19 @@ swContent = swContent.replace(/const CACHE_NAME = '.*?';/, "const CACHE_NAME = '
 fs.writeFileSync(swPath, swContent, 'utf8');
 console.log('service-worker.js CACHE_NAME:', newCacheName);
 
-// 3. index.html의 CURRENT_EMBEDDED_BUILD를 최신 빌드 번호(vData.build)와 정확히 일치시켜
+// 3. index.html 및 pwa_updater.js의 CURRENT_EMBEDDED_BUILD를 최신 빌드 번호(vData.build)와 정확히 일치시켜
 //    새 APK 설치 후 업데이트 안내 모달이 중복해서 뜨는 현상을 원천 차단!
 let idxHtml = fs.readFileSync('index.html', 'utf8');
 idxHtml = idxHtml.replace(/const CURRENT_EMBEDDED_BUILD = \d+;/, `const CURRENT_EMBEDDED_BUILD = ${vData.build};`);
 idxHtml = idxHtml.replace(/<span class="update-ver-tag" id="updateModalVerTag">.*?<\/span>/, `<span class="update-ver-tag" id="updateModalVerTag">v${vData.version} (빌드 #${vData.build})</span>`);
 fs.writeFileSync('index.html', idxHtml, 'utf8');
-console.log(`index.html CURRENT_EMBEDDED_BUILD = ${vData.build} 및 버전 태그 v${vData.version} 동기화 완료`);
 
-// 3-0. gemini_service.js 내 LATEST_BUILD_NUM 동기화
-if (fs.existsSync('gemini_service.js')) {
-  let gemContent = fs.readFileSync('gemini_service.js', 'utf8');
-  gemContent = gemContent.replace(/const LATEST_BUILD_NUM = \d+;/, `const LATEST_BUILD_NUM = ${vData.build};`);
-  fs.writeFileSync('gemini_service.js', gemContent, 'utf8');
+if (fs.existsSync('pwa_updater.js')) {
+  let pwaJs = fs.readFileSync('pwa_updater.js', 'utf8');
+  pwaJs = pwaJs.replace(/const CURRENT_EMBEDDED_BUILD = \d+;/, `const CURRENT_EMBEDDED_BUILD = ${vData.build};`);
+  fs.writeFileSync('pwa_updater.js', pwaJs, 'utf8');
 }
+console.log(`index.html 및 pwa_updater.js CURRENT_EMBEDDED_BUILD = ${vData.build}, 버전 태그 v${vData.version} 동기화 완료`);
 
 // 3-1. download.html 및 android/app/build.gradle 버전 동기화
 if (fs.existsSync('download.html')) {
@@ -59,11 +58,12 @@ fs.writeFileSync(vPath, JSON.stringify(vData, null, 2), 'utf8');
 
 // 4. www/ 및 android assets 폴더에 핵심 파일 선(先) 동기화 (APK 빌드 전 최신 에셋 주입!)
 const syncFiles = [
-  'index.html', 'style.css', 'app.js', 'elements.js', 'elements_extra.js',
-  'elements_photos.js', 'elements_encyclopedia.js', 'in_app_browser.js',
-  'gemini_service.js', 'quiz.js', 'game_suite.js', 'card_explorer.js',
-  'manifest.json', 'icon.svg', 'version.json', 'service-worker.js',
-  'download.html', 'firebase.json'
+  'index.html', 'print-multi.html', 'print-split.html', 'style.css',
+  'core_utils.js', 'alchemy_data.js', 'pwa_updater.js', 'app.js',
+  'elements.js', 'elements_extra.js', 'elements_photos.js', 'elements_encyclopedia.js',
+  'in_app_browser.js', 'gemini_service.js', 'quiz.js', 'game_suite.js',
+  'card_explorer.js', 'manifest.json', 'icon.svg', 'version.json',
+  'service-worker.js', 'download.html', 'firebase.json'
 ];
 const targetDirs = ['www', 'android/app/src/main/assets/public'];
 for (const dir of targetDirs) {
