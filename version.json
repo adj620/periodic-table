@@ -1,10 +1,10 @@
 {
-  "version": "1.3.13",
-  "versionCode": 30,
-  "build": 30,
-  "size": 4347035,
-  "updatedAt": "2026-11-09T13:19:32.842Z",
-  "notes": "전체 아키텍처 모듈 리팩토링(core_utils/alchemy_data/pwa_updater 분리) 및 다중 필터·전체 N장 뷰·게임 상태 보존·비동기 타이머·수식 파서 등 9대 구조적 버그 개선",
+  "version": "1.3.15",
+  "versionCode": 32,
+  "build": 32,
+  "size": 4382108,
+  "updatedAt": "2026-11-09T14:11:41.915Z",
+  "notes": "과학 실험·학습 5대 도구(온도 슬라이더·히트맵·블라인드 암기·분자량 계산기·1:1 VS 비교) 및 연금술 화학 튜터·신규 게임 3종(스무고개·전자껍질·반응식 계수) 탑재",
   "apkUrl": "https://periodic-table-adj.web.app/periodic-table.zip",
   "url": "https://periodic-table-adj.web.app/periodic-table.zip"
 }

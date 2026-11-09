@@ -496,7 +496,7 @@
       <div class="update-card-header">
         <span class="update-rocket-icon">🚀</span>
         <h3>새로운 업데이트가 있습니다!</h3>
-        <span class="update-ver-tag" id="updateModalVerTag">v1.3.13 (빌드 #30)</span>
+        <span class="update-ver-tag" id="updateModalVerTag">v1.3.15 (빌드 #32)</span>
       </div>
       <div class="update-card-body">
         <p class="update-notes-text" id="updateModalNotes">
@@ -553,15 +553,17 @@
   <script src="in_app_browser.js"></script>
   <script src="gemini_service.js"></script>
 
-  <!-- 4. UI 뷰 컨트롤러 & 게임 엔진 계층 -->
+  <!-- 4. UI 뷰 컨트롤러 & 과학 실험 도구 & 게임 엔진 계층 -->
   <script src="card_explorer.js"></script>
   <script src="quiz.js"></script>
+  <script src="learning_games.js"></script>
   <script src="game_suite.js"></script>
+  <script src="science_tools.js"></script>
   <script src="app.js"></script>
 
   <!-- 5. PWA 설치 가이드 · 서비스 워커 · 인앱 자동 업데이트 매니저 -->
   <script>
-    const CURRENT_EMBEDDED_BUILD = 30;
+    const CURRENT_EMBEDDED_BUILD = 32;
     window.CURRENT_EMBEDDED_BUILD = CURRENT_EMBEDDED_BUILD;
   </script>
   <script src="pwa_updater.js"></script>

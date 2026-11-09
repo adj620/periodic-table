@@ -53,6 +53,18 @@ window.initGameSuite = function(force = false) {
           <span class="game-tab-icon">⚗️</span>
           <span class="game-tab-text">원소 연금술</span>
         </button>
+        <button class="game-nav-tab ${activeGameTab === 'detective' ? 'active' : ''}" data-game="detective">
+          <span class="game-tab-icon">🕵️</span>
+          <span class="game-tab-text">원소 스무고개</span>
+        </button>
+        <button class="game-nav-tab ${activeGameTab === 'bohr' ? 'active' : ''}" data-game="bohr">
+          <span class="game-tab-icon">⚛️</span>
+          <span class="game-tab-text">전자껍질 조립</span>
+        </button>
+        <button class="game-nav-tab ${activeGameTab === 'balancer' ? 'active' : ''}" data-game="balancer">
+          <span class="game-tab-icon">⚖️</span>
+          <span class="game-tab-text">반응식 계수</span>
+        </button>
       </nav>
 
       <!-- 개별 게임 뷰 컨테이너 -->
@@ -76,6 +88,9 @@ function stopAllGameTimers() {
   stopMemoryTimer();
   stopPuzzleTimer();
   stopAlchemyTimer();
+  if (typeof window.stopLearningGamesTimers === 'function') {
+    window.stopLearningGamesTimers();
+  }
   if (typeof window.stopQuestionTimer === 'function') {
     window.stopQuestionTimer();
   }
@@ -111,6 +126,12 @@ function renderActiveGame() {
     renderPuzzleGameLobby(content);
   } else if (activeGameTab === 'alchemy') {
     renderAlchemyGameLobby(content);
+  } else if (activeGameTab === 'detective') {
+    renderDetectiveGameLobby(content);
+  } else if (activeGameTab === 'bohr') {
+    renderBohrBuilderGame(content);
+  } else if (activeGameTab === 'balancer') {
+    renderEquationBalancerGame(content);
   }
 }
 
@@ -696,8 +717,139 @@ let alchemyState = {
   splitMode: window.innerWidth >= 820 ? 'side' : 'top', // 'top' (상단 비커 고정) | 'side' (좌측 비커 고정)
   deckView: 'all', // 'all' (원소+인벤토리) | 'shelf' (원소·이온만) | 'inv' (도감 인벤토리만)
   touchDragMode: 'drag', // 'drag' (카드 터치 시 즉시 비커로 드래그) | 'scroll' (목록 스크롤 우선, 길게 눌러 드래그)
+  tutorTargetId: null, // 🎓 학습 가이드 목표 레시피 ID
+  isTutorOpen: true,   // 🎓 튜터 가이드 패널 표시 여부
   reactionTimeoutId: null
 };
+
+/**
+ * 🎓 화학 튜터: 현재 목표 레시피를 보장하고 부족한 재료/설명 데이터를 생성
+ */
+function ensureTutorTargetRecipe() {
+  const unlocked = alchemyState.unlockedRecipes;
+  if (alchemyState.tutorTargetId) {
+    const found = ALCHEMY_RECIPES.find(r => r.id === alchemyState.tutorTargetId);
+    if (found) return found;
+  }
+  const nextLocked = ALCHEMY_RECIPES.find(r => !unlocked.includes(r.id)) || ALCHEMY_RECIPES[0];
+  alchemyState.tutorTargetId = nextLocked.id;
+  return nextLocked;
+}
+
+function getTutorMissingElements(recipe, currentTokens) {
+  const activeTokens = currentTokens.filter(t => !['+', '➔', '=', '(', ')'].includes(t));
+  const pool = [...activeTokens];
+  const checklist = recipe.elements.map(reqSym => {
+    const idx = pool.indexOf(reqSym);
+    if (idx !== -1) {
+      pool.splice(idx, 1);
+      return { symbol: reqSym, satisfied: true };
+    }
+    return { symbol: reqSym, satisfied: false };
+  });
+  const missing = checklist.filter(c => !c.satisfied).map(c => c.symbol);
+  return { checklist, missing };
+}
+
+function renderSmartTutorPanelHtml() {
+  const targetRecipe = ensureTutorTargetRecipe();
+  const isUnlocked = alchemyState.unlockedRecipes.includes(targetRecipe.id);
+  const { checklist, missing } = getTutorMissingElements(targetRecipe, alchemyState.beakerElements);
+
+  // 비커에 담긴 원소 기반으로 만들 수 있는 연관 레시피 레이더 (최대 3개)
+  const cleanBeaker = alchemyState.beakerElements.filter(t => !['+', '-', '×', '÷', '➔', '=', '(', ')'].includes(t) && !/^\d+$/.test(t));
+  let radarSuggestions = [];
+  if (cleanBeaker.length > 0) {
+    radarSuggestions = ALCHEMY_RECIPES
+      .filter(r => r.elements.some(el => cleanBeaker.includes(el)))
+      .sort((a, b) => {
+        const aUn = alchemyState.unlockedRecipes.includes(a.id) ? 1 : 0;
+        const bUn = alchemyState.unlockedRecipes.includes(b.id) ? 1 : 0;
+        return aUn - bUn;
+      })
+      .slice(0, 3);
+  }
+
+  return `
+    <div class="alchemy-tutor-panel" id="alchemyTutorPanel">
+      <div class="tutor-header-row">
+        <div class="tutor-title-wrap">
+          <span class="tutor-badge">🎓 화학 선생님 학습 가이드</span>
+          <strong>화학식을 몰라도 걱정 마세요! 목표 물질의 재료를 하나씩 눌러 조합 원리를 배워보세요.</strong>
+        </div>
+        <div class="tutor-top-btns">
+          <select id="tutorMissionSelect" class="tutor-mission-select" title="배우고 싶은 목표 화학 물질을 선택하세요">
+            ${ALCHEMY_RECIPES.map(r => {
+              const un = alchemyState.unlockedRecipes.includes(r.id);
+              return `<option value="${r.id}" ${r.id === targetRecipe.id ? 'selected' : ''}>${un ? '✅' : '🎯'} ${r.icon} ${r.name} (${r.shortFormula || r.formula})</option>`;
+            }).join('')}
+          </select>
+          <button type="button" id="nextTutorMissionBtn" class="pill-btn secondary small-btn" title="아직 안 만든 다른 목표 물질 추천받기">🔄 다른 미션</button>
+        </div>
+      </div>
+
+      <div class="tutor-mission-body">
+        <div class="tutor-target-info">
+          <div class="tutor-target-name-row">
+            <span class="tutor-target-icon">${targetRecipe.icon}</span>
+            <div>
+              <div class="tutor-target-title">
+                <strong>목표: ${targetRecipe.name}</strong>
+                <span class="tutor-formula-pill">${targetRecipe.formula}</span>
+                ${isUnlocked ? '<span class="tutor-unlocked-tag">✅ 해금 완료</span>' : '<span class="tutor-new-tag">🆕 미해금 도전</span>'}
+              </div>
+              <p class="tutor-target-desc">${targetRecipe.desc}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="tutor-checklist-row">
+          <span class="tutor-step-lbl">🧩 필요한 재료 (${missing.length === 0 ? '🎉 모두 준비됨! [⚗️ 화학 반응 시작!]을 누르세요!' : `남은 재료 ${missing.length}개 — 버튼을 누르면 비커에 바로 들어갑니다`}):</span>
+          <div class="tutor-req-pills">
+            ${checklist.map(item => {
+              const koName = getTokenKoreanName(item.symbol);
+              const pron = getTokenPronunciationKo(item.symbol);
+              return item.satisfied
+                ? `<span class="tutor-req-pill satisfied">✅ <strong>${item.symbol}</strong> <small>${koName}</small></span>`
+                : `<button type="button" class="tutor-req-pill missing tutor-put-one-btn" data-sym="${item.symbol}" title="클릭하면 [${item.symbol} (${koName})]을 비커에 바로 넣습니다!">➕ <strong>${item.symbol}</strong> <small>${koName}[${pron}] 넣기</small></button>`;
+            }).join('<span class="tutor-plus-sign">+</span>')}
+          </div>
+        </div>
+
+        <div class="tutor-helper-btns-row">
+          <button type="button" id="tutorHintOneStepBtn" class="pill-btn secondary small-btn" ${missing.length === 0 ? 'disabled' : ''}>
+            💡 부족한 재료 1개 넣기 ${missing.length > 0 ? `(${missing[0]})` : ''}
+          </button>
+          <button type="button" id="tutorAutoFillAllBtn" class="pill-btn primary small-btn">
+            🪄 [${targetRecipe.shortFormula || targetRecipe.name}] 정답 재료 비커에 자동 세팅
+          </button>
+          ${Array.isArray(targetRecipe.altCombos) && targetRecipe.altCombos.length > 0 ? `
+            <button type="button" id="tutorAutoFillAltBtn" class="pill-btn secondary small-btn" title="이온 결합이나 중화 반응 등 다른 방법으로도 합성해 보세요!">
+              ⚡ 응용 반응식(${targetRecipe.altCombos[0].join(' + ')})으로 세팅
+            </button>
+          ` : ''}
+        </div>
+      </div>
+
+      ${radarSuggestions.length > 0 ? `
+        <div class="tutor-live-radar">
+          <span class="radar-lbl">🔍 현재 비커 재료로 만들 수 있는 추천 물질:</span>
+          <div class="radar-chips-wrap">
+            ${radarSuggestions.map(r => {
+              const un = alchemyState.unlockedRecipes.includes(r.id);
+              return `
+                <button type="button" class="radar-recipe-chip" data-radar-id="${r.id}" title="클릭하면 이 물질을 목표로 설정하고 부족한 재료를 비커에 채웁니다!">
+                  <span>${r.icon} <strong>${r.name.replace(/\s*\(.*?\)/, '')}</strong> (${r.elements.join('+')})</span>
+                  <small>${un ? '✅보유' : '➕완성하기'}</small>
+                </button>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
 
 function stopAlchemyTimer() {
   if (alchemyState.reactionTimeoutId) {
@@ -850,6 +1002,11 @@ function renderAlchemyGameLobby(container) {
 
             <!-- 힌트 알림 박스 (실패 시 똑똑한 안내) -->
             <div id="alchemyHintBox" class="alchemy-hint-box" style="display:none;"></div>
+
+            <!-- 🎓 초보 학습자를 위한 스마트 화학 튜터 & 단계별 미션 가이드 -->
+            <div id="alchemyTutorContainer">
+              ${renderSmartTutorPanelHtml()}
+            </div>
           </div>
         </div>
 
@@ -1116,6 +1273,82 @@ function renderAlchemyGameLobby(container) {
     });
   });
   bindRecipeBookCardActions(container);
+  bindSmartTutorActions(container);
+}
+
+function bindSmartTutorActions(container) {
+  const tutorContainer = document.getElementById('alchemyTutorContainer');
+  if (!tutorContainer) return;
+
+  const sel = document.getElementById('tutorMissionSelect');
+  sel?.addEventListener('change', () => {
+    alchemyState.tutorTargetId = sel.value;
+    refreshSmartTutorPanel(container);
+  });
+
+  document.getElementById('nextTutorMissionBtn')?.addEventListener('click', () => {
+    const unlocked = alchemyState.unlockedRecipes;
+    const lockedList = ALCHEMY_RECIPES.filter(r => !unlocked.includes(r.id) && r.id !== alchemyState.tutorTargetId);
+    const pool = lockedList.length > 0 ? lockedList : ALCHEMY_RECIPES;
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    if (pick) {
+      alchemyState.tutorTargetId = pick.id;
+      playSoundEffect('flip');
+      refreshSmartTutorPanel(container);
+    }
+  });
+
+  tutorContainer.querySelectorAll('.tutor-put-one-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      addTokenToBeaker(btn.dataset.sym, container);
+    });
+  });
+
+  document.getElementById('tutorHintOneStepBtn')?.addEventListener('click', () => {
+    const targetRecipe = ensureTutorTargetRecipe();
+    const { missing } = getTutorMissingElements(targetRecipe, alchemyState.beakerElements);
+    if (missing.length > 0) {
+      addTokenToBeaker(missing[0], container);
+    }
+  });
+
+  document.getElementById('tutorAutoFillAllBtn')?.addEventListener('click', () => {
+    const targetRecipe = ensureTutorTargetRecipe();
+    alchemyState.beakerElements = [...targetRecipe.elements];
+    playSoundEffect('match');
+    triggerHaptic('short');
+    updateBeakerDisplay(container);
+  });
+
+  document.getElementById('tutorAutoFillAltBtn')?.addEventListener('click', () => {
+    const targetRecipe = ensureTutorTargetRecipe();
+    if (Array.isArray(targetRecipe.altCombos) && targetRecipe.altCombos.length > 0) {
+      alchemyState.beakerElements = [...targetRecipe.altCombos[0]];
+      playSoundEffect('match');
+      triggerHaptic('short');
+      updateBeakerDisplay(container);
+    }
+  });
+
+  tutorContainer.querySelectorAll('.radar-recipe-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const rId = chip.dataset.radarId;
+      const r = ALCHEMY_RECIPES.find(item => item.id === rId);
+      if (r) {
+        alchemyState.tutorTargetId = r.id;
+        alchemyState.beakerElements = [...r.elements];
+        playSoundEffect('match');
+        updateBeakerDisplay(container);
+      }
+    });
+  });
+}
+
+function refreshSmartTutorPanel(container) {
+  const tutorContainer = document.getElementById('alchemyTutorContainer');
+  if (!tutorContainer) return;
+  tutorContainer.innerHTML = renderSmartTutorPanelHtml();
+  bindSmartTutorActions(container);
 }
 
 function renderShelfButtonsHtml(elementsList) {
@@ -1319,6 +1552,22 @@ function bindRecipeBookCardActions(container) {
         addTokenToBeaker(token, container);
         const bookModal = document.getElementById('recipeBookModal');
         if (bookModal) bookModal.style.display = 'none';
+      });
+    }
+    const learnBtn = card.querySelector('.recipe-learn-mission-btn');
+    if (learnBtn) {
+      learnBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const rId = learnBtn.dataset.recipeId;
+        const r = ALCHEMY_RECIPES.find(item => item.id === rId);
+        if (r) {
+          alchemyState.tutorTargetId = r.id;
+          alchemyState.beakerElements = [...r.elements];
+          playSoundEffect('match');
+          updateBeakerDisplay(container);
+          const bookModal = document.getElementById('recipeBookModal');
+          if (bookModal) bookModal.style.display = 'none';
+        }
       });
     }
   });
@@ -1552,16 +1801,20 @@ function renderRecipeGridItems(catFilter) {
     const tokenVal = r.shortFormula || r.formula.split(' ')[0];
     return `
       <div class="recipe-item-card ${isUnlocked ? 'unlocked' : 'locked'}" data-recipe-id="${r.id}">
-        <span class="recipe-icon">${isUnlocked ? r.icon : '🔒'}</span>
+        <span class="recipe-icon">${r.icon}</span>
         <div class="recipe-text" style="flex:1;">
           <div class="recipe-title-row">
-            <strong>${isUnlocked ? r.name : '미지의 물질/반응'}</strong>
-            <span class="recipe-formula">${isUnlocked ? r.formula : '???'}</span>
+            <strong>${isUnlocked ? '✅ ' : '🔒 [미해금] '}${r.name}</strong>
+            <span class="recipe-formula">${r.formula}</span>
           </div>
-          <small>${isUnlocked ? r.desc : '조합 힌트: ' + r.elements.join(' + ')}</small>
-          <div class="recipe-card-footer">
-            <button class="recipe-put-beaker-btn" data-token="${tokenVal}">
-              🧪 [${tokenVal}] 비커에 넣기
+          <small>${r.desc}</small>
+          <div class="recipe-combo-guide">🧩 조합 레시피: <strong>${r.elements.join(' + ')}</strong></div>
+          <div class="recipe-card-footer" style="display:flex; gap:0.4rem; flex-wrap:wrap; margin-top:0.45rem;">
+            <button type="button" class="recipe-learn-mission-btn pill-btn primary small-btn" data-recipe-id="${r.id}">
+              🎓 재료 비커에 세팅 & 연습하기
+            </button>
+            <button type="button" class="recipe-put-beaker-btn" data-token="${tokenVal}">
+              🧪 [${tokenVal}] 시약 투입
             </button>
           </div>
         </div>
@@ -1588,6 +1841,7 @@ function updateBeakerDisplay(container) {
   if (directInput && document.activeElement !== directInput) {
     directInput.value = expr;
   }
+  refreshSmartTutorPanel(container);
 }
 
 /**
@@ -1760,6 +2014,9 @@ function handleCombineReaction(container) {
       }
 
       localStorage.setItem('periodic_alchemy_unlocked', JSON.stringify(alchemyState.unlockedRecipes));
+      if (alchemyState.tutorTargetId === matched.id) {
+        alchemyState.tutorTargetId = null; // 달성 시 다음 미해금 미션으로 자동 전환
+      }
 
       showAlchemySuccessModal(matched, container, exprString, bonusNote);
       alchemyState.beakerElements = [];

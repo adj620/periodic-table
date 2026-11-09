@@ -10,7 +10,8 @@ const QUIZ_MODES = {
   name_to_symbol: { id: 'name_to_symbol', title: '🏷️ 이름 ➔ 기호 맞추기', desc: '원소 이름(이명)을 보고 올바른 원소 기호를 고르세요.' },
   number_to_name: { id: 'number_to_name', title: '🔢 원자번호 맞추기', desc: '원자번호를 보고 해당하는 원소를 맞추세요.' },
   usage_to_name: { id: 'usage_to_name', title: '🔋 실생활 용도 & 대표물건', desc: '실생활 대표 물건과 활용처를 보고 원소를 맞추세요.' },
-  photo_to_name: { id: 'photo_to_name', title: '📸 실제 사진 표본 퀴즈', desc: '118개 원소의 실제 표본 사진을 보고 원소를 맞추세요.' }
+  photo_to_name: { id: 'photo_to_name', title: '📸 실제 사진 표본 퀴즈', desc: '118개 원소의 실제 표본 사진을 보고 원소를 맞추세요.' },
+  bookmarked_review: { id: 'bookmarked_review', title: '⭐ 내 암기장 집중 훈련', desc: '내가 ⭐암기장에 별표해 둔 취약 원소만 집중 출제합니다.' }
 };
 
 let quizState = {
@@ -303,6 +304,13 @@ function handleTimeOut() {
  * 2. 퀴즈 라운드 시작 (문제 생성 및 초기화)
  */
 function startQuizRound(modeId) {
+  if (modeId === 'bookmarked_review') {
+    const bmIds = window.BookmarkManager ? window.BookmarkManager.getAll() : [];
+    if (bmIds.length === 0) {
+      alert('⭐ 아직 내 암기장에 등록된 원소가 없습니다!\n주기율표 상세창이나 퀴즈 오답 노트에서 먼저 원소를 ⭐암기장에 추가해 보세요.');
+      return;
+    }
+  }
   quizState.currentMode = modeId;
   quizState.currentIndex = 0;
   quizState.score = 0;
@@ -312,8 +320,9 @@ function startQuizRound(modeId) {
   quizState.isAnswered = false;
   quizState.totalQuestions = 10;
 
-  // 10문제 생성
+  // 문제 생성
   quizState.questions = generateQuizQuestions(modeId, quizState.totalQuestions);
+  quizState.totalQuestions = quizState.questions.length;
 
   renderQuizQuestionScreen();
 }
@@ -325,14 +334,21 @@ function generateQuizQuestions(modeId, count = 10) {
   const allElements = Array.from(elementsMap.values());
   const questions = [];
 
-  // 랜덤 셔플
-  const shuffled = [...allElements].sort(() => Math.random() - 0.5);
-  const selectedElements = shuffled.slice(0, count);
+  let candidatePool = allElements;
+  if (modeId === 'bookmarked_review' && window.BookmarkManager) {
+    const bmSet = new Set(window.BookmarkManager.getAll());
+    const filtered = allElements.filter(el => bmSet.has(el.atomicNumber));
+    if (filtered.length > 0) candidatePool = filtered;
+  }
 
-  for (let i = 0; i < count; i++) {
+  // 랜덤 셔플
+  const shuffled = [...candidatePool].sort(() => Math.random() - 0.5);
+  const selectedElements = shuffled.slice(0, Math.min(count, shuffled.length));
+
+  for (let i = 0; i < selectedElements.length; i++) {
     const target = selectedElements[i];
     let actualType = modeId;
-    if (modeId === 'random') {
+    if (modeId === 'random' || modeId === 'bookmarked_review') {
       const types = ['symbol_to_name', 'name_to_symbol', 'number_to_name', 'usage_to_name', 'photo_to_name'];
       actualType = types[Math.floor(Math.random() * types.length)];
     }
@@ -697,7 +713,10 @@ function renderQuizResultScreen() {
 
       ${quizState.wrongAnswers.length > 0 ? `
         <div class="wrong-answers-review-box">
-          <h3>📌 오답 노트 (${quizState.wrongAnswers.length}개)</h3>
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.6rem;">
+            <h3 style="margin:0;">📌 오답 노트 (${quizState.wrongAnswers.length}개)</h3>
+            <button type="button" id="bookmarkAllWrongBtn" class="pill-btn primary small-btn">⭐ 틀린 원소 모두 내 암기장에 추가</button>
+          </div>
           <div class="wrong-items-list">
             ${quizState.wrongAnswers.map((w, i) => `
               <div class="wrong-item-card">
@@ -731,6 +750,20 @@ function renderQuizResultScreen() {
   const retryWrongBtn = document.getElementById('retryWrongOnlyBtn');
   const retryBtn = document.getElementById('retryQuizBtn');
   const lobbyBtn = document.getElementById('backToLobbyBtn');
+  const bmAllWrongBtn = document.getElementById('bookmarkAllWrongBtn');
+
+  if (bmAllWrongBtn && window.BookmarkManager) {
+    bmAllWrongBtn.addEventListener('click', () => {
+      quizState.wrongAnswers.forEach(w => {
+        if (w.question && w.question.target) {
+          window.BookmarkManager.add(w.question.target.atomicNumber);
+        }
+      });
+      bmAllWrongBtn.textContent = '✅ 내 암기장에 모두 등록 완료!';
+      bmAllWrongBtn.disabled = true;
+      playQuizSound('correct');
+    });
+  }
 
   if (retryWrongBtn) {
     retryWrongBtn.addEventListener('click', () => {

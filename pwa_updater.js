@@ -4,7 +4,7 @@
  * - 스트림 다운로드 완료 시점에만 빌드 번호를 영구 기록하도록 개선하여 다운로드 실패 시 업데이트 누락 버그 해결
  */
 
-const CURRENT_EMBEDDED_BUILD = 30; // 배포 스크립트(deploy.ps1 / deploy_runner.js)가 자동 동기화
+const CURRENT_EMBEDDED_BUILD = 32; // 배포 스크립트(deploy.ps1 / deploy_runner.js)가 자동 동기화
 const REMOTE_VERSION_URL = 'https://periodic-table-adj.web.app/version.json';
 
 (function initPwaAndUpdater() {

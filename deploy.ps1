@@ -108,7 +108,7 @@ if (Test-Path $pwaUpdaterPath) {
 }
 
 # 5-1) www/ 및 android assets 폴더 동기화
-$syncFiles = @('index.html','print-multi.html','print-split.html','style.css','core_utils.js','alchemy_data.js','pwa_updater.js','app.js','elements.js','elements_extra.js','elements_photos.js','elements_encyclopedia.js','in_app_browser.js','gemini_service.js','quiz.js','game_suite.js','card_explorer.js','manifest.json','icon.svg','version.json','service-worker.js','download.html','firebase.json')
+$syncFiles = @('index.html','print-multi.html','print-split.html','style.css','core_utils.js','alchemy_data.js','science_tools.js','learning_games.js','pwa_updater.js','app.js','elements.js','elements_extra.js','elements_photos.js','elements_encyclopedia.js','in_app_browser.js','gemini_service.js','quiz.js','game_suite.js','card_explorer.js','manifest.json','icon.svg','version.json','service-worker.js','download.html','firebase.json')
 foreach ($targetRel in @('www', 'android\app\src\main\assets\public')) {
   $targetDir = Join-Path $proj $targetRel
   if (Test-Path $targetDir) {

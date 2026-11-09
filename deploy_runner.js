@@ -14,7 +14,7 @@ vData.version = verParts.join('.');
 vData.build = oldBuild + 1;
 vData.versionCode = vData.build;
 vData.updatedAt = new Date().toISOString();
-vData.notes = '전체 아키텍처 모듈 리팩토링(core_utils/alchemy_data/pwa_updater 분리) 및 다중 필터·전체 N장 뷰·게임 상태 보존·비동기 타이머·수식 파서 등 9대 구조적 버그 개선';
+vData.notes = '과학 실험·학습 5대 도구(온도 슬라이더·히트맵·블라인드 암기·분자량 계산기·1:1 VS 비교) 및 연금술 화학 튜터·신규 게임 3종(스무고개·전자껍질·반응식 계수) 탑재';
 
 console.log(`🚀 버전 상향: v${oldVersion} (#${oldBuild}) -> v${vData.version} (#${vData.build})`);
 
@@ -59,7 +59,8 @@ fs.writeFileSync(vPath, JSON.stringify(vData, null, 2), 'utf8');
 // 4. www/ 및 android assets 폴더에 핵심 파일 선(先) 동기화 (APK 빌드 전 최신 에셋 주입!)
 const syncFiles = [
   'index.html', 'print-multi.html', 'print-split.html', 'style.css',
-  'core_utils.js', 'alchemy_data.js', 'pwa_updater.js', 'app.js',
+  'core_utils.js', 'alchemy_data.js', 'science_tools.js', 'learning_games.js',
+  'pwa_updater.js', 'app.js',
   'elements.js', 'elements_extra.js', 'elements_photos.js', 'elements_encyclopedia.js',
   'in_app_browser.js', 'gemini_service.js', 'quiz.js', 'game_suite.js',
   'card_explorer.js', 'manifest.json', 'icon.svg', 'version.json',

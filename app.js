@@ -120,6 +120,11 @@ function initPeriodicTable(themeId = 1) {
 
   // 테마 탭 전환 시에도 현재 활성화된 검색어 · 방사성 필터 · 범례 카테고리 하이라이트 상태를 유지
   applyPeriodicTableFilters();
+
+  // 과학 실험/히트맵/블라인드 암기/북마크 별표 오버레이 동기화
+  if (typeof window.refreshScienceOverlaysOnTableRender === 'function') {
+    window.refreshScienceOverlaysOnTableRender();
+  }
 }
 
 /**
@@ -141,6 +146,12 @@ function createElementCellByTheme(element, themeId) {
   cell.innerHTML = buildElementTileInnerHtml(element, themeId);
 
   cell.addEventListener('click', () => {
+    if (
+      typeof window.handleElementCellClickWithScienceMode === 'function' &&
+      window.handleElementCellClickWithScienceMode(element, cell)
+    ) {
+      return;
+    }
     openElementModal(element);
   });
 
@@ -575,7 +586,7 @@ function applyPeriodicTableFilters() {
     }
   }
 
-  const hasActiveFilter = query.length > 0 || currentTypeFilter === 'radioactive' || Boolean(activeCategoryFilter);
+  const hasActiveFilter = query.length > 0 || currentTypeFilter !== 'all' || Boolean(activeCategoryFilter);
 
   allCells.forEach(cell => {
     let matchesSearch = true;
@@ -602,6 +613,9 @@ function applyPeriodicTableFilters() {
 
     if (currentTypeFilter === 'radioactive') {
       matchesType = (cell.dataset.radioactive === 'true');
+    } else if (currentTypeFilter === 'bookmarked') {
+      const atomicNum = parseInt(cell.dataset.atomicNumber, 10);
+      matchesType = Boolean(window.BookmarkManager && window.BookmarkManager.has(atomicNum));
     }
 
     if (activeCategoryFilter) {
@@ -628,7 +642,7 @@ function applyPeriodicTableFilters() {
 function initSearchAndFilter() {
   const searchInput = document.getElementById('searchInput');
   const clearBtn = document.getElementById('clearSearchBtn');
-  const pillBtns = document.querySelectorAll('.search-filter-group .pill-btn');
+  const filterPillsWrap = document.querySelector('.filter-pills') || document.querySelector('.search-filter-group');
 
   if (!searchInput) return;
 
@@ -642,14 +656,16 @@ function initSearchAndFilter() {
     });
   }
 
-  pillBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      pillBtns.forEach(b => b.classList.remove('active'));
+  if (filterPillsWrap) {
+    filterPillsWrap.addEventListener('click', (e) => {
+      const btn = e.target.closest('.pill-btn[data-filter]');
+      if (!btn) return;
+      filterPillsWrap.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       currentTypeFilter = btn.dataset.filter || 'all';
       applyPeriodicTableFilters();
     });
-  });
+  }
 }
 
 /**
@@ -801,6 +817,50 @@ function updateModalContent(atomicNum) {
 
   document.getElementById('modalNameEn').textContent = `${element.nameEn} (${element.enPronKo})`;
   document.getElementById('modalCategoryName').textContent = cat.nameKo || '';
+
+  // 모달 내 ⭐ 내 암기장 북마크 토글 & ⚔️ 1:1 VS 비교 버튼 연동
+  const koSpeakBtn = document.getElementById('modalSpeakKoBtn');
+  if (koSpeakBtn && koSpeakBtn.parentNode) {
+    let bmModalBtn = document.getElementById('modalBookmarkToggleBtn');
+    if (!bmModalBtn) {
+      bmModalBtn = document.createElement('button');
+      bmModalBtn.type = 'button';
+      bmModalBtn.id = 'modalBookmarkToggleBtn';
+      bmModalBtn.className = 'speak-btn modal-bm-btn';
+      koSpeakBtn.parentNode.appendChild(bmModalBtn);
+    }
+    const syncModalBmText = () => {
+      const isBm = window.BookmarkManager && window.BookmarkManager.has(atomicNum);
+      bmModalBtn.innerHTML = isBm ? '⭐ 암기장 등록됨' : '☆ 암기장 추가';
+      bmModalBtn.classList.toggle('bm-active', Boolean(isBm));
+    };
+    syncModalBmText();
+    bmModalBtn.onclick = () => {
+      if (window.BookmarkManager) {
+        window.BookmarkManager.toggle(atomicNum);
+        syncModalBmText();
+      }
+    };
+
+    let vsModalBtn = document.getElementById('modalVsCompareBtn');
+    if (!vsModalBtn) {
+      vsModalBtn = document.createElement('button');
+      vsModalBtn.type = 'button';
+      vsModalBtn.id = 'modalVsCompareBtn';
+      vsModalBtn.className = 'speak-btn modal-vs-btn';
+      vsModalBtn.innerHTML = '⚔️ 1:1 비교';
+      koSpeakBtn.parentNode.appendChild(vsModalBtn);
+    }
+    vsModalBtn.onclick = () => {
+      if (typeof window.openScienceToolsModal === 'function') {
+        if (typeof ScienceToolsState !== 'undefined') {
+          ScienceToolsState.vsLeftNum = atomicNum;
+          ScienceToolsState.vsRightNum = atomicNum === 11 ? 19 : 11;
+        }
+        window.openScienceToolsModal('vs');
+      }
+    };
+  }
 
   document.getElementById('modalMass').textContent = element.atomicMass;
   document.getElementById('modalPeriodGroup').textContent = `${element.period}주기 ${element.group}족`;
